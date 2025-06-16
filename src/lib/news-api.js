@@ -1,4 +1,4 @@
-import { supabase } from './supabaseClient';
+import { supabase } from "@/lib/supabaseClient";
 
 const LAST_FETCHED_KEY = 'newsLastFetched';
 const NEWS_CACHE_KEY = 'newsCache';

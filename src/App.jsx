@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { motion, AnimatePresence } from 'framer-motion';
 import { categories as allCategories } from '@/lib/placeholder-data';
-import { fetchNews, mockCategorizeArticle } from '@/lib/news-api';
+import { fetchNews } from '@/lib/news-api';
 import { Sun, Moon, Bookmark, Rss, Info, Gift, ExternalLink, Heart } from 'lucide-react';
 
 const HomePage = ({ setIsDonateModalOpen }) => {
@@ -39,10 +39,10 @@ const HomePage = ({ setIsDonateModalOpen }) => {
     const loadNews = async () => {
       setLoading(true);
       try {
-        const fetchedArticles = await fetchNews(selectedCategory); 
+        const fetchedArticles = await fetchNews(selectedCategory);
         const categorizedArticles = fetchedArticles.map(article => ({
           ...article,
-          category: article.category || mockCategorizeArticle(article.title, article.summary) 
+          category: article.category || 'General' // fallback to 'General' if no category
         }));
         setArticles(categorizedArticles);
       } catch (error) {
@@ -63,7 +63,6 @@ const HomePage = ({ setIsDonateModalOpen }) => {
     return () => clearInterval(intervalId);
 
   }, [selectedCategory, toast]);
-
 
   useEffect(() => {
     localStorage.setItem('bookmarkedArticles', JSON.stringify(bookmarkedArticles));
@@ -133,7 +132,6 @@ const HomePage = ({ setIsDonateModalOpen }) => {
       setShowBookmarks(false);
     }
   }, [currentPath, selectedCategory, navigate]);
-
 
   return (
     <div className="flex flex-col min-h-screen bg-secondary/30 dark:bg-background font-sans antialiased">
@@ -256,7 +254,6 @@ const App = () => {
 
   const BookmarksPageWrapper = () => <HomePage setIsDonateModalOpen={setIsDonateModalOpen} />;
   const MainHomePageWrapper = () => <HomePage setIsDonateModalOpen={setIsDonateModalOpen} />;
-
 
   return (
     <>

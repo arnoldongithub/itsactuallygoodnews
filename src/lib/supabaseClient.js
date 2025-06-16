@@ -1,6 +1,7 @@
 // src/lib/news-api.js
 
-import { supabase } from '../supabaseClient';
+import { supabase } from "./supabaseClient";
+
 
 export async function fetchNews() {
   const { data, error } = await supabase

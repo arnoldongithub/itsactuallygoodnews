@@ -1,7 +1,48 @@
-// src/supabaseClient.js
-import { createClient } from '@supabase/supabase-js';
+// src/lib/news-api.js
 
-const supabaseUrl = 'https://qcdapfobdsqvzmagimvr.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFjZGFwZm9iZHNxdnptYWdpbXZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAwNzE0MDEsImV4cCI6MjA2NTY0NzQwMX0.VLIavDgWnoNA-4LLfKZ7P6kGAW-YiASz50dFXyX_MCw';
+import { supabase } from '../supabaseClient';
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
+export async function fetchNews() {
+  const { data, error } = await supabase
+    .from('news')
+    .select('*')
+    .order('published_at', { ascending: false })
+    .limit(50);
+
+  if (error) {
+    console.error('Error fetching news:', error.message);
+    throw new Error('Could not fetch news');
+  }
+
+  return data;
+}
+
+export async function fetchNewsByCategory(category) {
+  const { data, error } = await supabase
+    .from('news')
+    .select('*')
+    .eq('category', category)
+    .order('published_at', { ascending: false });
+
+  if (error) {
+    console.error(`Error fetching news in category ${category}:`, error.message);
+    throw new Error(`Could not fetch news for category: ${category}`);
+  }
+
+  return data;
+}
+
+export async function fetchSingleNews(id) {
+  const { data, error } = await supabase
+    .from('news')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (error) {
+    console.error(`Error fetching news with ID ${id}:`, error.message);
+    throw new Error('Could not fetch the news article');
+  }
+
+  return data;
+}

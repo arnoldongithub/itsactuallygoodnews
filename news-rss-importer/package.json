@@ -1,0 +1,19 @@
+{
+  "name": "news-rss-importer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.42.3",
+    "rss-parser": "^3.12.0",
+    "html-to-text": "^9.0.4",
+    "dotenv": "^16.4.5"
+  }
+}

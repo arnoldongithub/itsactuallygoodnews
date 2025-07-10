@@ -7,25 +7,62 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="alternate icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
-
+    
     <!-- Meta -->
     <meta name="generator" content="Hostinger Horizons" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ItsActuallyGoodNews - Positive Journalism Aggregator</title>
     <meta name="description" content="Your daily source of uplifting news. We aggregate positive and inspiring stories in tech, environment, health, and human interest, cutting through the noise." />
     <meta name="keywords" content="good news, positive news, uplifting stories, inspiring journalism, innovation, environment, health, tech, philanthropy" />
-
-    <!-- Fonts -->
+    
+    <!-- Fonts - Load early to prevent FOUC -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;700&display=swap" rel="stylesheet" />
+    
+    <!-- Prevent FOUC by hiding content until React loads -->
+    <style>
+      #root {
+        opacity: 0;
+        transition: opacity 0.3s ease-in-out;
+      }
+      #root.loaded {
+        opacity: 1;
+      }
+      /* Prevent layout shifts */
+      html {
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
+      }
+    </style>
   </head>
   <body>
     <div id="root">
       <noscript>You need to enable JavaScript to view this site.</noscript>
-      <div style="text-align:center;padding-top:2rem;font-family:sans-serif;">Loading...</div>
+      <div style="text-align:center;padding-top:2rem;font-family:Lora,serif;">
+        <div style="display:inline-block;width:40px;height:40px;border:4px solid #f3f3f3;border-top:4px solid #3498db;border-radius:50%;animation:spin 1s linear infinite;"></div>
+        <p style="margin-top:1rem;color:#666;">Loading...</p>
+      </div>
     </div>
+    
+    <!-- Load React after DOM is ready -->
     <script type="module" src="/src/main.jsx"></script>
+    
+    <!-- Remove FOUC once React has loaded -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(function() {
+          document.getElementById('root').classList.add('loaded');
+        }, 100);
+      });
+    </script>
+    
+    <!-- CSS animation for loading spinner -->
+    <style>
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    </style>
   </body>
 </html>
-

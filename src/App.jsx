@@ -27,15 +27,41 @@ const allCategories = [
 
 const HomePage = ({ setIsDonateModalOpen }) => {
   const [news, setNews] = useState([]);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
+    setLoading(true);
     fetchNews()
-      .then(setNews)
-      .catch(() =>
-        toast({ title: 'Error', description: 'Failed to load news', variant: 'destructive' })
-      );
-  }, []);
+      .then((data) => {
+        setNews(data);
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error('Failed to load news:', error);
+        toast({ 
+          title: 'Error', 
+          description: 'Failed to load news', 
+          variant: 'destructive' 
+        });
+        setLoading(false);
+      });
+  }, [toast]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen px-4">
+        <Header setIsDonateModalOpen={setIsDonateModalOpen} />
+        <div className="flex justify-center items-center min-h-[400px]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading news...</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen px-4">
@@ -51,24 +77,40 @@ const HomePage = ({ setIsDonateModalOpen }) => {
 };
 
 const App = () => {
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    // Initialize from localStorage or system preference
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('darkMode');
+      if (saved !== null) {
+        return JSON.parse(saved);
+      }
+      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+    return false;
+  });
   const [isDonateModalOpen, setIsDonateModalOpen] = useState(false);
 
   useEffect(() => {
+    // Apply dark mode class
     document.documentElement.classList.toggle('dark', isDarkMode);
+    // Save to localStorage
+    localStorage.setItem('darkMode', JSON.stringify(isDarkMode));
   }, [isDarkMode]);
 
   return (
     <Router>
       <div className="bg-white dark:bg-black text-black dark:text-white transition-colors duration-300 min-h-screen">
-        <Button
-          onClick={() => setIsDarkMode(!isDarkMode)}
-          className="absolute top-4 right-4"
-          variant="ghost"
-          size="icon"
-        >
-          {isDarkMode ? <Sun /> : <Moon />}
-        </Button>
+        {/* Fixed positioning to prevent layout shifts */}
+        <div className="fixed top-4 right-4 z-50">
+          <Button
+            onClick={() => setIsDarkMode(!isDarkMode)}
+            variant="ghost"
+            size="icon"
+            className="bg-background/80 backdrop-blur-sm border"
+          >
+            {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </Button>
+        </div>
 
         <Routes>
           <Route path="/" element={<HomePage setIsDonateModalOpen={setIsDonateModalOpen} />} />
@@ -93,7 +135,7 @@ const App = () => {
             </Dialog>
           )}
         </AnimatePresence>
-
+        
         <Toaster />
       </div>
     </Router>
@@ -101,4 +143,3 @@ const App = () => {
 };
 
 export default App;
-

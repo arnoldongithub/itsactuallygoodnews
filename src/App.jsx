@@ -6,13 +6,11 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import NewsCard from "@/components/NewsCard";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { motion, AnimatePresence } from 'framer-motion';
 import { fetchNews } from '@/lib/news-api';
-import { Sun, Moon, Bookmark, Rss, Info, Gift, ExternalLink, Heart } from 'lucide-react';
+import { Sun, Moon } from 'lucide-react';
 
-// ✅ Matches updated RSS feed categories
 const allCategories = [
   'All',
   'Health',
@@ -28,11 +26,38 @@ const allCategories = [
 const HomePage = ({ setIsDonateModalOpen }) => {
   const [news, setNews] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [streak, setStreak] = useState(0);
   const { toast } = useToast();
 
   useEffect(() => {
+    const today = new Date().toDateString();
+    const lastVisit = localStorage.getItem('lastVisitDate');
+    const currentStreak = parseInt(localStorage.getItem('streak') || '0');
+
+    if (lastVisit === today) return;
+
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    if (lastVisit === yesterday.toDateString()) {
+      const newStreak = Math.min(currentStreak + 1, 999);
+      localStorage.setItem('streak', newStreak);
+      setStreak(newStreak);
+      toast({
+        title: "🔥 You're on a roll!",
+        description: `Day ${newStreak} in a row. Keep it up!`,
+      });
+    } else {
+      localStorage.setItem('streak', 1);
+      setStreak(1);
+    }
+    localStorage.setItem('lastVisitDate', today);
+  }, []);
+
+  useEffect(() => {
     setLoading(true);
-    fetchNews()
+    fetchNews(selectedCategory)
       .then((data) => {
         setNews(data);
         setLoading(false);
@@ -46,7 +71,7 @@ const HomePage = ({ setIsDonateModalOpen }) => {
         });
         setLoading(false);
       });
-  }, [toast]);
+  }, [selectedCategory]);
 
   if (loading) {
     return (
@@ -66,7 +91,26 @@ const HomePage = ({ setIsDonateModalOpen }) => {
   return (
     <div className="min-h-screen px-4">
       <Header setIsDonateModalOpen={setIsDonateModalOpen} />
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+      <div className="flex justify-between items-center mb-4">
+        <div className="overflow-x-auto py-2">
+          <div className="flex gap-2 flex-wrap justify-center border-b border-border pb-3">
+            {allCategories.map((cat) => (
+              <Button
+                key={cat}
+                variant={selectedCategory === cat ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setSelectedCategory(cat)}
+              >
+                {cat}
+              </Button>
+            ))}
+          </div>
+        </div>
+        <div className={`text-xs text-right ${streak >= 5 ? 'text-yellow-500' : 'text-muted-foreground'}`}>
+          🔥 Streak: <span className="font-bold text-foreground">{streak}</span> day{streak !== 1 ? 's' : ''} in a row
+        </div>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {news.map((item) => (
           <NewsCard key={item.id} article={item} />
         ))}
@@ -78,12 +122,9 @@ const HomePage = ({ setIsDonateModalOpen }) => {
 
 const App = () => {
   const [isDarkMode, setIsDarkMode] = useState(() => {
-    // Initialize from localStorage or system preference
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('darkMode');
-      if (saved !== null) {
-        return JSON.parse(saved);
-      }
+      if (saved !== null) return JSON.parse(saved);
       return window.matchMedia('(prefers-color-scheme: dark)').matches;
     }
     return false;
@@ -91,16 +132,13 @@ const App = () => {
   const [isDonateModalOpen, setIsDonateModalOpen] = useState(false);
 
   useEffect(() => {
-    // Apply dark mode class
     document.documentElement.classList.toggle('dark', isDarkMode);
-    // Save to localStorage
     localStorage.setItem('darkMode', JSON.stringify(isDarkMode));
   }, [isDarkMode]);
 
   return (
     <Router>
       <div className="bg-white dark:bg-black text-black dark:text-white transition-colors duration-300 min-h-screen">
-        {/* Fixed positioning to prevent layout shifts */}
         <div className="fixed top-4 right-4 z-50">
           <Button
             onClick={() => setIsDarkMode(!isDarkMode)}
@@ -114,7 +152,6 @@ const App = () => {
 
         <Routes>
           <Route path="/" element={<HomePage setIsDonateModalOpen={setIsDonateModalOpen} />} />
-          {/* Add more routes as needed */}
         </Routes>
 
         <AnimatePresence>
@@ -135,7 +172,7 @@ const App = () => {
             </Dialog>
           )}
         </AnimatePresence>
-        
+
         <Toaster />
       </div>
     </Router>
@@ -143,3 +180,4 @@ const App = () => {
 };
 
 export default App;
+

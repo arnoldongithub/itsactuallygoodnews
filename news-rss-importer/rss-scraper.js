@@ -1,10 +1,15 @@
-// === Enhanced RSS News Scraper with Image, Summary, Ranking Improvements ===
+// === Enhanced RSS News Scraper with Fixed .env Load and Improved Filters ===
 import RSSParser from 'rss-parser';
 import { createClient } from '@supabase/supabase-js';
 import { convert } from 'html-to-text';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-dotenv.config();
+// === Correct .env Load (absolute path based on current file) ===
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.join(__dirname, '.env') });
 
 if (!process.env.SUPABASE_URL || !process.env.SUPABASE_KEY) {
   console.error('❌ Missing SUPABASE_URL or SUPABASE_KEY in .env');
@@ -17,25 +22,26 @@ const parser = new RSSParser({
   customFields: { item: ['pubDate', 'description', 'content', 'author'] }
 });
 
+// === KEYWORDS ===
 const POSITIVE_KEYWORDS = [
   'breakthrough', 'success', 'achievement', 'innovation', 'cure', 'recovery',
   'improvement', 'progress', 'celebration', 'award', 'victory', 'solution',
   'discovery', 'advancement', 'positive', 'benefit', 'help', 'support',
-  'launch', 'create', 'build', 'develop', 'honor', 'celebrate', 'win'
+  'launch', 'create', 'build', 'develop', 'honor', 'celebrate', 'win',
+  'expand', 'transform', 'uplift', 'resolve', 'educate', 'protect', 'heal'
 ];
 
 const NEGATIVE_KEYWORDS = [
   'death', 'killed', 'murder', 'attack', 'war', 'disaster', 'crisis',
   'threat', 'danger', 'problem', 'failure', 'crash', 'collapse', 'decline',
   'recession', 'unemployment', 'violence', 'crime', 'scandal', 'die',
-  'destroy', 'fail', 'emergency', 'warn', 'injury', 'toxic', 'pollution',
-  'scam', 'hack', 'breach', 'explosion', 'earthquake', 'flood', 'fire',
-  'storm', 'hurricane', 'terror', 'hostage', 'bomb', 'genocide', 'famine',
-  'drought', 'abuse', 'corruption', 'suicide', 'overdose', 'accident',
-  'misconduct', 'conviction', 'lawsuit', 'sentenced', 'arrested', 'protest',
-  'crackdown', 'displacement', 'refugee', 'sabotage', 'contamination'
+  'destroy', 'fail', 'emergency', 'warn', 'drought', 'famine', 'coup',
+  'sanction', 'toxic', 'pollution', 'lawsuit', 'abuse', 'assault', 'rape',
+  'fire', 'flood', 'earthquake', 'hunger', 'suicide', 'explosion',
+  'eviction', 'shooting', 'gunfire', 'massacre', 'controversy'
 ];
 
+// === FEED SOURCES ===
 const FEEDS = {
   'Health': [
     'https://medicalxpress.com/rss-feed/health-news/',
@@ -91,7 +97,8 @@ const computePositivityScore = (title, content) => {
   const text = `${title} ${content}`.toLowerCase();
   const positiveMatches = POSITIVE_KEYWORDS.filter(k => text.includes(k)).length;
   const negativeMatches = NEGATIVE_KEYWORDS.filter(k => text.includes(k)).length;
-  return Math.max((positiveMatches * 2) - negativeMatches, 0);
+  const score = Math.max((positiveMatches * 2) - negativeMatches, 0);
+  return score;
 };
 
 const isGoodNews = (title, content) => {
@@ -127,7 +134,7 @@ const insertArticle = async (article) => {
       console.error('❌ Insert error:', error.message);
       return false;
     }
-    console.log('✅ Inserted:', article.title.slice(0, 50));
+    console.log('✅ Inserted:', article.title.slice(0, 60));
     return true;
   } catch (err) {
     console.error('❌ Insert exception:', err.message);

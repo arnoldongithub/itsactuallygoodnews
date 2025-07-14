@@ -28,7 +28,12 @@ const NEGATIVE_KEYWORDS = [
   'death', 'killed', 'murder', 'attack', 'war', 'disaster', 'crisis',
   'threat', 'danger', 'problem', 'failure', 'crash', 'collapse', 'decline',
   'recession', 'unemployment', 'violence', 'crime', 'scandal', 'die',
-  'destroy', 'fail', 'emergency', 'warn'
+  'destroy', 'fail', 'emergency', 'warn', 'injury', 'toxic', 'pollution',
+  'scam', 'hack', 'breach', 'explosion', 'earthquake', 'flood', 'fire',
+  'storm', 'hurricane', 'terror', 'hostage', 'bomb', 'genocide', 'famine',
+  'drought', 'abuse', 'corruption', 'suicide', 'overdose', 'accident',
+  'misconduct', 'conviction', 'lawsuit', 'sentenced', 'arrested', 'protest',
+  'crackdown', 'displacement', 'refugee', 'sabotage', 'contamination'
 ];
 
 const FEEDS = {
@@ -86,8 +91,7 @@ const computePositivityScore = (title, content) => {
   const text = `${title} ${content}`.toLowerCase();
   const positiveMatches = POSITIVE_KEYWORDS.filter(k => text.includes(k)).length;
   const negativeMatches = NEGATIVE_KEYWORDS.filter(k => text.includes(k)).length;
-  const score = Math.max((positiveMatches * 2) - negativeMatches, 0);
-  return score;
+  return Math.max((positiveMatches * 2) - negativeMatches, 0);
 };
 
 const isGoodNews = (title, content) => {

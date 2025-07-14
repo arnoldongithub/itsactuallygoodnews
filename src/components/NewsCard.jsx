@@ -50,16 +50,17 @@ const NewsCard = ({ article, isBookmarked, onBookmarkToggle }) => {
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-      <Card className="h-full flex flex-col overflow-hidden bg-card shadow-sm hover:shadow-lg transition-shadow duration-300 border-border/60">
+      <Card className={`h-full flex flex-col overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300 border-border/60 ${is_ad ? 'bg-yellow-50 border-l-4 border-yellow-400' : 'bg-card'}`}>
         {is_ad ? (
-          <a href={ad_link_url || "#"} target="_blank" rel="noopener noreferrer">
+          <a href={ad_link_url || "#"} target="_blank" rel="noopener noreferrer" className="block">
             <img
               src={ad_image_url || "https://via.placeholder.com/728x90.png?text=Ad"}
               alt="Sponsored"
               className="w-full object-cover h-48 sm:h-60 md:h-72"
             />
             <div className="p-4 text-center">
-              <p className="text-sm text-muted-foreground">Sponsored Content</p>
+              <span className="text-xs uppercase font-bold text-yellow-700 bg-yellow-100 px-2 py-1 rounded">Sponsored</span>
+              <p className="text-sm text-muted-foreground mt-2">This ad supports the platform. We do not endorse its contents.</p>
             </div>
           </a>
         ) : (

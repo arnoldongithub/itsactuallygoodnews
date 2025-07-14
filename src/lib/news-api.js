@@ -52,13 +52,13 @@ export const fetchNews = async (category = 'All', retryCount = 0) => {
     let query = supabase
       .from('news')
       .select('*')
+      .eq('is_ad', false)
+      .order('positivity_score', { ascending: false })
       .order('published_at', { ascending: false })
       .limit(100);
 
     if (decodedCategory && decodedCategory !== 'All') {
-      query = query
-        .eq('category', decodedCategory)
-        .eq('is_ad', false);
+      query = query.eq('category', decodedCategory);
     }
 
     const { data, error } = await query;
@@ -139,5 +139,64 @@ export const clearNewsCache = () => {
     localStorage.removeItem(LAST_FETCHED_KEY);
     console.log('🧹 News cache cleared');
   }
+};
+
+// === 2A: Additional Custom Queries ===
+
+export const fetchTrendingNews = async (limit = 20) => {
+  const fromTime = new Date(Date.now() - 36 * 60 * 60 * 1000).toISOString();
+
+  const { data, error } = await supabase
+    .from('news')
+    .select('*')
+    .eq('is_ad', false)
+    .gte('published_at', fromTime)
+    .order('positivity_score', { ascending: false })
+    .order('published_at', { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.error('❌ fetchTrendingNews error:', error.message);
+    return [];
+  }
+
+  return data;
+};
+
+export const fetchDailyReads = async (limit = 15) => {
+  const { data, error } = await supabase
+    .from('news')
+    .select('*')
+    .eq('is_ad', false)
+    .order('positivity_score', { ascending: false })
+    .order('published_at', { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.error('❌ fetchDailyReads error:', error.message);
+    return [];
+  }
+
+  return data;
+};
+
+export const fetchBlindspotStories = async (limit = 10) => {
+  const cutoff = new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString();
+
+  const { data, error } = await supabase
+    .from('news')
+    .select('*')
+    .eq('is_ad', false)
+    .lt('published_at', cutoff)
+    .order('positivity_score', { ascending: false })
+    .order('published_at', { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.error('❌ fetchBlindspotStories error:', error.message);
+    return [];
+  }
+
+  return data;
 };
 

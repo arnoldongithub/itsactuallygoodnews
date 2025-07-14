@@ -8,25 +8,14 @@ import NewsCard from "@/components/NewsCard";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { motion, AnimatePresence } from 'framer-motion';
-import { fetchNews } from '@/lib/news-api';
+import { fetchTrendingNews, fetchDailyReads, fetchBlindspotStories } from '@/lib/news-api';
 import { Sun, Moon } from 'lucide-react';
 
-const allCategories = [
-  'All',
-  'Health',
-  'Innovation & Tech',
-  'Environment & Sustainability',
-  'Education',
-  'Science & Space',
-  'Policy & Governance',
-  'Community & Culture',
-  'Philanthropy / Nonprofits'
-];
-
 const HomePage = ({ setIsDonateModalOpen }) => {
-  const [news, setNews] = useState([]);
+  const [trendingNews, setTrendingNews] = useState([]);
+  const [dailyReads, setDailyReads] = useState([]);
+  const [blindspots, setBlindspots] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState('All');
   const [streak, setStreak] = useState(0);
   const { toast } = useToast();
 
@@ -57,9 +46,15 @@ const HomePage = ({ setIsDonateModalOpen }) => {
 
   useEffect(() => {
     setLoading(true);
-    fetchNews(selectedCategory)
-      .then((data) => {
-        setNews(data);
+    Promise.all([
+      fetchTrendingNews(),
+      fetchDailyReads(),
+      fetchBlindspotStories()
+    ])
+      .then(([trending, daily, blind]) => {
+        setTrendingNews(trending);
+        setDailyReads(daily);
+        setBlindspots(blind);
         setLoading(false);
       })
       .catch((error) => {
@@ -71,7 +66,7 @@ const HomePage = ({ setIsDonateModalOpen }) => {
         });
         setLoading(false);
       });
-  }, [selectedCategory]);
+  }, []);
 
   if (loading) {
     return (
@@ -91,30 +86,47 @@ const HomePage = ({ setIsDonateModalOpen }) => {
   return (
     <div className="min-h-screen px-4">
       <Header setIsDonateModalOpen={setIsDonateModalOpen} />
-      <div className="flex justify-between items-center mb-4">
-        <div className="overflow-x-auto py-2">
-          <div className="flex gap-2 flex-wrap justify-center border-b border-border pb-3">
-            {allCategories.map((cat) => (
-              <Button
-                key={cat}
-                variant={selectedCategory === cat ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setSelectedCategory(cat)}
-              >
-                {cat}
-              </Button>
+
+      <div className="grid grid-cols-1 lg:grid-cols-6 gap-6 my-6">
+        {/* Daily Reads */}
+        <aside className="lg:col-span-1">
+          <h2 className="text-lg font-semibold mb-3">Daily Reads</h2>
+          <ul className="space-y-2">
+            {dailyReads.map((item) => (
+              <li key={item.id}>
+                <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">
+                  {item.title.slice(0, 80)}{item.title.length > 80 ? '...' : ''}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </aside>
+
+        {/* Trending News */}
+        <main className="lg:col-span-4">
+          <h2 className="text-xl font-bold mb-4">Trending Good News (Last 36 Hours)</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {trendingNews.map((item) => (
+              <NewsCard key={item.id} article={item} />
             ))}
           </div>
-        </div>
-        <div className={`text-xs text-right ${streak >= 5 ? 'text-yellow-500' : 'text-muted-foreground'}`}>
-          🔥 Streak: <span className="font-bold text-foreground">{streak}</span> day{streak !== 1 ? 's' : ''} in a row
-        </div>
+        </main>
+
+        {/* Blindspots */}
+        <aside className="lg:col-span-1">
+          <h2 className="text-lg font-semibold mb-3">Blindspots</h2>
+          <ul className="space-y-2">
+            {blindspots.map((item) => (
+              <li key={item.id}>
+                <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">
+                  {item.title.slice(0, 80)}{item.title.length > 80 ? '...' : ''}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </aside>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {news.map((item) => (
-          <NewsCard key={item.id} article={item} />
-        ))}
-      </div>
+
       <Footer />
     </div>
   );
@@ -180,4 +192,3 @@ const App = () => {
 };
 
 export default App;
-

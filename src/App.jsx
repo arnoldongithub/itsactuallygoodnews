@@ -238,6 +238,7 @@ const HomePage = ({ setIsDonateModalOpen }) => {
   const [dailyReads, setDailyReads] = useState([]);
   const [blindspots, setBlindspots] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [streak, setStreak] = useState(0);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -245,20 +246,39 @@ const HomePage = ({ setIsDonateModalOpen }) => {
     const lastVisit = localStorage.getItem('lastVisitDate');
     const currentStreak = parseInt(localStorage.getItem('streak') || '0');
 
-    if (lastVisit === today) return;
+    if (lastVisit === today) {
+      setStreak(currentStreak);
+      return;
+    }
 
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
 
     if (lastVisit === yesterday.toDateString()) {
       const newStreak = Math.min(currentStreak + 1, 999);
-      localStorage.setItem('streak', newStreak);
-      toast({
-        title: "🔥 You're on a roll!",
-        description: `Day ${newStreak} in a row. Keep it up!`,
-      });
+      localStorage.setItem('streak', newStreak.toString());
+      setStreak(newStreak);
+      
+      // Show streak notification
+      setTimeout(() => {
+        toast({
+          title: "🔥 Streak Updated!",
+          description: `Day ${newStreak} of reading good news! Keep it up!`,
+          duration: 3000,
+        });
+      }, 1000);
     } else {
-      localStorage.setItem('streak', 1);
+      localStorage.setItem('streak', '1');
+      setStreak(1);
+      
+      // Welcome back message
+      setTimeout(() => {
+        toast({
+          title: "Welcome back!",
+          description: "Starting a new reading streak. Keep coming back for more good news!",
+          duration: 3000,
+        });
+      }, 1000);
     }
     localStorage.setItem('lastVisitDate', today);
   }, [toast]);
@@ -303,8 +323,19 @@ const HomePage = ({ setIsDonateModalOpen }) => {
   }
 
   return (
-    <div className="min-h-screen px-4">
+    <div className="min-h-screen px-4 bg-white dark:bg-black">
       <Header setIsDonateModalOpen={setIsDonateModalOpen} />
+      
+      {/* Streak Display */}
+      {streak > 0 && (
+        <div className="streak-display">
+          <div className="flex items-center">
+            <span className="streak-icon">🔥</span>
+            <span className="streak-number">{streak}</span>
+          </div>
+          <div className="streak-text">day streak</div>
+        </div>
+      )}
       
       <div className="main-layout my-6">
         {/* Daily Reads - Left Sidebar (1/6 width) */}
@@ -317,7 +348,12 @@ const HomePage = ({ setIsDonateModalOpen }) => {
         {/* Main Trending Stories (2/3 width) */}
         <main className="trending-main">
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6">
-            <h2 className="text-xl font-bold mb-4">🔥 Trending Stories</h2>
+            <h2 className="text-xl font-bold mb-4">
+              <svg className="inline-block w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              Trending Stories
+            </h2>
             <TrendingStories stories={trendingNews} />
             {trendingNews.length === 0 && (
               <p className="text-gray-500 text-center py-8">No trending stories available</p>

@@ -8,31 +8,11 @@ import NewsCard from "@/components/NewsCard";
 import TrendingStories from "@/components/TrendingStories";
 import DailyReads from "@/components/DailyReads";
 import Blindspot from "@/components/Blindspot";
+import InlineAd from "@/components/InlineAd";
 import Button from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { motion, AnimatePresence } from 'framer-motion';
 import { fetchTrendingNews, fetchDailyReads, fetchBlindspotStories, fetchNews } from '@/lib/news-api';
-
-// Ad Component for strategic placement
-const AdPlacement = ({ position }) => {
-  const adConfig = {
-    top: { height: 'h-24', content: 'Top Banner Ad' },
-    sidebar: { height: 'h-32', content: 'Sidebar Ad' },
-    middle: { height: 'h-20', content: 'Content Ad' },
-    bottom: { height: 'h-24', content: 'Bottom Banner Ad' }
-  };
-
-  const config = adConfig[position] || adConfig.middle;
-
-  return (
-    <div className={`${config.height} bg-gray-100 border border-gray-300 rounded-lg flex items-center justify-center mb-6`}>
-      <div className="text-center">
-        <p className="text-sm text-gray-600">{config.content}</p>
-        <p className="text-xs text-gray-500">Advertisement</p>
-      </div>
-    </div>
-  );
-};
 
 // Story Summary Page Component
 const StoryPage = ({ setIsDonateModalOpen }) => {
@@ -46,18 +26,35 @@ const StoryPage = ({ setIsDonateModalOpen }) => {
     const fetchStory = async () => {
       try {
         setLoading(true);
-        // Fetch main story
-        const allNews = await fetchNews();
-        const foundStory = allNews.find(item => item.id === id);
+        
+        // Try to fetch from all news sources
+        const [trending, daily, blindspot, allNews] = await Promise.all([
+          fetchTrendingNews(),
+          fetchDailyReads(), 
+          fetchBlindspotStories(),
+          fetchNews()
+        ]);
+        
+        // Combine all stories to search through
+        const allStories = [...trending, ...daily, ...blindspot, ...allNews];
+        
+        // Remove duplicates by ID
+        const uniqueStories = allStories.filter((story, index, self) => 
+          index === self.findIndex(s => s.id === story.id)
+        );
+        
+        const foundStory = uniqueStories.find(item => item.id === parseInt(id));
         
         if (foundStory) {
           setStory(foundStory);
           
           // Fetch related stories from same category
-          const related = allNews
-            .filter(item => item.category === foundStory.category && item.id !== id)
+          const related = uniqueStories
+            .filter(item => item.category === foundStory.category && item.id !== foundStory.id)
             .slice(0, 5);
           setRelatedStories(related);
+        } else {
+          console.error('Story not found with ID:', id);
         }
         
         setLoading(false);
@@ -106,8 +103,6 @@ const StoryPage = ({ setIsDonateModalOpen }) => {
       <Header setIsDonateModalOpen={setIsDonateModalOpen} />
       
       <div className="max-w-4xl mx-auto my-8">
-        <AdPlacement position="top" />
-        
         <article className="bg-white rounded-lg shadow-sm p-6 mb-8">
           <div className="mb-4">
             <span className="text-sm font-semibold text-blue-600 uppercase">
@@ -129,8 +124,15 @@ const StoryPage = ({ setIsDonateModalOpen }) => {
           
           <div className="prose max-w-none">
             <p className="text-gray-700 text-lg leading-relaxed mb-6">
-              {story.summary || story.content || 'Summary not available for this story.'}
+              {story.content || story.summary || 'Full content not available for this story. Please click "Read Full Article" below to view the complete story.'}
             </p>
+            
+            {story.summary && story.content && story.summary !== story.content && (
+              <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                <h3 className="font-semibold text-gray-800 mb-2">Summary:</h3>
+                <p className="text-gray-600">{story.summary}</p>
+              </div>
+            )}
           </div>
           
           <div className="flex items-center justify-between pt-4 border-t">
@@ -150,32 +152,34 @@ const StoryPage = ({ setIsDonateModalOpen }) => {
           </div>
         </article>
 
-        <AdPlacement position="middle" />
-
         {/* Related Stories */}
         {relatedStories.length > 0 && (
           <div className="bg-gray-50 rounded-lg p-6">
             <h2 className="text-xl font-bold mb-4">Related Stories</h2>
-            <div className="space-y-3">
-              {relatedStories.map((relatedStory) => (
-                <div key={relatedStory.id} className="border-b border-gray-200 pb-3 last:border-b-0">
-                  <a
-                    href={relatedStory.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block hover:text-blue-600 transition-colors"
-                  >
-                    <h3 className="font-bold text-base leading-tight">
-                      {relatedStory.title}
-                    </h3>
-                  </a>
-                </div>
+            <div className="related-stories-list">
+              {relatedStories.map((relatedStory, index) => (
+                <React.Fragment key={relatedStory.id}>
+                  <div className="related-story-item">
+                    <a
+                      href={relatedStory.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="related-story-link"
+                    >
+                      <h3 className="related-story-title">
+                        {relatedStory.title}
+                      </h3>
+                    </a>
+                  </div>
+                  {/* Insert inline ad every 3rd related story */}
+                  {(index + 1) % 3 === 0 && index < relatedStories.length - 1 && (
+                    <InlineAd key={`related-ad-${index}`} />
+                  )}
+                </React.Fragment>
               ))}
             </div>
           </div>
         )}
-
-        <AdPlacement position="bottom" />
       </div>
       
       <Footer />
@@ -211,8 +215,6 @@ const CategoryPage = ({ setIsDonateModalOpen }) => {
     <div className="min-h-screen px-4">
       <Header setIsDonateModalOpen={setIsDonateModalOpen} />
       <div className="my-6">
-        <AdPlacement position="top" />
-        
         <h2 className="text-xl font-bold mb-4 capitalize">{decodeURIComponent(category)} News</h2>
         {loading ? (
           <div className="flex justify-center items-center h-60">
@@ -220,15 +222,8 @@ const CategoryPage = ({ setIsDonateModalOpen }) => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {filteredNews.map((item, index) => (
-              <React.Fragment key={item.id}>
-                <NewsCard article={item} />
-                {index === Math.floor(filteredNews.length / 2) && (
-                  <div className="col-span-1 md:col-span-2">
-                    <AdPlacement position="middle" />
-                  </div>
-                )}
-              </React.Fragment>
+            {filteredNews.map((item) => (
+              <NewsCard key={item.id} article={item} />
             ))}
           </div>
         )}
@@ -311,8 +306,6 @@ const HomePage = ({ setIsDonateModalOpen }) => {
     <div className="min-h-screen px-4">
       <Header setIsDonateModalOpen={setIsDonateModalOpen} />
       
-      <AdPlacement position="top" />
-      
       <div className="main-layout my-6">
         {/* Daily Reads - Left Sidebar (1/6 width) */}
         <aside className="daily-reads-sidebar">
@@ -323,9 +316,12 @@ const HomePage = ({ setIsDonateModalOpen }) => {
 
         {/* Main Trending Stories (2/3 width) */}
         <main className="trending-main">
-          <TrendingStories stories={trendingNews} />
-          <div className="mt-8">
-            <AdPlacement position="middle" />
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6">
+            <h2 className="text-xl font-bold mb-4">🔥 Trending Stories</h2>
+            <TrendingStories stories={trendingNews} />
+            {trendingNews.length === 0 && (
+              <p className="text-gray-500 text-center py-8">No trending stories available</p>
+            )}
           </div>
         </main>
 

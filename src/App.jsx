@@ -1,13 +1,4 @@
-<div className="main-layout my-6">
-        {/* Daily Reads - Left Sidebar (1/6 width) */}
-        <aside className="daily-reads-sidebar">
-          <div className="daily-reads-separator">
-            <DailyReads stories={dailyReads} />
-          </div>
-        </aside>
-
-        {/* Main Trending Stories (2/3 width) */}
-        <main className="trending-mainimport React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Routes, Route, BrowserRouter as Router, useParams } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 import { useToast } from "@/components/ui/use-toast";

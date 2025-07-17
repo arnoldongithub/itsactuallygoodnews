@@ -5,10 +5,183 @@ import { useToast } from "@/components/ui/use-toast";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import NewsCard from "@/components/NewsCard";
+import TrendingStories from "@/components/TrendingStories";
+import DailyReads from "@/components/DailyReads";
+import Blindspot from "@/components/Blindspot";
 import Button from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { motion, AnimatePresence } from 'framer-motion';
 import { fetchTrendingNews, fetchDailyReads, fetchBlindspotStories, fetchNews } from '@/lib/news-api';
+
+// Ad Component for strategic placement
+const AdPlacement = ({ position }) => {
+  const adConfig = {
+    top: { height: 'h-24', content: 'Top Banner Ad' },
+    sidebar: { height: 'h-32', content: 'Sidebar Ad' },
+    middle: { height: 'h-20', content: 'Content Ad' },
+    bottom: { height: 'h-24', content: 'Bottom Banner Ad' }
+  };
+
+  const config = adConfig[position] || adConfig.middle;
+
+  return (
+    <div className={`${config.height} bg-gray-100 border border-gray-300 rounded-lg flex items-center justify-center mb-6`}>
+      <div className="text-center">
+        <p className="text-sm text-gray-600">{config.content}</p>
+        <p className="text-xs text-gray-500">Advertisement</p>
+      </div>
+    </div>
+  );
+};
+
+// Story Summary Page Component
+const StoryPage = ({ setIsDonateModalOpen }) => {
+  const { id } = useParams();
+  const [story, setStory] = useState(null);
+  const [relatedStories, setRelatedStories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchStory = async () => {
+      try {
+        setLoading(true);
+        // Fetch main story
+        const allNews = await fetchNews();
+        const foundStory = allNews.find(item => item.id === id);
+        
+        if (foundStory) {
+          setStory(foundStory);
+          
+          // Fetch related stories from same category
+          const related = allNews
+            .filter(item => item.category === foundStory.category && item.id !== id)
+            .slice(0, 5);
+          setRelatedStories(related);
+        }
+        
+        setLoading(false);
+      } catch (error) {
+        console.error('Failed to load story:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load story',
+          variant: 'destructive'
+        });
+        setLoading(false);
+      }
+    };
+
+    fetchStory();
+  }, [id, toast]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen px-4">
+        <Header setIsDonateModalOpen={setIsDonateModalOpen} />
+        <div className="flex justify-center items-center min-h-[400px]">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!story) {
+    return (
+      <div className="min-h-screen px-4">
+        <Header setIsDonateModalOpen={setIsDonateModalOpen} />
+        <div className="text-center py-20">
+          <h2 className="text-2xl font-bold mb-4">Story Not Found</h2>
+          <p className="text-gray-600 mb-4">The story you're looking for doesn't exist.</p>
+          <Button onClick={() => window.history.back()}>Go Back</Button>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen px-4">
+      <Header setIsDonateModalOpen={setIsDonateModalOpen} />
+      
+      <div className="max-w-4xl mx-auto my-8">
+        <AdPlacement position="top" />
+        
+        <article className="bg-white rounded-lg shadow-sm p-6 mb-8">
+          <div className="mb-4">
+            <span className="text-sm font-semibold text-blue-600 uppercase">
+              {story.category}
+            </span>
+          </div>
+          
+          <h1 className="text-3xl font-bold mb-4 leading-tight">
+            {story.title}
+          </h1>
+          
+          {story.image_url && (
+            <img 
+              src={story.image_url} 
+              alt={story.title}
+              className="w-full h-64 object-cover rounded-lg mb-6"
+            />
+          )}
+          
+          <div className="prose max-w-none">
+            <p className="text-gray-700 text-lg leading-relaxed mb-6">
+              {story.summary || story.content || 'Summary not available for this story.'}
+            </p>
+          </div>
+          
+          <div className="flex items-center justify-between pt-4 border-t">
+            <div className="text-sm text-gray-500">
+              <p>Source: {story.source || 'Unknown'}</p>
+              <p>Published: {new Date(story.published_at).toLocaleDateString()}</p>
+            </div>
+            
+            <a 
+              href={story.url} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:text-blue-800 font-medium"
+            >
+              Read Full Article →
+            </a>
+          </div>
+        </article>
+
+        <AdPlacement position="middle" />
+
+        {/* Related Stories */}
+        {relatedStories.length > 0 && (
+          <div className="bg-gray-50 rounded-lg p-6">
+            <h2 className="text-xl font-bold mb-4">Related Stories</h2>
+            <div className="space-y-3">
+              {relatedStories.map((relatedStory) => (
+                <div key={relatedStory.id} className="border-b border-gray-200 pb-3 last:border-b-0">
+                  <a
+                    href={relatedStory.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block hover:text-blue-600 transition-colors"
+                  >
+                    <h3 className="font-bold text-base leading-tight">
+                      {relatedStory.title}
+                    </h3>
+                  </a>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <AdPlacement position="bottom" />
+      </div>
+      
+      <Footer />
+    </div>
+  );
+};
 
 const CategoryPage = ({ setIsDonateModalOpen }) => {
   const { category } = useParams();
@@ -32,12 +205,14 @@ const CategoryPage = ({ setIsDonateModalOpen }) => {
         });
         setLoading(false);
       });
-  }, [category]);
+  }, [category, toast]);
 
   return (
     <div className="min-h-screen px-4">
       <Header setIsDonateModalOpen={setIsDonateModalOpen} />
       <div className="my-6">
+        <AdPlacement position="top" />
+        
         <h2 className="text-xl font-bold mb-4 capitalize">{decodeURIComponent(category)} News</h2>
         {loading ? (
           <div className="flex justify-center items-center h-60">
@@ -45,8 +220,15 @@ const CategoryPage = ({ setIsDonateModalOpen }) => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {filteredNews.map((item) => (
-              <NewsCard key={item.id} article={item} />
+            {filteredNews.map((item, index) => (
+              <React.Fragment key={item.id}>
+                <NewsCard article={item} />
+                {index === Math.floor(filteredNews.length / 2) && (
+                  <div className="col-span-1 md:col-span-2">
+                    <AdPlacement position="middle" />
+                  </div>
+                )}
+              </React.Fragment>
             ))}
           </div>
         )}
@@ -61,7 +243,6 @@ const HomePage = ({ setIsDonateModalOpen }) => {
   const [dailyReads, setDailyReads] = useState([]);
   const [blindspots, setBlindspots] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [streak, setStreak] = useState(0);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -77,17 +258,15 @@ const HomePage = ({ setIsDonateModalOpen }) => {
     if (lastVisit === yesterday.toDateString()) {
       const newStreak = Math.min(currentStreak + 1, 999);
       localStorage.setItem('streak', newStreak);
-      setStreak(newStreak);
       toast({
         title: "🔥 You're on a roll!",
         description: `Day ${newStreak} in a row. Keep it up!`,
       });
     } else {
       localStorage.setItem('streak', 1);
-      setStreak(1);
     }
     localStorage.setItem('lastVisitDate', today);
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
     setLoading(true);
@@ -111,7 +290,7 @@ const HomePage = ({ setIsDonateModalOpen }) => {
         });
         setLoading(false);
       });
-  }, []);
+  }, [toast]);
 
   if (loading) {
     return (
@@ -131,60 +310,33 @@ const HomePage = ({ setIsDonateModalOpen }) => {
   return (
     <div className="min-h-screen px-4">
       <Header setIsDonateModalOpen={setIsDonateModalOpen} />
+      
+      <AdPlacement position="top" />
+      
       <div className="grid grid-cols-1 lg:grid-cols-6 gap-6 my-6">
-        <aside className="lg:col-span-1 space-y-4">
-          <h2 className="text-lg font-semibold">Daily Reads</h2>
-          {dailyReads.slice(0, 2).map((item) => (
-            <NewsCard key={item.id} article={item} />
-          ))}
-          <hr className="border-t border-muted/30 my-2" />
-          <ul className="space-y-2 pl-2 border-l">
-            {dailyReads.slice(2, 5).map((item) => (
-              <li key={item.id}>
-                <a
-                  href={item.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline text-sm block"
-                >
-                  {item.title.slice(0, 80)}{item.title.length > 80 ? '...' : ''}
-                </a>
-              </li>
-            ))}
-          </ul>
+        {/* Daily Reads - Left Sidebar */}
+        <aside className="lg:col-span-1">
+          <div className="border-r border-white pr-4">
+            <DailyReads stories={dailyReads} />
+          </div>
         </aside>
 
+        {/* Main Trending Stories */}
         <main className="lg:col-span-4">
-          <h2 className="text-xl font-bold mb-4">Trending Good News (Last 36 Hours)</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {trendingNews.map((item) => (
-              <NewsCard key={item.id} article={item} />
-            ))}
+          <TrendingStories stories={trendingNews} />
+          <div className="mt-8">
+            <AdPlacement position="middle" />
           </div>
         </main>
 
-        <aside className="lg:col-span-1 space-y-4">
-          <h2 className="text-lg font-semibold">Blindspots</h2>
-          {blindspots.slice(0, 2).map((item) => (
-            <NewsCard key={item.id} article={item} />
-          ))}
-          <hr className="border-t border-muted/30 my-2" />
-          <ul className="space-y-2 pl-2 border-l">
-            {blindspots.slice(2, 5).map((item) => (
-              <li key={item.id}>
-                <a
-                  href={item.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline text-sm block"
-                >
-                  {item.title.slice(0, 80)}{item.title.length > 80 ? '...' : ''}
-                </a>
-              </li>
-            ))}
-          </ul>
+        {/* Blindspot - Right Sidebar */}
+        <aside className="lg:col-span-1">
+          <div className="border-l border-white pl-4">
+            <Blindspot stories={blindspots} />
+          </div>
         </aside>
       </div>
+      
       <Footer />
     </div>
   );
@@ -213,6 +365,7 @@ const App = () => {
         <Routes>
           <Route path="/" element={<HomePage setIsDonateModalOpen={setIsDonateModalOpen} />} />
           <Route path="/category/:category" element={<CategoryPage setIsDonateModalOpen={setIsDonateModalOpen} />} />
+          <Route path="/article/:id" element={<StoryPage setIsDonateModalOpen={setIsDonateModalOpen} />} />
         </Routes>
 
         <AnimatePresence>

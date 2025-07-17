@@ -1,55 +1,47 @@
 import React from 'react';
-import { useParams } from 'react-router-dom';
 import NewsCard from './NewsCard';
 
-const BlindspotStories = ({ stories }) => {
-  const { category } = useParams();
+const Blindspot = ({ stories }) => {
+  if (!stories || stories.length === 0) return null;
 
-  // Filter stories by active category, if any
-  const filteredStories = category
-    ? stories.filter(
-        (story) =>
-          story.category?.toLowerCase() === category.toLowerCase()
-      )
-    : stories;
-
-  // Don't render anything if there are no stories
-  if (!filteredStories || filteredStories.length === 0) return null;
-
-  // Split top 2 as featured, rest as simple list
-  const featured = filteredStories.slice(0, 2);
-  const remaining = filteredStories.slice(2);
+  const featured = stories.slice(0, 2); // Max 2 newscards for most unreported
+  const headlines = stories.slice(2, 12); // Max 10 additional headlines
 
   return (
-    <div className="bg-muted p-4 rounded space-y-4">
-      <h2 className="text-lg font-semibold mb-3">🕳️ Blindspots</h2>
-
-      {/* Show top 2 as NewsCards */}
-      <div className="space-y-4">
-        {featured.map((story) => (
-          <NewsCard key={story.id} article={story} />
-        ))}
-      </div>
-
-      {/* Show remaining as headlines */}
-      {remaining.length > 0 && (
-        <ul className="space-y-2 mt-4">
-          {remaining.map((story) => (
-            <li key={story.id}>
-              <a
-                href={story.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:underline text-sm text-foreground/90"
-              >
-                {story.title}
-              </a>
-            </li>
+    <div className="bg-gray-50 p-4 rounded-lg">
+      <h2 className="text-lg font-semibold mb-4 text-gray-800">🔍 Blindspot</h2>
+      
+      {/* Featured Unreported Stories in NewsCard format */}
+      {featured.length > 0 && (
+        <div className="space-y-4 mb-4">
+          {featured.map((story) => (
+            <NewsCard key={story.id} article={story} />
           ))}
-        </ul>
+        </div>
+      )}
+
+      {/* Headlines Section */}
+      {headlines.length > 0 && (
+        <div className="space-y-0">
+          {headlines.map((story, index) => (
+            <div key={story.id}>
+              <a
+                href={`/article/${story.id}`}
+                className="block py-2 hover:text-blue-600 transition-colors"
+              >
+                <h3 className="font-bold text-sm leading-tight text-gray-800">
+                  {story.title}
+                </h3>
+              </a>
+              {index < headlines.length - 1 && (
+                <hr className="border-gray-300" />
+              )}
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );
 };
 
-export default BlindspotStories;
+export default Blindspot;

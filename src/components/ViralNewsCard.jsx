@@ -6,20 +6,28 @@ export default function ViralNewsCard({ article }) {
   return (
     <a
       href={`/article/${article.id}`}
-      className="relative w-full h-72 md:h-96 rounded-lg overflow-hidden shadow-md group"
+      className="relative block w-full h-48 md:h-56 rounded-lg overflow-hidden shadow-md group transition-transform duration-300 hover:scale-105"
     >
-      <img
-        src={article.image_url}
-        alt={article.title}
-        className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
-      />
+      {/* Image Background */}
+      <div className="absolute inset-0">
+        <img
+          src={article.image_url || '/placeholder-image.jpg'}
+          alt={article.title}
+          className="object-cover w-full h-full"
+        />
+      </div>
 
-      <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/85 via-black/60 to-transparent px-4 py-3">
-        <h2 className="text-white text-lg md:text-2xl font-semibold leading-snug line-clamp-3">
+      {/* Title Overlay */}
+      <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/90 via-black/60 to-transparent p-4">
+        <h3 className="text-white text-base md:text-lg font-semibold leading-tight line-clamp-2">
           {article.title}
-        </h2>
+        </h3>
+      </div>
+
+      {/* Viral Badge */}
+      <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold">
+        VIRAL
       </div>
     </a>
   );
 }
-

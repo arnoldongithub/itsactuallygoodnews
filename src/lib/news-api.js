@@ -4,6 +4,18 @@ const LAST_FETCHED_KEY = 'newsLastFetched';
 const NEWS_CACHE_KEY = 'newsCache';
 const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
 
+// Enhanced category mappings for better filtering
+const CATEGORY_MAPPINGS = {
+  'health': ['health', 'healthcare', 'medical', 'wellness', 'mental health'],
+  'humanitarian': ['humanitarian', 'rescue', 'aid', 'relief', 'charity', 'volunteer'],
+  'environment': ['environment', 'climate', 'sustainability', 'conservation', 'renewable'],
+  'education': ['education', 'learning', 'school', 'university', 'students'],
+  'technology': ['technology', 'tech', 'innovation', 'digital', 'ai', 'robotics'],
+  'community': ['community', 'local', 'neighborhood', 'social', 'culture'],
+  'heroism': ['heroism', 'hero', 'brave', 'courage', 'rescue', 'save'],
+  'sports': ['sports', 'athletics', 'fitness', 'competition', 'team']
+};
+
 const FALLBACK_NEWS = [
   {
     id: 'fallback-1',
@@ -13,7 +25,9 @@ const FALLBACK_NEWS = [
     published_at: new Date().toISOString(),
     author: 'ItsActuallyGoodNews Team',
     url: '#',
-    image_url: null
+    image_url: null,
+    viral_score: 0,
+    positivity_score: 8
   }
 ];
 
@@ -39,9 +53,7 @@ export const fetchNews = async (category = 'All', retryCount = 0) => {
   ) {
     try {
       const parsedCache = JSON.parse(cachedNews);
-      const filteredCache = decodedCategory === 'All'
-        ? parsedCache
-        : parsedCache.filter(article => article.category === decodedCategory && article.is_ad === false);
+      const filteredCache = filterByCategory(parsedCache, decodedCategory);
       if (filteredCache.length > 0) return filteredCache;
     } catch (e) {
       console.warn('⚠️ Failed to parse local cache:', e);
@@ -57,8 +69,12 @@ export const fetchNews = async (category = 'All', retryCount = 0) => {
       .order('published_at', { ascending: false })
       .limit(100);
 
+    // Enhanced category filtering
     if (decodedCategory && decodedCategory !== 'All') {
-      query = query.eq('category', decodedCategory);
+      const categoryTerms = CATEGORY_MAPPINGS[decodedCategory.toLowerCase()] || [decodedCategory];
+      query = query.or(
+        categoryTerms.map(term => `category.ilike.%${term}%`).join(',')
+      );
     }
 
     const { data, error } = await query;
@@ -66,15 +82,22 @@ export const fetchNews = async (category = 'All', retryCount = 0) => {
     if (error) throw new Error(`Supabase error: ${error.message}`);
 
     if (data && data.length > 0) {
+      // Add viral_score if missing
+      const processedData = data.map(item => ({
+        ...item,
+        viral_score: item.viral_score || (item.positivity_score > 9 ? 8 : 0)
+      }));
+
       if (isBrowser) {
         try {
-          localStorage.setItem(NEWS_CACHE_KEY, JSON.stringify(data));
+          localStorage.setItem(NEWS_CACHE_KEY, JSON.stringify(processedData));
           localStorage.setItem(LAST_FETCHED_KEY, now.toString());
         } catch (e) {
           console.warn('⚠️ Failed to cache news in localStorage:', e);
         }
       }
-      return data;
+      
+      return filterByCategory(processedData, decodedCategory);
     }
 
     if (data && data.length === 0) {
@@ -82,9 +105,7 @@ export const fetchNews = async (category = 'All', retryCount = 0) => {
       if (isBrowser && cachedNews) {
         try {
           const parsedCache = JSON.parse(cachedNews);
-          return decodedCategory === 'All'
-            ? parsedCache
-            : parsedCache.filter(article => article.category === decodedCategory && article.is_ad === false);
+          return filterByCategory(parsedCache, decodedCategory);
         } catch (e) {
           console.warn('⚠️ Failed to parse fallback cache:', e);
         }
@@ -100,9 +121,7 @@ export const fetchNews = async (category = 'All', retryCount = 0) => {
     if (isBrowser && cachedNews) {
       try {
         const parsedCache = JSON.parse(cachedNews);
-        return decodedCategory === 'All'
-          ? parsedCache
-          : parsedCache.filter(article => article.category === decodedCategory && article.is_ad === false);
+        return filterByCategory(parsedCache, decodedCategory);
       } catch (e) {
         console.warn('⚠️ Failed to parse fallback cache:', e);
       }
@@ -110,6 +129,22 @@ export const fetchNews = async (category = 'All', retryCount = 0) => {
   }
 
   return FALLBACK_NEWS;
+};
+
+// Helper function to filter by category with enhanced matching
+const filterByCategory = (data, category) => {
+  if (!category || category === 'All') return data;
+  
+  const categoryTerms = CATEGORY_MAPPINGS[category.toLowerCase()] || [category];
+  
+  return data.filter(article => {
+    if (!article.category) return false;
+    
+    const articleCategory = article.category.toLowerCase();
+    return categoryTerms.some(term => 
+      articleCategory.includes(term.toLowerCase())
+    );
+  });
 };
 
 export const checkNewsHealth = async () => {
@@ -141,8 +176,7 @@ export const clearNewsCache = () => {
   }
 };
 
-// === 2A: Additional Custom Queries ===
-
+// Enhanced trending news with better viral detection
 export const fetchTrendingNews = async (limit = 20) => {
   const fromTime = new Date(Date.now() - 36 * 60 * 60 * 1000).toISOString();
 
@@ -160,7 +194,19 @@ export const fetchTrendingNews = async (limit = 20) => {
     return [];
   }
 
-  return data;
+  // Add viral scores and filter for positive content
+  return data.map(item => ({
+    ...item,
+    viral_score: item.viral_score || calculateViralScore(item)
+  })).filter(item => 
+    // Focus on heroic and positive content
+    item.category && (
+      item.category.toLowerCase().includes('heroism') ||
+      item.category.toLowerCase().includes('rescue') ||
+      item.category.toLowerCase().includes('humanitarian') ||
+      item.positivity_score >= 8
+    )
+  );
 };
 
 export const fetchDailyReads = async (limit = 15) => {
@@ -177,7 +223,7 @@ export const fetchDailyReads = async (limit = 15) => {
     return [];
   }
 
-  return data;
+  return data.filter(item => item.positivity_score >= 7);
 };
 
 export const fetchBlindspotStories = async (limit = 10) => {
@@ -197,6 +243,24 @@ export const fetchBlindspotStories = async (limit = 10) => {
     return [];
   }
 
-  return data;
+  return data.filter(item => item.positivity_score >= 7);
 };
 
+// Helper function to calculate viral score based on content
+const calculateViralScore = (article) => {
+  const viralKeywords = ['rescue', 'hero', 'save', 'amazing', 'incredible', 'inspiring', 'breakthrough', 'triumph'];
+  const title = article.title?.toLowerCase() || '';
+  const content = (article.content || article.summary || '').toLowerCase();
+  
+  const keywordCount = viralKeywords.filter(keyword => 
+    title.includes(keyword) || content.includes(keyword)
+  ).length;
+  
+  const baseScore = article.positivity_score || 0;
+  const viralBonus = keywordCount * 2;
+  
+  return Math.min(baseScore + viralBonus, 10);
+};
+
+// Export category mappings for use in components
+export const getCategoryMappings = () => CATEGORY_MAPPINGS;

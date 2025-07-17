@@ -1,13 +1,30 @@
 import React from 'react';
-import { Search, Gift, Heart, ShoppingCart } from 'lucide-react';
+import { Search, Gift, Heart, ShoppingCart, Sun, Moon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from "@/components/ui/use-toast";
 import Logo from '@/components/Logo';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 
-const Header = ({ setIsDonateModalOpen }) => {
+const categories = [
+  'All',
+  'Health',
+  'Innovation & Tech',
+  'Environment & Sustainability',
+  'Education',
+  'Science & Space',
+  'Humanitarian & Rescue'
+];
+
+const Header = ({ isDarkMode, setIsDarkMode, setIsDonateModalOpen }) => {
   const { toast } = useToast();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const currentCategory = new URLSearchParams(location.search).get('cat') || 'All';
+
+  const handleCategoryClick = (cat) => {
+    navigate(`/?cat=${encodeURIComponent(cat)}`);
+  };
 
   const handleUnsupportedFeature = () => {
     toast({
@@ -17,24 +34,16 @@ const Header = ({ setIsDonateModalOpen }) => {
     });
   };
 
-  const openPatreonLink = () => {
-    window.open("https://www.patreon.com", '_blank', 'noopener,noreferrer');
-  };
-
-  const openShopifyLink = () => {
-    window.open("https://www.shopify.com", '_blank', 'noopener,noreferrer');
-  };
-
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-header dark:bg-black/80 backdrop-blur-sm supports-[backdrop-filter]:bg-header/80">
-      <div className="container flex flex-col sm:flex-row h-auto sm:h-20 items-center py-2 sm:py-0">
-        <div className="mr-0 sm:mr-2 md:mr-4 flex items-center self-start sm:self-center">
+    <header className="sticky top-0 z-50 w-full border-b bg-header dark:bg-black/80 backdrop-blur-sm supports-[backdrop-filter]:bg-header/80">
+      <div className="container mx-auto flex flex-col sm:flex-row items-center py-2 px-4 sm:py-0">
+        <div className="flex items-center flex-shrink-0 mr-4">
           <Link to="/">
             <Logo />
           </Link>
         </div>
 
-        <div className="flex-1 w-full sm:w-auto flex flex-col sm:flex-row items-center sm:justify-end mt-2 sm:mt-0 space-y-2 sm:space-y-0 sm:space-x-1 md:space-x-2">
+        <div className="mt-2 sm:mt-0 flex-1 flex flex-col sm:flex-row items-center justify-between space-y-2 sm:space-y-0 sm:space-x-4">
           <div className="hidden md:block relative w-full sm:w-auto sm:max-w-xs">
             <Input
               type="search"
@@ -47,32 +56,61 @@ const Header = ({ setIsDonateModalOpen }) => {
             </div>
           </div>
 
-          <div className="flex flex-row sm:flex-row w-full sm:w-auto justify-around sm:justify-end space-x-1 md:space-x-2">
+          <nav className="overflow-x-auto whitespace-nowrap py-1">
+            {categories.map(cat => {
+              const active = cat === currentCategory;
+              return (
+                <button
+                  key={cat}
+                  onClick={() => handleCategoryClick(cat)}
+                  className={`inline-block mx-1 px-3 py-1 rounded-full text-sm font-medium 
+                    ${active ? 'bg-accent text-white' : 'bg-background/50 dark:bg-white/10 text-foreground dark:text-muted-foreground'} 
+                    hover:opacity-90 transition`}
+                >
+                  {cat}
+                </button>
+              );
+            })}
+          </nav>
+
+          <div className="flex items-center space-x-2">
             <Button
-              variant="default"
-              size="sm"
-              onClick={openPatreonLink}
-              className="flex items-center bg-accent hover:bg-accent/90 w-full sm:w-auto justify-center"
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsDarkMode(!isDarkMode)}
+              aria-label="Toggle theme"
+              className="bg-background/20 backdrop-blur-sm"
             >
-              <Heart className="h-4 w-4 mr-1 md:mr-2 text-pink-500" />
-              <span className="text-xs sm:text-sm">Member</span>
+              {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </Button>
+
             <Button
               variant="default"
               size="sm"
               onClick={() => setIsDonateModalOpen(true)}
-              className="flex items-center bg-accent hover:bg-accent/90 w-full sm:w-auto justify-center"
+              className="flex items-center bg-accent hover:bg-accent/90"
             >
-              <Gift className="h-4 w-4 mr-1 md:mr-2 text-red-500" />
+              <Heart className="h-4 w-4 mr-1 text-pink-500" />
               <span className="text-xs sm:text-sm">Donate</span>
             </Button>
+
             <Button
               variant="default"
               size="sm"
-              onClick={openShopifyLink}
-              className="flex items-center bg-accent hover:bg-accent/90 w-full sm:w-auto justify-center"
+              onClick={handleUnsupportedFeature}
+              className="flex items-center bg-accent hover:bg-accent/90"
             >
-              <ShoppingCart className="h-4 w-4 mr-1 md:mr-2 text-blue-500" />
+              <Gift className="h-4 w-4 mr-1 text-red-500" />
+              <span className="text-xs sm:text-sm">Member</span>
+            </Button>
+
+            <Button
+              variant="default"
+              size="sm"
+              onClick={handleUnsupportedFeature}
+              className="flex items-center bg-accent hover:bg-accent/90"
+            >
+              <ShoppingCart className="h-4 w-4 mr-1 text-blue-500" />
               <span className="text-xs sm:text-sm">Shop</span>
             </Button>
           </div>
@@ -83,4 +121,3 @@ const Header = ({ setIsDonateModalOpen }) => {
 };
 
 export default Header;
-

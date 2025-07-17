@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Routes, Route, BrowserRouter as Router } from 'react-router-dom';
+import { Routes, Route, BrowserRouter as Router, useParams } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 import { useToast } from "@/components/ui/use-toast";
 import Header from "@/components/Header";
@@ -8,8 +8,53 @@ import NewsCard from "@/components/NewsCard";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { motion, AnimatePresence } from 'framer-motion';
-import { fetchTrendingNews, fetchDailyReads, fetchBlindspotStories } from '@/lib/news-api';
-import { Sun, Moon } from 'lucide-react';
+import { fetchTrendingNews, fetchDailyReads, fetchBlindspotStories, fetchNews } from '@/lib/news-api';
+
+const CategoryPage = ({ setIsDonateModalOpen }) => {
+  const { category } = useParams();
+  const [filteredNews, setFilteredNews] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    setLoading(true);
+    fetchNews(category)
+      .then((data) => {
+        setFilteredNews(data);
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error('Failed to load category news:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load category news',
+          variant: 'destructive'
+        });
+        setLoading(false);
+      });
+  }, [category]);
+
+  return (
+    <div className="min-h-screen px-4">
+      <Header setIsDonateModalOpen={setIsDonateModalOpen} />
+      <div className="my-6">
+        <h2 className="text-xl font-bold mb-4 capitalize">{decodeURIComponent(category)} News</h2>
+        {loading ? (
+          <div className="flex justify-center items-center h-60">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {filteredNews.map((item) => (
+              <NewsCard key={item.id} article={item} />
+            ))}
+          </div>
+        )}
+      </div>
+      <Footer />
+    </div>
+  );
+};
 
 const HomePage = ({ setIsDonateModalOpen }) => {
   const [trendingNews, setTrendingNews] = useState([]);
@@ -86,15 +131,22 @@ const HomePage = ({ setIsDonateModalOpen }) => {
   return (
     <div className="min-h-screen px-4">
       <Header setIsDonateModalOpen={setIsDonateModalOpen} />
-
       <div className="grid grid-cols-1 lg:grid-cols-6 gap-6 my-6">
-        {/* Daily Reads */}
-        <aside className="lg:col-span-1">
-          <h2 className="text-lg font-semibold mb-3">Daily Reads</h2>
-          <ul className="space-y-2">
-            {dailyReads.map((item) => (
+        <aside className="lg:col-span-1 space-y-4">
+          <h2 className="text-lg font-semibold">Daily Reads</h2>
+          {dailyReads.slice(0, 2).map((item) => (
+            <NewsCard key={item.id} article={item} />
+          ))}
+          <hr className="border-t border-muted/30 my-2" />
+          <ul className="space-y-2 pl-2 border-l">
+            {dailyReads.slice(2, 5).map((item) => (
               <li key={item.id}>
-                <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">
+                <a
+                  href={item.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:underline text-sm block"
+                >
                   {item.title.slice(0, 80)}{item.title.length > 80 ? '...' : ''}
                 </a>
               </li>
@@ -102,7 +154,6 @@ const HomePage = ({ setIsDonateModalOpen }) => {
           </ul>
         </aside>
 
-        {/* Trending News */}
         <main className="lg:col-span-4">
           <h2 className="text-xl font-bold mb-4">Trending Good News (Last 36 Hours)</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -112,13 +163,21 @@ const HomePage = ({ setIsDonateModalOpen }) => {
           </div>
         </main>
 
-        {/* Blindspots */}
-        <aside className="lg:col-span-1">
-          <h2 className="text-lg font-semibold mb-3">Blindspots</h2>
-          <ul className="space-y-2">
-            {blindspots.map((item) => (
+        <aside className="lg:col-span-1 space-y-4">
+          <h2 className="text-lg font-semibold">Blindspots</h2>
+          {blindspots.slice(0, 2).map((item) => (
+            <NewsCard key={item.id} article={item} />
+          ))}
+          <hr className="border-t border-muted/30 my-2" />
+          <ul className="space-y-2 pl-2 border-l">
+            {blindspots.slice(2, 5).map((item) => (
               <li key={item.id}>
-                <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">
+                <a
+                  href={item.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:underline text-sm block"
+                >
                   {item.title.slice(0, 80)}{item.title.length > 80 ? '...' : ''}
                 </a>
               </li>
@@ -126,7 +185,6 @@ const HomePage = ({ setIsDonateModalOpen }) => {
           </ul>
         </aside>
       </div>
-
       <Footer />
     </div>
   );
@@ -141,6 +199,7 @@ const App = () => {
     }
     return false;
   });
+
   const [isDonateModalOpen, setIsDonateModalOpen] = useState(false);
 
   useEffect(() => {
@@ -151,19 +210,9 @@ const App = () => {
   return (
     <Router>
       <div className="bg-white dark:bg-black text-black dark:text-white transition-colors duration-300 min-h-screen">
-        <div className="fixed top-4 right-4 z-50">
-          <Button
-            onClick={() => setIsDarkMode(!isDarkMode)}
-            variant="ghost"
-            size="icon"
-            className="bg-background/80 backdrop-blur-sm border"
-          >
-            {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          </Button>
-        </div>
-
         <Routes>
           <Route path="/" element={<HomePage setIsDonateModalOpen={setIsDonateModalOpen} />} />
+          <Route path="/category/:category" element={<CategoryPage setIsDonateModalOpen={setIsDonateModalOpen} />} />
         </Routes>
 
         <AnimatePresence>

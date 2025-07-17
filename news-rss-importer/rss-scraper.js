@@ -1,4 +1,3 @@
-// === Enhanced RSS News Scraper with Fixed .env Load and Improved Filters ===
 import RSSParser from 'rss-parser';
 import { createClient } from '@supabase/supabase-js';
 import { convert } from 'html-to-text';
@@ -6,7 +5,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-// === Correct .env Load (absolute path based on current file) ===
+// === Correct .env Load ===
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.join(__dirname, '.env') });
@@ -22,26 +21,36 @@ const parser = new RSSParser({
   customFields: { item: ['pubDate', 'description', 'content', 'author'] }
 });
 
-// === KEYWORDS ===
+// === Enhanced Keywords for Catastrophe Heroes ===
 const POSITIVE_KEYWORDS = [
   'breakthrough', 'success', 'achievement', 'innovation', 'cure', 'recovery',
   'improvement', 'progress', 'celebration', 'award', 'victory', 'solution',
   'discovery', 'advancement', 'positive', 'benefit', 'help', 'support',
   'launch', 'create', 'build', 'develop', 'honor', 'celebrate', 'win',
-  'expand', 'transform', 'uplift', 'resolve', 'educate', 'protect', 'heal'
+  'expand', 'transform', 'uplift', 'resolve', 'educate', 'protect', 'heal',
+  'rescued', 'saved', 'hero', 'heroic', 'brave', 'courage', 'volunteer',
+  'evacuate', 'evacuation', 'relief', 'aid', 'donate', 'donation',
+  'rebuild', 'restore', 'recover', 'resilience', 'survivor', 'survive',
+  'first responder', 'emergency response', 'search and rescue',
+  'good samaritan', 'community support', 'helping hand', 'lifesaver',
+  'selfless', 'compassion', 'kindness', 'generous', 'solidarity',
+  'miracle', 'hope', 'inspiring', 'remarkable', 'extraordinary',
+  'overcome', 'triumph', 'persevere', 'strength', 'unity',
+  'neighbor helping neighbor', 'came together', 'rallied',
+  'shelter', 'refuge', 'sanctuary', 'safety', 'protection'
 ];
 
 const NEGATIVE_KEYWORDS = [
   'death', 'killed', 'murder', 'attack', 'war', 'disaster', 'crisis',
   'threat', 'danger', 'problem', 'failure', 'crash', 'collapse', 'decline',
-  'recession', 'unemployment', 'violence', 'crime', 'scandal', 'die',
-  'destroy', 'fail', 'emergency', 'warn', 'drought', 'famine', 'coup',
-  'sanction', 'toxic', 'pollution', 'lawsuit', 'abuse', 'assault', 'rape',
-  'fire', 'flood', 'earthquake', 'hunger', 'suicide', 'explosion',
-  'eviction', 'shooting', 'gunfire', 'massacre', 'controversy'
+  'devastating', 'destruction', 'catastrophic', 'tragic', 'horror',
+  'nightmare', 'chaos', 'panic', 'terror', 'helpless', 'trapped',
+  'missing', 'feared dead', 'body count', 'casualty', 'victim',
+  'unprecedented damage', 'total loss', 'wiped out', 'flattened',
+  'without hope', 'dire situation', 'worst case', 'no survivors'
 ];
 
-// === FEED SOURCES ===
+// === Feeds
 const FEEDS = {
   'Health': [
     'https://medicalxpress.com/rss-feed/health-news/',
@@ -53,7 +62,8 @@ const FEEDS = {
     'https://www.theverge.com/rss/index.xml'
   ],
   'Environment & Sustainability': [
-    'https://grist.org/feed/'
+    'https://grist.org/feed/',
+    'https://www.treehugger.com/feeds/rss'
   ],
   'Education': [
     'https://hechingerreport.org/feed/'
@@ -62,6 +72,13 @@ const FEEDS = {
     'https://feeds.feedburner.com/spaceflightnow',
     'https://www.sciencedaily.com/rss/space_time.xml',
     'https://phys.org/rss-feed/space-news/'
+  ],
+  'Humanitarian & Rescue': [
+    'https://reliefweb.int/updates/rss.xml',
+    'https://www.unicef.org/feeds/news-releases.xml',
+    'https://www.unhcr.org/rss/news.xml',
+    'https://www.redcross.org/news.rss',
+    'https://www.google.com/alerts/feeds/12610777509108054570/3869133423126878870'
   ]
 };
 
@@ -74,10 +91,24 @@ const isValidUrl = (url) => {
   }
 };
 
+const isValidImageUrl = async (url) => {
+  if (!url || !isValidUrl(url)) return false;
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const response = await fetch(url, { method: 'HEAD', signal: controller.signal });
+    clearTimeout(timeoutId);
+    const contentType = response.headers.get('content-type');
+    return response.ok && contentType?.startsWith('image/');
+  } catch {
+    return false;
+  }
+};
+
 const extractImageFromHTML = (html) => {
   if (!html) return null;
   const match = html.match(/<img[^>]+src="([^">]+)"/i);
-  return match && match[1] && isValidUrl(match[1]) ? match[1] : null;
+  return match && isValidUrl(match[1]) ? match[1] : null;
 };
 
 const clean = (html) => {
@@ -87,8 +118,7 @@ const clean = (html) => {
       wordwrap: false,
       selectors: [{ selector: 'a', options: { ignoreHref: true } }]
     }).trim().slice(0, 500);
-  } catch (err) {
-    console.error('❌ Error cleaning HTML:', err.message);
+  } catch {
     return '';
   }
 };
@@ -97,49 +127,38 @@ const computePositivityScore = (title, content) => {
   const text = `${title} ${content}`.toLowerCase();
   const positiveMatches = POSITIVE_KEYWORDS.filter(k => text.includes(k)).length;
   const negativeMatches = NEGATIVE_KEYWORDS.filter(k => text.includes(k)).length;
-  const score = Math.max((positiveMatches * 2) - negativeMatches, 0);
-  return score;
+  return Math.max((positiveMatches * 2) - negativeMatches, 0);
 };
 
 const isGoodNews = (title, content) => {
   const text = `${title} ${content}`.toLowerCase();
+  const hasHero = /\b(saved|rescued|hero|miracle|hope|lifesaver|brave|volunteer)\b/i.test(text);
+  const hasDisasterContext = /\b(flood|disaster|storm|crisis|earthquake|wildfire)\b/i.test(text);
+
+  if (hasHero && hasDisasterContext) return true;
+
   const positiveMatches = POSITIVE_KEYWORDS.filter(k => text.includes(k)).length;
   const negativeMatches = NEGATIVE_KEYWORDS.filter(k => text.includes(k)).length;
-  const positiveScore = positiveMatches * 2;
-  const negativeScore = negativeMatches;
 
-  const hasPositivePattern = /\b(celebrates?|honors?|wins?|succeeds?|helps?|saves?|improves?|launches?|creates?|builds?|develops?)\b/i.test(text);
-  const hasNegativePattern = /\b(dies?|killed?|destroys?|fails?|crashes?|threatens?|warns?|crisis|emergency)\b/i.test(text);
-
-  return (hasPositivePattern || (positiveScore > negativeScore && positiveMatches > 0));
+  return (positiveMatches > 0 && (positiveMatches * 2) > negativeMatches);
 };
 
 const checkDuplicate = async (title, url) => {
-  try {
-    const { data, error } = await supabase.from('news')
-      .select('id')
-      .or(`title.eq.${title},url.eq.${url}`)
-      .limit(1);
-    if (error) return true;
-    return data?.length > 0;
-  } catch {
-    return true;
-  }
+  const { data } = await supabase.from('news')
+    .select('id')
+    .or(`title.eq.${title},url.eq.${url}`)
+    .limit(1);
+  return data?.length > 0;
 };
 
 const insertArticle = async (article) => {
-  try {
-    const { error } = await supabase.from('news').insert([article]);
-    if (error) {
-      console.error('❌ Insert error:', error.message);
-      return false;
-    }
-    console.log('✅ Inserted:', article.title.slice(0, 60));
-    return true;
-  } catch (err) {
-    console.error('❌ Insert exception:', err.message);
+  const { error } = await supabase.from('news').insert([article]);
+  if (error) {
+    console.error('❌ Insert error:', error.message);
     return false;
   }
+  console.log('✅ Inserted:', article.title);
+  return true;
 };
 
 const processFeed = async (feedUrl, category) => {
@@ -148,7 +167,8 @@ const processFeed = async (feedUrl, category) => {
     'Innovation & Tech': 'https://source.unsplash.com/featured/?technology',
     'Environment & Sustainability': 'https://source.unsplash.com/featured/?nature',
     Education: 'https://source.unsplash.com/featured/?education',
-    'Science & Space': 'https://source.unsplash.com/featured/?space'
+    'Science & Space': 'https://source.unsplash.com/featured/?space',
+    'Humanitarian & Rescue': 'https://source.unsplash.com/featured/?rescue,hero,aid'
   };
 
   try {
@@ -163,19 +183,20 @@ const processFeed = async (feedUrl, category) => {
 
       const positivity_score = computePositivityScore(item.title, content);
       const imageFromContent = extractImageFromHTML(rawContent);
-      const finalImage = item.enclosure?.url && isValidUrl(item.enclosure.url)
-        ? item.enclosure.url
-        : imageFromContent || fallbackImages[category] || null;
+      let finalImage = fallbackImages[category];
 
-      const publishedAt = item.pubDate ? new Date(item.pubDate).toISOString() : null;
-      const summary = content.slice(0, 300);
+      if (item.enclosure?.url && await isValidImageUrl(item.enclosure.url)) {
+        finalImage = item.enclosure.url;
+      } else if (imageFromContent && await isValidImageUrl(imageFromContent)) {
+        finalImage = imageFromContent;
+      }
 
       const article = {
         title: item.title.trim().slice(0, 500),
         url: item.link.trim(),
-        summary,
+        summary: content.slice(0, 300),
         content,
-        published_at: publishedAt,
+        published_at: item.pubDate ? new Date(item.pubDate).toISOString() : null,
         category,
         author: item.author?.trim()?.slice(0, 200) || null,
         image_url: finalImage,
@@ -185,9 +206,7 @@ const processFeed = async (feedUrl, category) => {
         source_name: new URL(item.link).hostname.replace('www.', ''),
         sentiment: 'positive',
         positivity_score,
-        is_ad: false,
-        ad_image_url: null,
-        ad_link_url: null
+        is_ad: false
       };
 
       await insertArticle(article);
@@ -199,12 +218,15 @@ const processFeed = async (feedUrl, category) => {
 };
 
 const main = async () => {
+  console.log('🚀 Starting RSS News Scraper...');
   for (const [category, urls] of Object.entries(FEEDS)) {
+    console.log(`\n📰 Category: ${category}`);
     for (const url of urls) {
+      console.log(`🔗 Fetching: ${url}`);
       await processFeed(url, category);
     }
   }
+  console.log('\n✨ Scraping completed!');
 };
 
 main();
-

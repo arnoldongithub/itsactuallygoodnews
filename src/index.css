@@ -152,6 +152,122 @@
     height: 1px;
   }
 
+  /* INLINE ADS - Small, subtle ads between headlines */
+  .inline-ad {
+    @apply bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md p-3 my-2 mx-0;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.2s ease;
+  }
+
+  .dark .inline-ad {
+    background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+  }
+
+  .inline-ad:hover {
+    @apply bg-gray-100 dark:bg-gray-700 shadow-sm;
+    transform: translateY(-1px);
+  }
+
+  .inline-ad-content {
+    @apply flex-1 pr-3;
+  }
+
+  .inline-ad-title {
+    @apply text-sm font-medium text-gray-700 dark:text-gray-300 mb-1;
+    line-height: 1.3;
+  }
+
+  .inline-ad-description {
+    @apply text-xs text-gray-500 dark:text-gray-400;
+    line-height: 1.2;
+  }
+
+  .inline-ad-image {
+    @apply w-12 h-12 bg-gray-200 dark:bg-gray-600 rounded flex-shrink-0 overflow-hidden;
+  }
+
+  .inline-ad-image img {
+    @apply w-full h-full object-cover;
+  }
+
+  .inline-ad-badge {
+    @apply absolute top-1 right-1 bg-gray-400 text-white text-xs px-1 py-0.5 rounded opacity-60;
+    font-size: 10px;
+    line-height: 1;
+  }
+
+  /* Trending headlines with inline ads */
+  .trending-headlines {
+    @apply space-y-0 mt-6; /* Remove default spacing for custom control */
+  }
+
+  .trending-headline {
+    @apply text-base font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer py-3 border-b border-gray-200 dark:border-gray-700;
+  }
+
+  .trending-headline:last-child {
+    @apply border-b-0;
+  }
+
+  /* Sidebar headlines with inline ads */
+  .sidebar-headlines {
+    @apply space-y-0; /* Remove default spacing for custom control */
+  }
+
+  .sidebar-headline {
+    @apply text-sm font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer py-2 border-b border-gray-200 dark:border-gray-700;
+  }
+
+  .sidebar-headline:last-child {
+    @apply border-b-0;
+  }
+
+  /* Related stories with inline ads */
+  .related-stories-list {
+    @apply space-y-0; /* Remove default spacing for custom control */
+  }
+
+  .related-story-item {
+    @apply border-b border-gray-200 dark:border-gray-700 pb-3 pt-3 first:pt-0;
+  }
+
+  .related-story-item:last-child {
+    @apply border-b-0 pb-0;
+  }
+
+  .related-story-link {
+    @apply block hover:text-blue-600 dark:hover:text-blue-400 transition-colors;
+  }
+
+  .related-story-title {
+    @apply font-bold text-base leading-tight text-gray-900 dark:text-white;
+  }
+
+  /* Responsive inline ads */
+  @media (max-width: 768px) {
+    .inline-ad {
+      @apply p-2;
+      min-height: 50px;
+    }
+
+    .inline-ad-image {
+      @apply w-10 h-10;
+    }
+
+    .inline-ad-title {
+      @apply text-xs;
+    }
+
+    .inline-ad-description {
+      @apply text-xs;
+      display: none; /* Hide description on mobile for cleaner look */
+    }
+  }
+
   /* Section separators */
   .section-separator {
     @apply border-r border-white dark:border-gray-600;
@@ -173,66 +289,72 @@
     @apply text-lg font-bold text-gray-900 dark:text-white mb-4;
   }
 
+  /* Sidebar newscard - 2:1 aspect ratio (width 2x height) */
   .sidebar-newscard {
-    @apply bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden mb-4;
+    @apply bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden mb-4 relative;
+    width: 100%;
+    height: 120px; /* Fixed height for 2:1 ratio */
+    display: block;
+    transition: transform 0.2s ease;
+  }
+
+  .sidebar-newscard:hover {
+    transform: translateY(-2px);
   }
 
   .sidebar-newscard-image {
-    @apply w-full h-32 object-cover;
+    @apply w-full h-full object-cover absolute inset-0;
   }
 
-  .sidebar-newscard-content {
-    @apply p-3;
+  .sidebar-newscard-overlay {
+    @apply absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/85 via-black/60 to-transparent p-3;
   }
 
   .sidebar-newscard-title {
-    @apply text-sm font-semibold text-gray-900 dark:text-white leading-tight;
+    @apply text-sm font-semibold text-white leading-tight;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
 
+  /* Remove summary from sidebar cards */
   .sidebar-newscard-summary {
-    @apply text-xs text-gray-600 dark:text-gray-400 mt-1;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+    display: none;
   }
 
-  .sidebar-headlines {
-    @apply space-y-2;
+  /* Responsive adjustments for sidebar cards */
+  @media (max-width: 1024px) {
+    .sidebar-newscard {
+      height: 100px; /* Slightly smaller on tablets */
+    }
   }
 
-  .sidebar-headline {
-    @apply text-sm font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer py-2 border-b border-gray-200 dark:border-gray-700 last:border-b-0;
+  @media (max-width: 768px) {
+    .sidebar-newscard {
+      height: 140px; /* Taller on mobile for better text readability */
+    }
+    
+    .sidebar-newscard-title {
+      @apply text-base; /* Larger text on mobile */
+    }
   }
 
-  /* Trending stories regular headlines */
-  .trending-headlines {
-    @apply space-y-3 mt-6;
-  }
-
-  .trending-headline {
-    @apply text-base font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer py-2 border-b border-gray-200 dark:border-gray-700 last:border-b-0;
-  }
-
-  /* Layout grid improvements */
+  /* Layout grid improvements - 1/3 sidebars, 2/3 main */
   .main-layout {
-    @apply grid grid-cols-1 lg:grid-cols-6 gap-6;
+    @apply grid grid-cols-1 lg:grid-cols-12 gap-6;
   }
 
   .daily-reads-sidebar {
-    @apply lg:col-span-1;
+    @apply lg:col-span-2; /* 2/12 = 1/6 each sidebar */
   }
 
   .trending-main {
-    @apply lg:col-span-4;
+    @apply lg:col-span-8; /* 8/12 = 2/3 for trending */
   }
 
   .blindspot-sidebar {
-    @apply lg:col-span-1;
+    @apply lg:col-span-2; /* 2/12 = 1/6 each sidebar */
   }
 
   /* Visual separators */
@@ -290,22 +412,6 @@
     @apply text-xl font-bold mb-4 text-gray-900 dark:text-white;
   }
 
-  .related-stories-list {
-    @apply space-y-3;
-  }
-
-  .related-story-item {
-    @apply border-b border-gray-200 dark:border-gray-700 pb-3 last:border-b-0;
-  }
-
-  .related-story-link {
-    @apply block hover:text-blue-600 dark:hover:text-blue-400 transition-colors;
-  }
-
-  .related-story-title {
-    @apply font-bold text-base leading-tight text-gray-900 dark:text-white;
-  }
-
   /* Responsive improvements */
   @media (max-width: 1024px) {
     .main-layout {
@@ -355,5 +461,68 @@
 
   .category-humanitarian {
     @apply bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200;
+  }
+
+  /* Animation for inline ads */
+  .inline-ad-enter {
+    animation: slideInAd 0.3s ease-out;
+  }
+
+  @keyframes slideInAd {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Subtle pulse effect for ads */
+  .inline-ad-pulse {
+    animation: pulseAd 3s ease-in-out infinite;
+  }
+
+  @keyframes pulseAd {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.9;
+    }
+  }
+
+  /* Ad frequency control classes */
+  .ad-spacing-3 > .inline-ad:nth-child(3n) {
+    display: block;
+  }
+
+  .ad-spacing-4 > .inline-ad:nth-child(4n) {
+    display: block;
+  }
+
+  .ad-spacing-5 > .inline-ad:nth-child(5n) {
+    display: block;
+  }
+
+  /* Hide ads by default, show only at specific intervals */
+  .headline-list .inline-ad {
+    display: none;
+  }
+
+  /* Show ads every 3rd item in trending headlines */
+  .trending-headlines .inline-ad:nth-child(6n+3) {
+    display: flex;
+  }
+
+  /* Show ads every 4th item in sidebar headlines */
+  .sidebar-headlines .inline-ad:nth-child(8n+4) {
+    display: flex;
+  }
+
+  /* Show ads every 3rd item in related stories */
+  .related-stories-list .inline-ad:nth-child(6n+3) {
+    display: flex;
   }
 }

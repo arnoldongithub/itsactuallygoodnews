@@ -1,4 +1,13 @@
-import React, { useState, useEffect } from 'react';
+<div className="main-layout my-6">
+        {/* Daily Reads - Left Sidebar (1/6 width) */}
+        <aside className="daily-reads-sidebar">
+          <div className="daily-reads-separator">
+            <DailyReads stories={dailyReads} />
+          </div>
+        </aside>
+
+        {/* Main Trending Stories (2/3 width) */}
+        <main className="trending-mainimport React, { useState, useEffect } from 'react';
 import { Routes, Route, BrowserRouter as Router, useParams } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 import { useToast } from "@/components/ui/use-toast";
@@ -313,25 +322,25 @@ const HomePage = ({ setIsDonateModalOpen }) => {
       
       <AdPlacement position="top" />
       
-      <div className="grid grid-cols-1 lg:grid-cols-6 gap-6 my-6">
-        {/* Daily Reads - Left Sidebar */}
-        <aside className="lg:col-span-1">
-          <div className="border-r border-white pr-4">
+      <div className="main-layout my-6">
+        {/* Daily Reads - Left Sidebar (1/6 width) */}
+        <aside className="daily-reads-sidebar">
+          <div className="daily-reads-separator">
             <DailyReads stories={dailyReads} />
           </div>
         </aside>
 
-        {/* Main Trending Stories */}
-        <main className="lg:col-span-4">
+        {/* Main Trending Stories (2/3 width) */}
+        <main className="trending-main">
           <TrendingStories stories={trendingNews} />
           <div className="mt-8">
             <AdPlacement position="middle" />
           </div>
         </main>
 
-        {/* Blindspot - Right Sidebar */}
-        <aside className="lg:col-span-1">
-          <div className="border-l border-white pl-4">
+        {/* Blindspot - Right Sidebar (1/6 width) */}
+        <aside className="blindspot-sidebar">
+          <div className="blindspot-separator">
             <Blindspot stories={blindspots} />
           </div>
         </aside>

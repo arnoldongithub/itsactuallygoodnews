@@ -1,14 +1,8 @@
 import React, { useState } from 'react';
-import { Search, Gift, Heart, ShoppingCart, Sun, Moon, ExternalLink } from 'lucide-react';
+import { Search, Gift, Heart, ShoppingCart, Sun, Moon, ExternalLink, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from "@/components/ui/use-toast";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import Logo from '@/components/Logo';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
@@ -27,6 +21,7 @@ const Header = ({ isDarkMode, setIsDarkMode, setIsDonateModalOpen, streak }) => 
   const location = useLocation();
   const navigate = useNavigate();
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
+  const [isDonateDropdownOpen, setIsDonateDropdownOpen] = useState(false);
   const currentCategory = new URLSearchParams(location.search).get('cat') || 'All';
 
   const handleCategoryClick = (cat) => {
@@ -52,6 +47,7 @@ const Header = ({ isDarkMode, setIsDarkMode, setIsDonateModalOpen, streak }) => 
     };
     
     window.open(donationUrls[platform], '_blank');
+    setIsDonateDropdownOpen(false);
   };
 
   const handleMemberClick = () => {
@@ -145,40 +141,61 @@ const Header = ({ isDarkMode, setIsDarkMode, setIsDonateModalOpen, streak }) => 
             {/* Desktop Right Section */}
             <div className="hidden lg:flex items-center space-x-3">
               <div className="flex space-x-2">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="default"
-                      size="sm"
-                      className="px-4 py-2 text-sm rounded-lg bg-accent hover:bg-accent/90"
-                    >
-                      <Heart className="h-4 w-4 mr-1 text-pink-500" />
-                      <span>Donate</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuItem onClick={() => handleDonationPlatform('givesendgo')}>
-                      <ExternalLink className="mr-2 h-4 w-4" />
-                      GiveSendGo
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleDonationPlatform('gofundme')}>
-                      <ExternalLink className="mr-2 h-4 w-4" />
-                      GoFundMe
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleDonationPlatform('indiegogo')}>
-                      <ExternalLink className="mr-2 h-4 w-4" />
-                      Indiegogo
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleDonationPlatform('paypal')}>
-                      <ExternalLink className="mr-2 h-4 w-4" />
-                      PayPal
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleDonationPlatform('kickstarter')}>
-                      <ExternalLink className="mr-2 h-4 w-4" />
-                      Kickstarter
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                {/* Donate Dropdown */}
+                <div className="relative">
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={() => setIsDonateDropdownOpen(!isDonateDropdownOpen)}
+                    className="px-4 py-2 text-sm rounded-lg bg-accent hover:bg-accent/90 flex items-center"
+                  >
+                    <Heart className="h-4 w-4 mr-1 text-pink-500" />
+                    <span>Donate</span>
+                    <ChevronDown className="h-3 w-3 ml-1" />
+                  </Button>
+                  
+                  {isDonateDropdownOpen && (
+                    <div className="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50">
+                      <div className="py-1">
+                        <button
+                          onClick={() => handleDonationPlatform('givesendgo')}
+                          className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
+                        >
+                          <ExternalLink className="mr-2 h-4 w-4" />
+                          GiveSendGo
+                        </button>
+                        <button
+                          onClick={() => handleDonationPlatform('gofundme')}
+                          className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
+                        >
+                          <ExternalLink className="mr-2 h-4 w-4" />
+                          GoFundMe
+                        </button>
+                        <button
+                          onClick={() => handleDonationPlatform('indiegogo')}
+                          className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
+                        >
+                          <ExternalLink className="mr-2 h-4 w-4" />
+                          Indiegogo
+                        </button>
+                        <button
+                          onClick={() => handleDonationPlatform('paypal')}
+                          className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
+                        >
+                          <ExternalLink className="mr-2 h-4 w-4" />
+                          PayPal
+                        </button>
+                        <button
+                          onClick={() => handleDonationPlatform('kickstarter')}
+                          className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
+                        >
+                          <ExternalLink className="mr-2 h-4 w-4" />
+                          Kickstarter
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
 
                 <Button
                   variant="default"
@@ -217,40 +234,61 @@ const Header = ({ isDarkMode, setIsDarkMode, setIsDonateModalOpen, streak }) => 
           {!isSearchExpanded && (
             <div className="flex items-center justify-between w-full lg:hidden">
               <div className="flex space-x-2 flex-1">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="default"
-                      size="sm"
-                      className="px-3 py-1.5 text-sm rounded-lg flex-1 bg-accent hover:bg-accent/90"
-                    >
-                      <Heart className="h-4 w-4 mr-1 text-pink-500" />
-                      <span>Donate</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="w-48">
-                    <DropdownMenuItem onClick={() => handleDonationPlatform('givesendgo')}>
-                      <ExternalLink className="mr-2 h-4 w-4" />
-                      GiveSendGo
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleDonationPlatform('gofundme')}>
-                      <ExternalLink className="mr-2 h-4 w-4" />
-                      GoFundMe
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleDonationPlatform('indiegogo')}>
-                      <ExternalLink className="mr-2 h-4 w-4" />
-                      Indiegogo
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleDonationPlatform('paypal')}>
-                      <ExternalLink className="mr-2 h-4 w-4" />
-                      PayPal
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleDonationPlatform('kickstarter')}>
-                      <ExternalLink className="mr-2 h-4 w-4" />
-                      Kickstarter
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                {/* Mobile Donate Dropdown */}
+                <div className="relative flex-1">
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={() => setIsDonateDropdownOpen(!isDonateDropdownOpen)}
+                    className="px-3 py-1.5 text-sm rounded-lg w-full bg-accent hover:bg-accent/90 flex items-center justify-center"
+                  >
+                    <Heart className="h-4 w-4 mr-1 text-pink-500" />
+                    <span>Donate</span>
+                    <ChevronDown className="h-3 w-3 ml-1" />
+                  </Button>
+                  
+                  {isDonateDropdownOpen && (
+                    <div className="absolute top-full left-0 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50">
+                      <div className="py-1">
+                        <button
+                          onClick={() => handleDonationPlatform('givesendgo')}
+                          className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
+                        >
+                          <ExternalLink className="mr-2 h-4 w-4" />
+                          GiveSendGo
+                        </button>
+                        <button
+                          onClick={() => handleDonationPlatform('gofundme')}
+                          className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
+                        >
+                          <ExternalLink className="mr-2 h-4 w-4" />
+                          GoFundMe
+                        </button>
+                        <button
+                          onClick={() => handleDonationPlatform('indiegogo')}
+                          className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
+                        >
+                          <ExternalLink className="mr-2 h-4 w-4" />
+                          Indiegogo
+                        </button>
+                        <button
+                          onClick={() => handleDonationPlatform('paypal')}
+                          className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
+                        >
+                          <ExternalLink className="mr-2 h-4 w-4" />
+                          PayPal
+                        </button>
+                        <button
+                          onClick={() => handleDonationPlatform('kickstarter')}
+                          className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
+                        >
+                          <ExternalLink className="mr-2 h-4 w-4" />
+                          Kickstarter
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
 
                 <Button
                   variant="default"

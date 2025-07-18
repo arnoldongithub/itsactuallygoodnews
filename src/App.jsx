@@ -12,7 +12,7 @@ import InlineAd from "@/components/InlineAd";
 import Button from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { motion, AnimatePresence } from 'framer-motion';
-import { fetchTrendingNews, fetchDailyReads, fetchBlindspotStories, fetchNews } from '@/lib/news-api';
+import { fetchTrendingNews, fetchDailyReads, fetchBlindspotStories, fetchNews, useHomepageData } from '@/lib/news-api';
 
 // Story Summary Page Component
 const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
@@ -149,7 +149,7 @@ const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
           
           <div className="flex items-center justify-between pt-4 border-t">
             <div className="text-sm text-gray-500">
-              <p>Source: {story.source || 'Unknown'}</p>
+              <p>Source: {story.source || story.source_name || 'Unknown'}</p>
               <p>Published: {new Date(story.published_at).toLocaleDateString()}</p>
             </div>
             
@@ -249,14 +249,14 @@ const CategoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
   );
 };
 
+// === OPTIMIZED HOMEPAGE with single data fetch ===
 const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
-  const [trendingNews, setTrendingNews] = useState([]);
-  const [dailyReads, setDailyReads] = useState([]);
-  const [blindspots, setBlindspots] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // Use the new optimized hook instead of multiple API calls
+  const { data, loading, error, refetch } = useHomepageData();
   const [streak, setStreak] = useState(0);
   const { toast } = useToast();
 
+  // Streak logic remains the same
   useEffect(() => {
     const today = new Date().toDateString();
     const lastVisit = localStorage.getItem('lastVisitDate');
@@ -299,30 +299,7 @@ const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
     localStorage.setItem('lastVisitDate', today);
   }, [toast]);
 
-  useEffect(() => {
-    setLoading(true);
-    Promise.all([
-      fetchTrendingNews(),
-      fetchDailyReads(),
-      fetchBlindspotStories()
-    ])
-      .then(([trending, daily, blind]) => {
-        setTrendingNews(trending);
-        setDailyReads(daily);
-        setBlindspots(blind);
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.error('Failed to load news:', error);
-        toast({ 
-          title: 'Error', 
-          description: 'Failed to load news', 
-          variant: 'destructive' 
-        });
-        setLoading(false);
-      });
-  }, [toast]);
-
+  // Loading state with better UX
   if (loading) {
     return (
       <div className="min-h-screen bg-white dark:bg-black">
@@ -335,13 +312,65 @@ const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
         <div className="flex justify-center items-center min-h-[400px]">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading news...</p>
+            <p className="text-muted-foreground">Loading good news...</p>
+            <p className="text-sm text-muted-foreground mt-2">This should only take a moment</p>
           </div>
         </div>
         <Footer />
       </div>
     );
   }
+
+  // Error state with retry option
+  if (error) {
+    return (
+      <div className="min-h-screen bg-white dark:bg-black">
+        <Header 
+          setIsDonateModalOpen={setIsDonateModalOpen} 
+          isDarkMode={isDarkMode} 
+          setIsDarkMode={setIsDarkMode}
+          streak={streak}
+        />
+        <div className="container mx-auto px-4 py-8">
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 max-w-md mx-auto">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <span className="text-red-500 text-2xl">⚠️</span>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-lg font-medium text-red-800 dark:text-red-200">
+                  Something went wrong
+                </h3>
+                <p className="mt-2 text-sm text-red-700 dark:text-red-300">
+                  {error || 'Failed to load news. Please try again.'}
+                </p>
+                <div className="mt-4 flex space-x-2">
+                  <Button 
+                    onClick={refetch}
+                    size="sm"
+                    className="bg-red-100 dark:bg-red-800 text-red-800 dark:text-red-200 hover:bg-red-200 dark:hover:bg-red-700"
+                  >
+                    Try Again
+                  </Button>
+                  <Button 
+                    onClick={() => window.location.reload()}
+                    variant="outline"
+                    size="sm"
+                  >
+                    Refresh Page
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Extract data from the optimized hook
+  const { trending: trendingNews, dailyReads, blindspot: blindspots } = data;
 
   return (
     <div className="min-h-screen bg-white dark:bg-black">
@@ -371,7 +400,12 @@ const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
             </h2>
             <TrendingStories stories={trendingNews} />
             {trendingNews.length === 0 && (
-              <p className="text-gray-500 text-center py-8">No trending stories available</p>
+              <div className="text-center py-8">
+                <p className="text-gray-500 mb-2">No trending stories available right now</p>
+                <Button onClick={refetch} variant="outline" size="sm">
+                  Refresh Stories
+                </Button>
+              </div>
             )}
           </div>
         </main>

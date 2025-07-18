@@ -15,7 +15,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { fetchTrendingNews, fetchDailyReads, fetchBlindspotStories, fetchNews } from '@/lib/news-api';
 
 // Story Summary Page Component
-const StoryPage = ({ setIsDonateModalOpen }) => {
+const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
   const { id } = useParams();
   const [story, setStory] = useState(null);
   const [relatedStories, setRelatedStories] = useState([]);
@@ -74,8 +74,12 @@ const StoryPage = ({ setIsDonateModalOpen }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen px-4">
-        <Header setIsDonateModalOpen={setIsDonateModalOpen} />
+      <div className="min-h-screen bg-white dark:bg-black">
+        <Header 
+          setIsDonateModalOpen={setIsDonateModalOpen} 
+          isDarkMode={isDarkMode} 
+          setIsDarkMode={setIsDarkMode}
+        />
         <div className="flex justify-center items-center min-h-[400px]">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
         </div>
@@ -86,8 +90,12 @@ const StoryPage = ({ setIsDonateModalOpen }) => {
 
   if (!story) {
     return (
-      <div className="min-h-screen px-4">
-        <Header setIsDonateModalOpen={setIsDonateModalOpen} />
+      <div className="min-h-screen bg-white dark:bg-black">
+        <Header 
+          setIsDonateModalOpen={setIsDonateModalOpen} 
+          isDarkMode={isDarkMode} 
+          setIsDarkMode={setIsDarkMode}
+        />
         <div className="text-center py-20">
           <h2 className="text-2xl font-bold mb-4">Story Not Found</h2>
           <p className="text-gray-600 mb-4">The story you're looking for doesn't exist.</p>
@@ -99,11 +107,15 @@ const StoryPage = ({ setIsDonateModalOpen }) => {
   }
 
   return (
-    <div className="min-h-screen px-4">
-      <Header setIsDonateModalOpen={setIsDonateModalOpen} />
+    <div className="min-h-screen bg-white dark:bg-black">
+      <Header 
+        setIsDonateModalOpen={setIsDonateModalOpen} 
+        isDarkMode={isDarkMode} 
+        setIsDarkMode={setIsDarkMode}
+      />
       
-      <div className="max-w-4xl mx-auto my-8">
-        <article className="bg-white rounded-lg shadow-sm p-6 mb-8">
+      <div className="max-w-4xl mx-auto my-8 px-4">
+        <article className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-8">
           <div className="mb-4">
             <span className="text-sm font-semibold text-blue-600 uppercase">
               {story.category}
@@ -187,7 +199,7 @@ const StoryPage = ({ setIsDonateModalOpen }) => {
   );
 };
 
-const CategoryPage = ({ setIsDonateModalOpen }) => {
+const CategoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
   const { category } = useParams();
   const [filteredNews, setFilteredNews] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -212,9 +224,13 @@ const CategoryPage = ({ setIsDonateModalOpen }) => {
   }, [category, toast]);
 
   return (
-    <div className="min-h-screen px-4">
-      <Header setIsDonateModalOpen={setIsDonateModalOpen} />
-      <div className="my-6">
+    <div className="min-h-screen bg-white dark:bg-black">
+      <Header 
+        setIsDonateModalOpen={setIsDonateModalOpen} 
+        isDarkMode={isDarkMode} 
+        setIsDarkMode={setIsDarkMode}
+      />
+      <div className="px-4 lg:px-6 my-6">
         <h2 className="text-xl font-bold mb-4 capitalize">{decodeURIComponent(category)} News</h2>
         {loading ? (
           <div className="flex justify-center items-center h-60">
@@ -233,7 +249,7 @@ const CategoryPage = ({ setIsDonateModalOpen }) => {
   );
 };
 
-const HomePage = ({ setIsDonateModalOpen }) => {
+const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
   const [trendingNews, setTrendingNews] = useState([]);
   const [dailyReads, setDailyReads] = useState([]);
   const [blindspots, setBlindspots] = useState([]);
@@ -330,19 +346,13 @@ const HomePage = ({ setIsDonateModalOpen }) => {
   }
 
   return (
-    <div className="min-h-screen px-4 bg-white dark:bg-black">
-      <Header setIsDonateModalOpen={setIsDonateModalOpen} />
-      
-      {/* Streak Display */}
-      {streak > 0 && (
-        <div className="streak-display">
-          <div className="flex items-center">
-            <span className="streak-icon">🔥</span>
-            <span className="streak-number">{streak}</span>
-          </div>
-          <div className="streak-text">day streak</div>
-        </div>
-      )}
+    <div className="min-h-screen bg-white dark:bg-black">
+      <Header 
+        setIsDonateModalOpen={setIsDonateModalOpen} 
+        isDarkMode={isDarkMode} 
+        setIsDarkMode={setIsDarkMode}
+        streak={streak}
+      />
       
       <div className="main-layout my-6">
         {/* Daily Reads - Left Sidebar (1/6 width) */}
@@ -358,6 +368,27 @@ const HomePage = ({ setIsDonateModalOpen }) => {
             <h2 className="text-xl font-bold mb-4">
               <svg className="inline-block w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              Trending Stories
+            </h2>
+            <TrendingStories stories={trendingNews} />
+            {trendingNews.length === 0 && (
+              <p className="text-gray-500 text-center py-8">No trending stories available</p>
+            )}
+          </div>
+        </main>
+
+        {/* Blindspot - Right Sidebar (1/6 width) */}
+        <aside className="blindspot-sidebar">
+          <div className="blindspot-separator">
+            <Blindspot stories={blindspots} />
+          </div>
+        </aside>
+      </div>
+      
+      <Footer />
+    </div>
+  );={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
               Trending Stories
             </h2>
@@ -398,6 +429,7 @@ const App = () => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('darkMode');
       if (saved !== null) return JSON.parse(saved);
+      // Follow system preference as default
       return window.matchMedia('(prefers-color-scheme: dark)').matches;
     }
     return false;
@@ -410,13 +442,24 @@ const App = () => {
     localStorage.setItem('darkMode', JSON.stringify(isDarkMode));
   }, [isDarkMode]);
 
+  // Listen for system theme changes if no manual preference is set
+  useEffect(() => {
+    const saved = localStorage.getItem('darkMode');
+    if (saved === null) {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      const handleChange = (e) => setIsDarkMode(e.matches);
+      mediaQuery.addEventListener('change', handleChange);
+      return () => mediaQuery.removeEventListener('change', handleChange);
+    }
+  }, []);
+
   return (
     <Router>
       <div className="bg-white dark:bg-black text-black dark:text-white transition-colors duration-300 min-h-screen">
         <Routes>
-          <Route path="/" element={<HomePage setIsDonateModalOpen={setIsDonateModalOpen} />} />
-          <Route path="/category/:category" element={<CategoryPage setIsDonateModalOpen={setIsDonateModalOpen} />} />
-          <Route path="/article/:id" element={<StoryPage setIsDonateModalOpen={setIsDonateModalOpen} />} />
+          <Route path="/" element={<HomePage setIsDonateModalOpen={setIsDonateModalOpen} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />} />
+          <Route path="/category/:category" element={<CategoryPage setIsDonateModalOpen={setIsDonateModalOpen} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />} />
+          <Route path="/article/:id" element={<StoryPage setIsDonateModalOpen={setIsDonateModalOpen} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />} />
         </Routes>
 
         <AnimatePresence>

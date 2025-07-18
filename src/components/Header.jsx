@@ -1,8 +1,14 @@
 import React, { useState } from 'react';
-import { Search, Gift, Heart, ShoppingCart, Sun, Moon } from 'lucide-react';
+import { Search, Gift, Heart, ShoppingCart, Sun, Moon, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from "@/components/ui/use-toast";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import Logo from '@/components/Logo';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
@@ -35,10 +41,32 @@ const Header = ({ isDarkMode, setIsDarkMode, setIsDonateModalOpen, streak }) => 
     });
   };
 
+  const handleDonationPlatform = (platform) => {
+    // Placeholder URLs - replace with actual account URLs when accounts are set up
+    const donationUrls = {
+      givesendgo: 'https://www.givesendgo.com', // Add your account path when ready
+      gofundme: 'https://www.gofundme.com', // Add your account path when ready
+      indiegogo: 'https://www.indiegogo.com', // Add your account path when ready
+      paypal: 'https://www.paypal.com', // Add your account path when ready
+      kickstarter: 'https://www.kickstarter.com', // Add your account path when ready
+    };
+    
+    window.open(donationUrls[platform], '_blank');
+  };
+
+  const handleMemberClick = () => {
+    window.open('https://www.patreon.com/c/itsActuallyGoodNews', '_blank');
+  };
+
+  const handleShopClick = () => {
+    // Placeholder - replace with actual Shopify store URL when set up
+    window.open('https://shopify.com', '_blank'); // Replace with your actual store URL
+  };
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-header dark:bg-black/80 backdrop-blur-sm supports-[backdrop-filter]:bg-header/80">
       <div className="w-full max-w-none px-4 py-3">
-        <div className="flex flex-col space-y-3">
+        <div className="flex flex-col space-y-4">
           
           {/* Top row - Logo, Search, Theme */}
           <div className="flex items-center justify-between w-full">
@@ -117,20 +145,45 @@ const Header = ({ isDarkMode, setIsDarkMode, setIsDonateModalOpen, streak }) => 
             {/* Desktop Right Section */}
             <div className="hidden lg:flex items-center space-x-3">
               <div className="flex space-x-2">
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={() => setIsDonateModalOpen(true)}
-                  className="px-4 py-2 text-sm rounded-lg bg-accent hover:bg-accent/90"
-                >
-                  <Heart className="h-4 w-4 mr-1 text-pink-500" />
-                  <span>Donate</span>
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="px-4 py-2 text-sm rounded-lg bg-accent hover:bg-accent/90"
+                    >
+                      <Heart className="h-4 w-4 mr-1 text-pink-500" />
+                      <span>Donate</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem onClick={() => handleDonationPlatform('givesendgo')}>
+                      <ExternalLink className="mr-2 h-4 w-4" />
+                      GiveSendGo
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleDonationPlatform('gofundme')}>
+                      <ExternalLink className="mr-2 h-4 w-4" />
+                      GoFundMe
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleDonationPlatform('indiegogo')}>
+                      <ExternalLink className="mr-2 h-4 w-4" />
+                      Indiegogo
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleDonationPlatform('paypal')}>
+                      <ExternalLink className="mr-2 h-4 w-4" />
+                      PayPal
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleDonationPlatform('kickstarter')}>
+                      <ExternalLink className="mr-2 h-4 w-4" />
+                      Kickstarter
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
                 <Button
                   variant="default"
                   size="sm"
-                  onClick={handleUnsupportedFeature}
+                  onClick={handleMemberClick}
                   className="px-4 py-2 text-sm rounded-lg bg-accent hover:bg-accent/90"
                 >
                   <Gift className="h-4 w-4 mr-1 text-red-500" />
@@ -140,7 +193,7 @@ const Header = ({ isDarkMode, setIsDarkMode, setIsDonateModalOpen, streak }) => 
                 <Button
                   variant="default"
                   size="sm"
-                  onClick={handleUnsupportedFeature}
+                  onClick={handleShopClick}
                   className="px-4 py-2 text-sm rounded-lg bg-accent hover:bg-accent/90"
                 >
                   <ShoppingCart className="h-4 w-4 mr-1 text-blue-500" />
@@ -164,20 +217,45 @@ const Header = ({ isDarkMode, setIsDarkMode, setIsDonateModalOpen, streak }) => 
           {!isSearchExpanded && (
             <div className="flex items-center justify-between w-full lg:hidden">
               <div className="flex space-x-2 flex-1">
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={() => setIsDonateModalOpen(true)}
-                  className="px-3 py-1.5 text-sm rounded-lg flex-1 bg-accent hover:bg-accent/90"
-                >
-                  <Heart className="h-4 w-4 mr-1 text-pink-500" />
-                  <span>Donate</span>
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="px-3 py-1.5 text-sm rounded-lg flex-1 bg-accent hover:bg-accent/90"
+                    >
+                      <Heart className="h-4 w-4 mr-1 text-pink-500" />
+                      <span>Donate</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-48">
+                    <DropdownMenuItem onClick={() => handleDonationPlatform('givesendgo')}>
+                      <ExternalLink className="mr-2 h-4 w-4" />
+                      GiveSendGo
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleDonationPlatform('gofundme')}>
+                      <ExternalLink className="mr-2 h-4 w-4" />
+                      GoFundMe
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleDonationPlatform('indiegogo')}>
+                      <ExternalLink className="mr-2 h-4 w-4" />
+                      Indiegogo
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleDonationPlatform('paypal')}>
+                      <ExternalLink className="mr-2 h-4 w-4" />
+                      PayPal
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleDonationPlatform('kickstarter')}>
+                      <ExternalLink className="mr-2 h-4 w-4" />
+                      Kickstarter
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
                 <Button
                   variant="default"
                   size="sm"
-                  onClick={handleUnsupportedFeature}
+                  onClick={handleMemberClick}
                   className="px-3 py-1.5 text-sm rounded-lg flex-1 bg-accent hover:bg-accent/90"
                 >
                   <Gift className="h-4 w-4 mr-1 text-red-500" />
@@ -187,7 +265,7 @@ const Header = ({ isDarkMode, setIsDarkMode, setIsDonateModalOpen, streak }) => 
                 <Button
                   variant="default"
                   size="sm"
-                  onClick={handleUnsupportedFeature}
+                  onClick={handleShopClick}
                   className="px-3 py-1.5 text-sm rounded-lg flex-1 bg-accent hover:bg-accent/90"
                 >
                   <ShoppingCart className="h-4 w-4 mr-1 text-blue-500" />
@@ -204,6 +282,9 @@ const Header = ({ isDarkMode, setIsDarkMode, setIsDonateModalOpen, streak }) => 
               )}
             </div>
           )}
+
+          {/* Separator Line */}
+          <div className="border-t border-white/30"></div>
 
           {/* Categories Section - Horizontal Scroll */}
           <div className="flex flex-col space-y-3">

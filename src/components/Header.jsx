@@ -43,13 +43,10 @@ const Header = ({ isDarkMode, setIsDarkMode, setIsDonateModalOpen, streak }) => 
           {/* Top row - Logo, Search, Theme */}
           <div className="flex items-center justify-between w-full">
             {/* Logo Section */}
-            <div className="flex items-center space-x-2 flex-shrink-0 min-w-0">
+            <div className="flex items-center flex-shrink-0 min-w-0">
               <Link to="/" className="w-8 h-8 lg:w-10 lg:h-10 flex-shrink-0">
                 <Logo />
               </Link>
-              <h1 className="text-lg lg:text-xl font-bold truncate min-w-0 hidden sm:block">
-                ItsActuallyGoodNews
-              </h1>
             </div>
 
             {/* Desktop Search - Always visible */}

@@ -4,51 +4,51 @@
 
 @layer base {
   :root {
-    --background: 40 33% 96%; /* #F8F6F2 */
-    --foreground: 224 71.4% 10%;
+    --background: 0 0% 100%; /* Pure white background */
+    --foreground: 0 0% 0%; /* Pure black text */
     --card: 0 0% 100%;
-    --card-foreground: 224 71.4% 10%;
+    --card-foreground: 0 0% 0%;
     --popover: 0 0% 100%;
-    --popover-foreground: 224 71.4% 10%;
+    --popover-foreground: 0 0% 0%;
     --primary: 239 49% 77%; /* #A5A6E2 */
     --primary-foreground: 0 0% 100%;
     --secondary: 170 45% 90%; /* Lighter Pastel Green */
     --secondary-foreground: 170 30% 30%;
-    --muted: 220 20% 90%;
-    --muted-foreground: 220 10% 45%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
     --accent: 16 100% 66%; /* coral */
     --accent-foreground: 0 0% 100%;
     --header-background: 170 45% 68%; /* #89D1C5 */
     --header-foreground: 0 0% 100%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
-    --border: 220 20% 85%;
-    --input: 220 20% 90%;
+    --border: 0 0% 90%;
+    --input: 0 0% 96%;
     --ring: 239 49% 70%;
     --radius: 0.5rem;
   }
   
   .dark {
-    --background: 224 30% 12%;
-    --foreground: 210 40% 98%;
-    --card: 224 30% 16%;
-    --card-foreground: 210 40% 98%;
-    --popover: 224 30% 12%;
-    --popover-foreground: 210 40% 98%;
+    --background: 0 0% 0%; /* Pure black background */
+    --foreground: 0 0% 100%; /* Pure white text */
+    --card: 0 0% 5%;
+    --card-foreground: 0 0% 100%;
+    --popover: 0 0% 0%;
+    --popover-foreground: 0 0% 100%;
     --primary: 239 49% 77%;
     --primary-foreground: 0 0% 100%;
     --secondary: 170 30% 20%;
     --secondary-foreground: 170 45% 90%;
-    --muted: 215 28% 25%;
-    --muted-foreground: 218 11% 65%;
+    --muted: 0 0% 10%;
+    --muted-foreground: 0 0% 65%;
     --accent: 16 100% 70%;
     --accent-foreground: 0 0% 100%;
     --header-background: 170 40% 30%;
     --header-foreground: 0 0% 100%;
     --destructive: 0 62.8% 50.6%;
     --destructive-foreground: 0 0% 100%;
-    --border: 215 28% 25%;
-    --input: 215 28% 25%;
+    --border: 0 0% 15%;
+    --input: 0 0% 10%;
     --ring: 239 49% 70%;
   }
   
@@ -59,12 +59,10 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
-    /* Fix webkit text size adjust error */
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
   }
   
-  /* Prevent layout shifts and FOUC */
   html {
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
@@ -77,84 +75,251 @@
     color: hsl(var(--header-foreground));
   }
 
-  /* Viral Stories - 2x1 newscard layout */
-  .viral-story-card {
-    @apply bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden;
-    /* Grid span 2 columns, height of 1 row */
-    grid-column: span 2;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    min-height: 200px;
+  /* VIRAL STORIES - Responsive: TALL on mobile, LONG on desktop */
+  .viral-newscard {
+    @apply bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden relative block;
+    transition: transform 0.2s ease;
+    position: relative;
   }
 
-  .viral-story-image {
-    @apply w-full h-full object-cover;
+  /* Mobile: TALL rectangles (2×1 ratio) - Height = 2 × Width - Scrollable like IG Reels */
+  @media (max-width: 1023px) {
+    .viral-newscard {
+      height: 400px; /* TALL for mobile */
+      width: 200px;
+      flex-shrink: 0;
+    }
+    
+    .viral-stories-container {
+      overflow-x: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      padding-bottom: 8px;
+    }
+    
+    .viral-stories-container::-webkit-scrollbar {
+      display: none;
+    }
+    
+    .viral-stories-grid {
+      display: flex;
+      gap: 16px;
+      padding-right: 16px;
+    }
   }
 
-  .viral-story-content {
-    @apply p-4 flex flex-col justify-center;
+  /* Desktop: LONG rectangles (1×2 ratio) - Width = 2 × Height - Spans full width */
+  @media (min-width: 1024px) {
+    .viral-newscard {
+      height: 200px; /* LONG for desktop */
+      width: 100%;
+      margin-bottom: 16px;
+    }
+    
+    .viral-stories-container {
+      width: 100%;
+    }
+    
+    .viral-stories-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      width: 100%;
+    }
   }
 
-  .viral-story-title {
-    @apply text-lg font-semibold text-gray-900 dark:text-white leading-tight;
+  .viral-newscard:hover {
+    transform: translateY(-2px);
+  }
+
+  .viral-newscard-image {
+    @apply absolute inset-0 w-full h-full object-cover;
+  }
+
+  .viral-newscard-overlay {
+    @apply absolute bottom-0 left-0 w-full;
+    background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.7) 30%, transparent 100%);
+    padding: 20px;
+  }
+
+  .viral-newscard-title {
+    @apply text-white font-bold leading-tight;
+    font-size: 16px;
     display: -webkit-box;
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.7);
   }
 
-  .viral-story-category {
-    @apply text-sm font-medium text-blue-600 dark:text-blue-400 mb-2;
+  .viral-newscard-badge {
+    @apply absolute top-3 right-3 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold;
   }
 
-  /* Trending section layout */
-  .trending-grid {
-    @apply grid gap-4;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  /* SIDEBAR NEWSCARDS - ALWAYS TALL (both mobile & desktop) */
+  .sidebar-newscard {
+    @apply bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden mb-4 relative block;
+    width: 100%;
+    height: 200px; /* TALL rectangles (2×1 ratio) */
+    transition: transform 0.2s ease;
   }
 
-  .viral-section {
-    @apply mb-8;
+  .sidebar-newscard:hover {
+    transform: translateY(-2px);
   }
 
-  .viral-section-title {
-    @apply text-xl font-bold mb-4 text-gray-900 dark:text-white;
+  .sidebar-newscard-image {
+    @apply absolute inset-0 w-full h-full object-cover;
   }
 
-  .viral-stories-grid {
-    @apply grid gap-4;
-    grid-template-columns: repeat(2, 1fr);
+  .sidebar-newscard-overlay {
+    @apply absolute bottom-0 left-0 w-full;
+    background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.7) 50%, transparent 100%);
+    padding: 16px;
   }
 
-  @media (max-width: 768px) {
-    .viral-story-card {
-      grid-column: span 1;
-      grid-template-columns: 1fr;
-      grid-template-rows: 120px 1fr;
+  .sidebar-newscard-title {
+    @apply text-white font-semibold leading-tight;
+    font-size: 14px;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  }
+
+  /* CATEGORY NEWSCARDS - REGULAR proportions */
+  .category-newscard {
+    @apply bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden relative block;
+    width: 100%;
+    height: 200px;
+    transition: transform 0.2s ease;
+  }
+
+  .category-newscard:hover {
+    transform: translateY(-2px);
+  }
+
+  .category-newscard-image {
+    @apply absolute inset-0 w-full h-full object-cover;
+  }
+
+  .category-newscard-overlay {
+    @apply absolute bottom-0 left-0 w-full;
+    background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.7) 50%, transparent 100%);
+    padding: 16px;
+  }
+
+  .category-newscard-title {
+    @apply text-white font-semibold leading-tight;
+    font-size: 15px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  }
+
+  .category-newscard-category {
+    @apply text-blue-300 text-xs font-medium mb-1;
+  }
+
+  /* TRENDING HEADLINES */
+  .trending-headlines {
+    @apply space-y-0;
+  }
+
+  .trending-headline {
+    @apply text-base font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer py-3 border-b border-gray-200 dark:border-gray-700;
+  }
+
+  .trending-headline:last-child {
+    @apply border-b-0;
+  }
+
+  /* SIDEBAR HEADLINES */
+  .sidebar-headlines {
+    @apply space-y-0;
+  }
+
+  .sidebar-headline {
+    @apply text-sm font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer py-2 border-b border-gray-200 dark:border-gray-700;
+  }
+
+  .sidebar-headline:last-child {
+    @apply border-b-0;
+  }
+
+  /* LAYOUT - Responsive with mobile-first trending */
+  .main-layout {
+    @apply flex flex-col gap-6 my-6;
+  }
+
+  /* Mobile: Trending first, then sidebars stacked */
+  @media (max-width: 1023px) {
+    .main-layout {
+      @apply flex-col;
     }
     
-    .viral-stories-grid {
-      grid-template-columns: 1fr;
+    .trending-main {
+      @apply order-1 w-full;
+    }
+    
+    .daily-reads-sidebar {
+      @apply order-2 w-full;
+    }
+    
+    .blindspot-sidebar {
+      @apply order-3 w-full;
     }
   }
 
-  /* Headlines styling */
-  .headline-item {
-    @apply py-3 border-b border-gray-200 dark:border-gray-700 last:border-b-0;
+  /* Desktop: 1/6 + 2/3 + 1/6 layout */
+  @media (min-width: 1024px) {
+    .main-layout {
+      @apply flex-row;
+    }
+    
+    .daily-reads-sidebar {
+      @apply order-1 w-1/6 min-w-0;
+    }
+    
+    .trending-main {
+      @apply order-2 w-2/3 min-w-0;
+    }
+    
+    .blindspot-sidebar {
+      @apply order-3 w-1/6 min-w-0;
+    }
   }
 
-  .headline-title {
-    @apply font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer;
+  /* Visual separators - only on desktop */
+  @media (min-width: 1024px) {
+    .daily-reads-separator {
+      @apply border-r border-gray-200 dark:border-gray-600 pr-4;
+    }
+
+    .blindspot-separator {
+      @apply border-l border-gray-200 dark:border-gray-600 pl-4;
+    }
   }
 
-  .headline-separator {
-    @apply border-b border-gray-300 dark:border-gray-600 my-2;
-    height: 1px;
+  /* Section styling */
+  .sidebar-section {
+    @apply space-y-4 w-full;
   }
 
-  /* INLINE ADS - Small, subtle ads between headlines */
+  .sidebar-title {
+    @apply text-lg font-bold text-gray-900 dark:text-white mb-4;
+  }
+
+  .sidebar-featured-cards {
+    @apply space-y-4 mb-4;
+  }
+
+  /* INLINE ADS */
   .inline-ad {
-    @apply bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md p-3 my-2 mx-0;
+    @apply bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md p-3 my-2;
     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
     min-height: 60px;
     display: flex;
@@ -178,65 +343,82 @@
 
   .inline-ad-title {
     @apply text-sm font-medium text-gray-700 dark:text-gray-300 mb-1;
-    line-height: 1.3;
   }
 
   .inline-ad-description {
     @apply text-xs text-gray-500 dark:text-gray-400;
-    line-height: 1.2;
   }
 
   .inline-ad-image {
     @apply w-12 h-12 bg-gray-200 dark:bg-gray-600 rounded flex-shrink-0 overflow-hidden;
   }
 
-  .inline-ad-image img {
-    @apply w-full h-full object-cover;
-  }
-
   .inline-ad-badge {
     @apply absolute top-1 right-1 bg-gray-400 text-white text-xs px-1 py-0.5 rounded opacity-60;
     font-size: 10px;
-    line-height: 1;
   }
 
-  /* Trending headlines with inline ads */
-  .trending-headlines {
-    @apply space-y-0 mt-6; /* Remove default spacing for custom control */
+  /* STREAK DISPLAY */
+  .streak-display {
+    @apply fixed top-20 right-4 z-40 bg-white dark:bg-black border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 shadow-sm;
+    backdrop-filter: blur(10px);
+    background-color: rgba(255, 255, 255, 0.9);
   }
 
-  .trending-headline {
-    @apply text-base font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer py-3 border-b border-gray-200 dark:border-gray-700;
+  .dark .streak-display {
+    background-color: rgba(0, 0, 0, 0.9);
   }
 
-  .trending-headline:last-child {
-    @apply border-b-0;
+  .streak-number {
+    @apply text-orange-500 font-bold text-lg;
   }
 
-  /* Sidebar headlines with inline ads */
-  .sidebar-headlines {
-    @apply space-y-0; /* Remove default spacing for custom control */
+  .streak-text {
+    @apply text-gray-600 dark:text-gray-300 text-xs;
   }
 
-  .sidebar-headline {
-    @apply text-sm font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer py-2 border-b border-gray-200 dark:border-gray-700;
+  .streak-icon {
+    @apply text-orange-500 mr-1;
   }
 
-  .sidebar-headline:last-child {
-    @apply border-b-0;
+  /* Mobile adjustments */
+  @media (max-width: 768px) {
+    .viral-newscard-title {
+      font-size: 14px;
+    }
+    
+    .sidebar-newscard {
+      height: 160px;
+    }
+    
+    .category-newscard {
+      height: 160px;
+    }
+    
+    .streak-display {
+      @apply top-16 right-2 px-2 py-1;
+    }
+    
+    .inline-ad {
+      @apply p-2;
+      min-height: 50px;
+    }
   }
 
-  /* Related stories with inline ads */
+  /* Force blindspot visibility */
+  .blindspot-sidebar {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  /* Related stories */
   .related-stories-list {
-    @apply space-y-0; /* Remove default spacing for custom control */
+    @apply space-y-0;
   }
 
   .related-story-item {
-    @apply border-b border-gray-200 dark:border-gray-700 pb-3 pt-3 first:pt-0;
-  }
-
-  .related-story-item:last-child {
-    @apply border-b-0 pb-0;
+    @apply border-b border-gray-200 dark:border-gray-700 pb-3 pt-3 first:pt-0 last:border-b-0 last:pb-0;
   }
 
   .related-story-link {
@@ -245,284 +427,5 @@
 
   .related-story-title {
     @apply font-bold text-base leading-tight text-gray-900 dark:text-white;
-  }
-
-  /* Responsive inline ads */
-  @media (max-width: 768px) {
-    .inline-ad {
-      @apply p-2;
-      min-height: 50px;
-    }
-
-    .inline-ad-image {
-      @apply w-10 h-10;
-    }
-
-    .inline-ad-title {
-      @apply text-xs;
-    }
-
-    .inline-ad-description {
-      @apply text-xs;
-      display: none; /* Hide description on mobile for cleaner look */
-    }
-  }
-
-  /* Section separators */
-  .section-separator {
-    @apply border-r border-white dark:border-gray-600;
-    width: 1px;
-    height: 100%;
-  }
-
-  .section-separator-horizontal {
-    @apply border-t border-white dark:border-gray-600 my-6;
-    height: 1px;
-  }
-
-  /* Daily Reads and Blindspot styling */
-  .sidebar-section {
-    @apply space-y-4;
-  }
-
-  .sidebar-title {
-    @apply text-lg font-bold text-gray-900 dark:text-white mb-4;
-  }
-
-  /* Sidebar newscard - 2:1 aspect ratio (width 2x height) */
-  .sidebar-newscard {
-    @apply bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden mb-4 relative;
-    width: 100%;
-    height: 120px; /* Fixed height for 2:1 ratio */
-    display: block;
-    transition: transform 0.2s ease;
-  }
-
-  .sidebar-newscard:hover {
-    transform: translateY(-2px);
-  }
-
-  .sidebar-newscard-image {
-    @apply w-full h-full object-cover absolute inset-0;
-  }
-
-  .sidebar-newscard-overlay {
-    @apply absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/85 via-black/60 to-transparent p-3;
-  }
-
-  .sidebar-newscard-title {
-    @apply text-sm font-semibold text-white leading-tight;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  /* Remove summary from sidebar cards */
-  .sidebar-newscard-summary {
-    display: none;
-  }
-
-  /* Responsive adjustments for sidebar cards */
-  @media (max-width: 1024px) {
-    .sidebar-newscard {
-      height: 100px; /* Slightly smaller on tablets */
-    }
-  }
-
-  @media (max-width: 768px) {
-    .sidebar-newscard {
-      height: 140px; /* Taller on mobile for better text readability */
-    }
-    
-    .sidebar-newscard-title {
-      @apply text-base; /* Larger text on mobile */
-    }
-  }
-
-  /* Layout grid improvements - 1/3 sidebars, 2/3 main */
-  .main-layout {
-    @apply grid grid-cols-1 lg:grid-cols-12 gap-6;
-  }
-
-  .daily-reads-sidebar {
-    @apply lg:col-span-2; /* 2/12 = 1/6 each sidebar */
-  }
-
-  .trending-main {
-    @apply lg:col-span-8; /* 8/12 = 2/3 for trending */
-  }
-
-  .blindspot-sidebar {
-    @apply lg:col-span-2; /* 2/12 = 1/6 each sidebar */
-  }
-
-  /* Visual separators */
-  .daily-reads-separator {
-    @apply border-r border-white dark:border-gray-600 pr-4 h-full;
-  }
-
-  .blindspot-separator {
-    @apply border-l border-white dark:border-gray-600 pl-4 h-full;
-  }
-
-  /* Story detail page improvements */
-  .story-detail-container {
-    @apply max-w-4xl mx-auto my-8;
-  }
-
-  .story-detail-article {
-    @apply bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-8;
-  }
-
-  .story-detail-category {
-    @apply text-sm font-semibold text-blue-600 dark:text-blue-400 uppercase mb-4;
-  }
-
-  .story-detail-title {
-    @apply text-3xl font-bold mb-4 leading-tight text-gray-900 dark:text-white;
-  }
-
-  .story-detail-image {
-    @apply w-full h-64 object-cover rounded-lg mb-6;
-  }
-
-  .story-detail-content {
-    @apply prose max-w-none text-gray-700 dark:text-gray-300 text-lg leading-relaxed mb-6;
-  }
-
-  .story-detail-meta {
-    @apply flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700;
-  }
-
-  .story-detail-source {
-    @apply text-sm text-gray-500 dark:text-gray-400;
-  }
-
-  .story-detail-read-more {
-    @apply text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium;
-  }
-
-  /* Related stories section */
-  .related-stories-container {
-    @apply bg-gray-50 dark:bg-gray-900 rounded-lg p-6;
-  }
-
-  .related-stories-title {
-    @apply text-xl font-bold mb-4 text-gray-900 dark:text-white;
-  }
-
-  /* Responsive improvements */
-  @media (max-width: 1024px) {
-    .main-layout {
-      @apply grid-cols-1 gap-4;
-    }
-    
-    .daily-reads-separator,
-    .blindspot-separator {
-      @apply border-r-0 border-l-0 border-t border-b pr-0 pl-0 py-4;
-    }
-  }
-
-  /* Loading states */
-  .loading-spinner {
-    @apply animate-spin rounded-full border-b-2 border-primary;
-  }
-
-  /* Hover effects */
-  .card-hover {
-    @apply hover:shadow-md transition-shadow duration-200;
-  }
-
-  /* Category badges */
-  .category-badge {
-    @apply inline-block px-2 py-1 text-xs font-semibold rounded-full;
-  }
-
-  .category-health {
-    @apply bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200;
-  }
-
-  .category-tech {
-    @apply bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200;
-  }
-
-  .category-environment {
-    @apply bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200;
-  }
-
-  .category-science {
-    @apply bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200;
-  }
-
-  .category-education {
-    @apply bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200;
-  }
-
-  .category-humanitarian {
-    @apply bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200;
-  }
-
-  /* Animation for inline ads */
-  .inline-ad-enter {
-    animation: slideInAd 0.3s ease-out;
-  }
-
-  @keyframes slideInAd {
-    from {
-      opacity: 0;
-      transform: translateY(-10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  /* Subtle pulse effect for ads */
-  .inline-ad-pulse {
-    animation: pulseAd 3s ease-in-out infinite;
-  }
-
-  @keyframes pulseAd {
-    0%, 100% {
-      opacity: 1;
-    }
-    50% {
-      opacity: 0.9;
-    }
-  }
-
-  /* Ad frequency control classes */
-  .ad-spacing-3 > .inline-ad:nth-child(3n) {
-    display: block;
-  }
-
-  .ad-spacing-4 > .inline-ad:nth-child(4n) {
-    display: block;
-  }
-
-  .ad-spacing-5 > .inline-ad:nth-child(5n) {
-    display: block;
-  }
-
-  /* Hide ads by default, show only at specific intervals */
-  .headline-list .inline-ad {
-    display: none;
-  }
-
-  /* Show ads every 3rd item in trending headlines */
-  .trending-headlines .inline-ad:nth-child(6n+3) {
-    display: flex;
-  }
-
-  /* Show ads every 4th item in sidebar headlines */
-  .sidebar-headlines .inline-ad:nth-child(8n+4) {
-    display: flex;
-  }
-
-  /* Show ads every 3rd item in related stories */
-  .related-stories-list .inline-ad:nth-child(6n+3) {
-    display: flex;
   }
 }

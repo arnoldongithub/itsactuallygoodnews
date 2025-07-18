@@ -221,7 +221,7 @@ const CategoryPage = ({ setIsDonateModalOpen }) => {
             <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredNews.map((item) => (
               <NewsCard key={item.id} article={item} />
             ))}
@@ -294,10 +294,17 @@ const HomePage = ({ setIsDonateModalOpen }) => {
         setTrendingNews(trending);
         setDailyReads(daily);
         setBlindspots(blind);
+        console.log('Blindspot stories loaded:', blind.length); // Debug log
         setLoading(false);
       })
       .catch((error) => {
         console.error('Failed to load news:', error);
+        
+        // Set fallback data to ensure sections show
+        setTrendingNews([]);
+        setDailyReads([]);
+        setBlindspots([{ id: 'fallback', title: 'Loading blindspot stories...', category: 'Loading' }]);
+        
         toast({ 
           title: 'Error', 
           description: 'Failed to load news', 
@@ -361,10 +368,22 @@ const HomePage = ({ setIsDonateModalOpen }) => {
           </div>
         </main>
 
-        {/* Blindspot - Right Sidebar (1/6 width) */}
-        <aside className="blindspot-sidebar">
+        {/* Blindspot - Right Sidebar (1/6 width) - FORCE VISIBLE */}
+        <aside className="blindspot-sidebar" style={{ display: 'block !important' }}>
           <div className="blindspot-separator">
             <Blindspot stories={blindspots} />
+            {/* Debug: Show even if empty */}
+            {blindspots.length === 0 && (
+              <div className="sidebar-section">
+                <h2 className="sidebar-title">
+                  <svg className="inline-block w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  Blindspot
+                </h2>
+                <p className="text-gray-500 text-sm">Loading underreported stories...</p>
+              </div>
+            )}
           </div>
         </aside>
       </div>

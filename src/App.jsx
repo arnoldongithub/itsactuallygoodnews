@@ -310,17 +310,10 @@ const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
         setTrendingNews(trending);
         setDailyReads(daily);
         setBlindspots(blind);
-        console.log('Blindspot stories loaded:', blind.length); // Debug log
         setLoading(false);
       })
       .catch((error) => {
         console.error('Failed to load news:', error);
-        
-        // Set fallback data to ensure sections show
-        setTrendingNews([]);
-        setDailyReads([]);
-        setBlindspots([{ id: 'fallback', title: 'Loading blindspot stories...', category: 'Loading' }]);
-        
         toast({ 
           title: 'Error', 
           description: 'Failed to load news', 
@@ -332,8 +325,13 @@ const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen px-4">
-        <Header setIsDonateModalOpen={setIsDonateModalOpen} />
+      <div className="min-h-screen bg-white dark:bg-black">
+        <Header 
+          setIsDonateModalOpen={setIsDonateModalOpen} 
+          isDarkMode={isDarkMode} 
+          setIsDarkMode={setIsDarkMode}
+          streak={streak}
+        />
         <div className="flex justify-center items-center min-h-[400px]">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
@@ -382,39 +380,6 @@ const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
         <aside className="blindspot-sidebar">
           <div className="blindspot-separator">
             <Blindspot stories={blindspots} />
-          </div>
-        </aside>
-      </div>
-      
-      <Footer />
-    </div>
-  );={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-              Trending Stories
-            </h2>
-            <TrendingStories stories={trendingNews} />
-            {trendingNews.length === 0 && (
-              <p className="text-gray-500 text-center py-8">No trending stories available</p>
-            )}
-          </div>
-        </main>
-
-        {/* Blindspot - Right Sidebar (1/6 width) - FORCE VISIBLE */}
-        <aside className="blindspot-sidebar" style={{ display: 'block !important' }}>
-          <div className="blindspot-separator">
-            <Blindspot stories={blindspots} />
-            {/* Debug: Show even if empty */}
-            {blindspots.length === 0 && (
-              <div className="sidebar-section">
-                <h2 className="sidebar-title">
-                  <svg className="inline-block w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                  Blindspot
-                </h2>
-                <p className="text-gray-500 text-sm">Loading underreported stories...</p>
-              </div>
-            )}
           </div>
         </aside>
       </div>

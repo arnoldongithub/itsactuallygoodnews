@@ -1,89 +1,75 @@
-import { createClient } from '@supabase/supabase-js';
+import supabase from './supabase';
 
-// Setup your Supabase client
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey);
-
-// Fetch top trending stories
-export const fetchTrendingStories = async (limit = 20) => {
+export async function fetchTrendingNews() {
   const { data, error } = await supabase
     .from('news')
     .select('*')
+    .eq('category', 'TrendingStories')
     .order('published_at', { ascending: false })
-    .limit(limit);
+    .limit(12);
 
-  if (error) {
-    console.error('Error fetching trending stories:', error);
-    return [];
-  }
-
+  if (error) throw error;
   return data;
-};
+}
 
-// Fetch daily reads (or similar logic)
-export const fetchDailyReads = async (limit = 10) => {
+export async function fetchDailyReads() {
   const { data, error } = await supabase
     .from('news')
     .select('*')
+    .eq('category', 'DailyReads')
     .order('published_at', { ascending: false })
-    .limit(limit)
-    .neq('category', 'Blindspot'); // Optional filter
+    .limit(10);
 
-  if (error) {
-    console.error('Error fetching daily reads:', error);
-    return [];
-  }
-
+  if (error) throw error;
   return data;
-};
+}
 
-// Fetch blindspot stories
-export const fetchBlindspotStories = async (limit = 5) => {
+export async function fetchBlindspotStories() {
   const { data, error } = await supabase
     .from('news')
     .select('*')
     .eq('category', 'Blindspot')
     .order('published_at', { ascending: false })
-    .limit(limit);
+    .limit(10);
 
-  if (error) {
-    console.error('Error fetching blindspot stories:', error);
-    return [];
-  }
-
+  if (error) throw error;
   return data;
-};
+}
 
-// General-purpose fetch with category
-export const fetchNews = async (category, limit = 10) => {
+export async function fetchNews(category = '') {
   const { data, error } = await supabase
     .from('news')
     .select('*')
     .eq('category', category)
     .order('published_at', { ascending: false })
-    .limit(limit);
+    .limit(10);
 
-  if (error) {
-    console.error(`Error fetching news for ${category}:`, error);
-    return [];
-  }
-
+  if (error) throw error;
   return data;
-};
+}
 
-// Optional: wrapper hook for preloading
-export const useHomepageData = async () => {
-  const [trending, blindspot, dailyReads] = await Promise.all([
-    fetchTrendingStories(20),
-    fetchBlindspotStories(5),
-    fetchDailyReads(10),
-  ]);
+// Optimized fetcher for homepage
+export async function useHomepageData() {
+  try {
+    const [trending, dailyReads, blindspot] = await Promise.all([
+      fetchTrendingNews(),
+      fetchDailyReads(),
+      fetchBlindspotStories(),
+    ]);
 
-  return {
-    trending,
-    blindspot,
-    dailyReads,
-  };
-};
+    return {
+      data: { trending, dailyReads, blindspot },
+      loading: false,
+      error: null,
+      refetch: useHomepageData, // provide ability to refetch
+    };
+  } catch (err) {
+    return {
+      data: null,
+      loading: false,
+      error: err.message || 'Error loading homepage data',
+      refetch: useHomepageData,
+    };
+  }
+}
 

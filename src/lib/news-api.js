@@ -1,4 +1,4 @@
-import supabase from './supabase';
+import supabase from './supa.js';
 
 export async function fetchTrendingNews() {
   const { data, error } = await supabase

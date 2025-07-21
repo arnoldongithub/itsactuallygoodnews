@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { motion, AnimatePresence } from 'framer-motion';
 import { fetchTrendingNews, fetchDailyReads, fetchBlindspotStories, fetchNews, useHomepageData } from '@/lib/news-api';
 
-// ENHANCED Story Summary Page Component with better data fetching
+// ENHANCED Story Summary Page Component with bullet point summaries
 const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -22,6 +22,20 @@ const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
   const [relatedStories, setRelatedStories] = useState([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+
+  // Helper function to convert text to bullet points
+  const createBulletPoints = (text) => {
+    if (!text) return [];
+    
+    // Split by sentences and clean up
+    const sentences = text
+      .split(/[.!?]+/)
+      .map(s => s.trim())
+      .filter(s => s.length > 10)
+      .slice(0, 5); // Max 5 bullet points
+    
+    return sentences.map(sentence => sentence.charAt(0).toUpperCase() + sentence.slice(1));
+  };
 
   useEffect(() => {
     const fetchStory = async () => {
@@ -125,7 +139,11 @@ const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
             The story you're looking for doesn't exist or may have been removed.
           </p>
           <div className="space-x-4">
-            <Button onClick={() => navigate('/')} variant="default">
+            <Button 
+              onClick={() => navigate('/')} 
+              className="btn-primary"
+              style={{ backgroundColor: 'hsl(var(--purple-text))' }}
+            >
               Go Home
             </Button>
             <Button onClick={() => window.history.back()} variant="outline">
@@ -138,6 +156,9 @@ const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
     );
   }
 
+  const summaryText = story.summary || story.content || '';
+  const bulletPoints = createBulletPoints(summaryText);
+
   return (
     <div className="min-h-screen bg-white dark:bg-black">
       <Header 
@@ -147,14 +168,17 @@ const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
       />
       
       <div className="max-w-4xl mx-auto my-8 px-4">
-        <article className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-8">
-          <div className="mb-4">
-            <span className="text-sm font-semibold text-blue-600 dark:text-blue-400 uppercase">
+        <article className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 mb-8 border border-gray-100 dark:border-gray-700">
+          <div className="mb-6">
+            <span 
+              className="text-sm font-semibold uppercase tracking-wide px-3 py-1 rounded-full text-white" 
+              style={{ backgroundColor: 'hsl(var(--orange-accent))' }}
+            >
               {story.category}
             </span>
           </div>
           
-          <h1 className="text-3xl font-bold mb-4 leading-tight text-gray-900 dark:text-white">
+          <h1 className="text-4xl font-bold mb-6 leading-tight text-gray-900 dark:text-white">
             {story.title}
           </h1>
           
@@ -162,48 +186,63 @@ const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
             <img 
               src={story.image_url} 
               alt={story.title}
-              className="w-full h-64 object-cover rounded-lg mb-6"
+              className="w-full h-80 object-cover rounded-xl mb-8 shadow-md"
               onError={(e) => {
                 e.target.style.display = 'none';
               }}
             />
           )}
           
-          <div className="prose max-w-none dark:prose-invert">
-            <p className="text-gray-700 dark:text-gray-300 text-lg leading-relaxed mb-6">
-              {story.content || story.summary || 'Full content not available for this story. Please click "Read Full Article" below to view the complete story.'}
-            </p>
-            
-            {story.summary && story.content && story.summary !== story.content && (
-              <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">Summary:</h3>
-                <p className="text-gray-600 dark:text-gray-300">{story.summary}</p>
-              </div>
-            )}
-          </div>
+          {/* SINGLE BULLET POINT SUMMARY */}
+          {bulletPoints.length > 0 && (
+            <div className="story-summary">
+              <h3>Story Summary</h3>
+              <ul className="summary-bullets">
+                {bulletPoints.map((point, index) => (
+                  <li key={index}>{point}</li>
+                ))}
+              </ul>
+            </div>
+          )}
           
-          <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-600">
-            <div className="text-sm text-gray-500 dark:text-gray-400">
-              <p>Source: {story.source || story.source_name || 'Unknown'}</p>
-              <p>Published: {new Date(story.published_at).toLocaleDateString()}</p>
-              {story.author && <p>Author: {story.author}</p>}
+          <div className="flex items-center justify-between pt-6 border-t border-gray-200 dark:border-gray-600">
+            <div className="text-sm text-gray-500 dark:text-gray-400 space-y-1">
+              <p><strong>Source:</strong> {story.source || story.source_name || 'Unknown'}</p>
+              <p><strong>Published:</strong> {new Date(story.published_at).toLocaleDateString()}</p>
+              {story.author && <p><strong>Author:</strong> {story.author}</p>}
+              {story.positivity_score && (
+                <p><strong>Positivity Score:</strong> 
+                  <span 
+                    className="ml-2 px-2 py-1 rounded text-xs font-semibold text-white"
+                    style={{ backgroundColor: 'hsl(var(--orange-accent))' }}
+                  >
+                    {story.positivity_score}/10
+                  </span>
+                </p>
+              )}
             </div>
             
             <a 
               href={story.url} 
               target="_blank" 
               rel="noopener noreferrer"
-              className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
+              className="px-6 py-3 rounded-lg font-medium transition-all duration-300 hover:shadow-lg text-white"
+              style={{ backgroundColor: 'hsl(var(--purple-text))' }}
             >
               Read Full Article →
             </a>
           </div>
         </article>
 
-        {/* Related Stories */}
+        {/* Enhanced Related Stories */}
         {relatedStories.length > 0 && (
-          <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-6">
-            <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">Related Stories</h2>
+          <div className="bg-gray-50 dark:bg-gray-800 rounded-xl shadow-lg p-8 border border-gray-100 dark:border-gray-700">
+            <h2 
+              className="text-2xl font-bold mb-6 text-gray-900 dark:text-white" 
+              style={{ color: 'hsl(var(--purple-text))' }}
+            >
+              Related Stories
+            </h2>
             <div className="related-stories-list">
               {relatedStories.map((relatedStory, index) => (
                 <React.Fragment key={relatedStory.id}>

@@ -97,7 +97,7 @@
     background: hsl(var(--background)); /* Pure white background */
   }
 
-  /* Mobile Layout - NO DEBUG BORDERS */
+  /* Mobile Layout */
   @media (max-width: 1023px) {
     .main-layout {
       @apply flex-col px-4 gap-6;
@@ -121,7 +121,7 @@
     }
   }
 
-  /* Desktop Layout with clean spacing */
+  /* Desktop Layout with clean spacing and level alignment */
   @media (min-width: 1024px) {
     .main-layout {
       @apply flex-row px-8;
@@ -129,14 +129,17 @@
       margin: 0 auto;
       gap: 3rem;
       background: hsl(var(--background));
+      align-items: flex-start; /* LEVEL ALIGNMENT FIX */
     }
     
     .daily-reads-sidebar {
       @apply order-1 w-1/6 min-w-0;
+      margin-top: 0; /* Remove any top margins that cause misalignment */
     }
     
     .trending-main {
       @apply order-2 w-2/3 min-w-0;
+      margin-top: 0; /* Remove any top margins that cause misalignment */
     }
     
     .blindspot-sidebar {
@@ -145,7 +148,16 @@
       visibility: visible !important;
       opacity: 1 !important;
       min-height: 400px;
+      margin-top: 0; /* Remove any top margins that cause misalignment */
     }
+  }
+
+  /* === HALF UNIT SPACING FOR NEWSCARDS === */
+  .sidebar-section {
+    @apply space-y-6 w-full;
+    min-height: 400px;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
   }
 
   /* === SOURCE & POSITIVITY BAR === */
@@ -158,6 +170,7 @@
     margin-bottom: 8px;
     border-radius: 6px;
     border-left: 4px solid hsl(var(--orange-accent));
+    width: 100%;
   }
 
   .source-info {
@@ -179,6 +192,7 @@
     justify-content: center;
     font-size: 10px;
     font-weight: 700;
+    color: hsl(var(--foreground));
   }
 
   .positivity-score {
@@ -307,6 +321,42 @@
     text-shadow: 0 2px 4px rgba(0,0,0,0.7);
   }
 
+  /* === CATEGORY NEWSCARDS - REGULAR proportions === */
+  .category-newscard {
+    @apply bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden relative block;
+    width: 100%;
+    aspect-ratio: 4/3;
+    transition: all 0.3s ease;
+  }
+
+  .category-newscard:hover {
+    transform: translateY(-2px);
+  }
+
+  .category-newscard-image {
+    @apply absolute inset-0 w-full h-full object-cover;
+  }
+
+  .category-newscard-overlay {
+    @apply absolute bottom-0 left-0 w-full;
+    background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.7) 50%, transparent 100%);
+    padding: 16px;
+  }
+
+  .category-newscard-title {
+    @apply text-white font-semibold leading-tight;
+    font-size: 15px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  }
+
+  .category-newscard-category {
+    @apply text-blue-300 text-xs font-medium mb-1;
+  }
+
   /* === HEADLINE DISPLAY - CLEAN STYLING === */
   .trending-headlines {
     @apply space-y-0;
@@ -321,11 +371,6 @@
 
   .trending-headline:last-child {
     @apply border-b-0;
-  }
-
-  .trending-headline a {
-    @apply text-gray-800 dark:text-white hover:text-purple-600 dark:hover:text-purple-400 transition-colors;
-    text-decoration: none;
   }
 
   .trending-headline h3 {
@@ -351,11 +396,6 @@
     @apply border-b-0;
   }
 
-  .sidebar-headline a {
-    @apply text-gray-800 dark:text-white hover:text-purple-600 dark:hover:text-purple-400 transition-colors;
-    text-decoration: none;
-  }
-
   .sidebar-headline h3 {
     @apply font-medium text-sm leading-tight;
     font-family: 'Poppins', sans-serif;
@@ -373,12 +413,6 @@
     .blindspot-separator {
       @apply border-l border-gray-100 dark:border-gray-700 pl-8;
     }
-  }
-
-  /* === SECTION STYLING === */
-  .sidebar-section {
-    @apply space-y-6 w-full;
-    min-height: 400px;
   }
 
   .sidebar-title {
@@ -411,6 +445,12 @@
     min-height: 400px;
   }
 
+  .force-visible {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
   /* === CONTAINER IMPROVEMENTS === */
   .trending-main > div {
     @apply bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8;
@@ -422,16 +462,89 @@
     width: 100%;
   }
 
+  /* === STORY SUMMARY BULLET POINTS === */
+  .story-summary {
+    background: hsl(var(--secondary) / 0.3);
+    border-radius: 12px;
+    padding: 24px;
+    margin: 24px 0;
+    border-left: 4px solid hsl(var(--orange-accent));
+  }
+
+  .story-summary h3 {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    margin-bottom: 16px;
+    color: hsl(var(--purple-text));
+  }
+
+  .summary-bullets {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .summary-bullets li {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 1.6;
+    color: hsl(var(--foreground));
+    position: relative;
+    padding-left: 24px;
+    margin-bottom: 12px;
+  }
+
+  .summary-bullets li::before {
+    content: "•";
+    color: hsl(var(--orange-accent));
+    font-weight: bold;
+    position: absolute;
+    left: 0;
+    font-size: 20px;
+    line-height: 1;
+  }
+
+  /* === ENHANCED RELATED STORIES === */
+  .related-stories-list {
+    @apply space-y-0;
+  }
+
+  .related-story-item {
+    @apply border-b border-gray-100 dark:border-gray-700 pb-4 pt-4 first:pt-0 last:border-b-0 last:pb-0;
+  }
+
+  .related-story-link {
+    @apply block transition-colors;
+  }
+
+  .related-story-title {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 18px;
+    line-height: 1.4;
+    color: hsl(var(--foreground));
+    word-break: break-word;
+    overflow-wrap: break-word;
+    transition: color 0.3s ease;
+  }
+
+  .related-story-title:hover {
+    color: hsl(var(--purple-text));
+  }
+
   /* === CATEGORY BUTTONS - ORANGE THEME === */
   .category-button {
     font-family: 'Poppins', sans-serif;
     font-weight: 500;
     transition: all 0.3s ease;
+    border-radius: 24px;
   }
 
   .category-button.active {
-    background: hsl(var(--orange-accent));
-    color: white;
+    background: hsl(var(--orange-accent)) !important;
+    color: white !important;
     box-shadow: 0 4px 12px hsl(var(--orange-accent) / 0.3);
   }
 
@@ -453,6 +566,7 @@
     font-family: 'Poppins', sans-serif;
     font-weight: 500;
     transition: all 0.3s ease;
+    border: none;
   }
 
   .btn-primary:hover {
@@ -461,59 +575,74 @@
     box-shadow: 0 6px 16px hsl(var(--purple-text) / 0.3);
   }
 
-  /* === RELATED STORIES - ENHANCED TYPOGRAPHY === */
-  .related-stories-list {
-    @apply space-y-0;
+  /* === INLINE ADS - FULL WIDTH FIX === */
+  .w-full {
+    width: 100% !important;
+    max-width: 100% !important;
   }
 
-  .related-story-item {
-    @apply border-b border-gray-100 dark:border-gray-700 pb-4 pt-4 first:pt-0 last:border-b-0 last:pb-0;
+  /* Ensure ads take full container width */
+  .inline-ad,
+  .inline-ad > *,
+  .inline-ad a {
+    width: 100% !important;
+    display: block !important;
   }
 
-  .related-story-link {
-    @apply block hover:text-purple-600 dark:hover:text-purple-400 transition-colors;
+  /* === INLINE ADS STYLING === */
+  .inline-ad {
+    width: 100% !important;
+    margin: 16px 0;
   }
 
-  .related-story-title {
-    @apply font-semibold text-lg leading-tight text-gray-900 dark:text-white;
-    font-family: 'Poppins', sans-serif;
-    font-weight: 600;
-    word-break: break-word;
-    overflow-wrap: break-word;
-    line-height: 1.4;
+  .inline-ad a {
+    display: block !important;
+    width: 100% !important;
+    text-decoration: none;
   }
 
-  /* === SUMMARY BULLET POINTS === */
-  .story-summary {
-    @apply bg-gray-50 dark:bg-gray-800 rounded-lg p-6 my-6;
-    border-left: 4px solid hsl(var(--orange-accent));
+  .inline-ad-content {
+    @apply flex-1 pr-3;
   }
 
-  .story-summary h3 {
-    @apply font-bold text-lg mb-4;
-    font-family: 'Poppins', sans-serif;
-    color: hsl(var(--purple-text));
+  .inline-ad-title {
+    @apply text-sm font-medium text-gray-700 dark:text-gray-300 mb-1;
   }
 
-  .summary-bullets {
-    @apply space-y-2;
+  .inline-ad-description {
+    @apply text-xs text-gray-500 dark:text-gray-400;
   }
 
-  .summary-bullets li {
-    @apply text-gray-700 dark:text-gray-300 leading-relaxed;
-    font-family: 'Poppins', sans-serif;
-    font-weight: 400;
-    position: relative;
-    padding-left: 1.5rem;
+  .inline-ad-image {
+    @apply w-12 h-12 bg-gray-200 dark:bg-gray-600 rounded flex-shrink-0 overflow-hidden;
   }
 
-  .summary-bullets li::before {
-    content: "•";
-    color: hsl(var(--orange-accent));
-    font-weight: bold;
-    position: absolute;
-    left: 0;
-    font-size: 1.2em;
+  .inline-ad-badge {
+    @apply absolute top-1 right-1 bg-gray-400 text-white text-xs px-1 py-0.5 rounded opacity-60;
+    font-size: 10px;
+  }
+
+  /* === STREAK DISPLAY === */
+  .streak-display {
+    @apply fixed top-20 right-4 z-40 bg-white dark:bg-black border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 shadow-sm;
+    backdrop-filter: blur(10px);
+    background-color: rgba(255, 255, 255, 0.9);
+  }
+
+  .dark .streak-display {
+    background-color: rgba(0, 0, 0, 0.9);
+  }
+
+  .streak-number {
+    @apply text-orange-500 font-bold text-lg;
+  }
+
+  .streak-text {
+    @apply text-gray-600 dark:text-gray-300 text-xs;
+  }
+
+  .streak-icon {
+    @apply text-orange-500 mr-1;
   }
 
   /* === MOBILE RESPONSIVENESS === */
@@ -521,6 +650,11 @@
     .main-layout {
       padding: 0 1rem;
       gap: 1.5rem;
+    }
+    
+    .sidebar-section {
+      padding-left: 0.25rem;
+      padding-right: 0.25rem;
     }
     
     .sidebar-newscard {
@@ -533,16 +667,36 @@
     }
 
     .related-story-title {
-      @apply text-base;
+      font-size: 16px;
     }
     
     .viral-newscard-title {
       font-size: 16px;
     }
+    
+    .source-positivity-bar {
+      padding: 6px 10px;
+      font-size: 11px;
+    }
+    
+    .story-summary {
+      padding: 16px;
+      margin: 16px 0;
+    }
+    
+    .story-summary h3 {
+      font-size: 16px;
+    }
+    
+    .summary-bullets li {
+      font-size: 14px;
+      padding-left: 20px;
+    }
+    
+    .streak-display {
+      @apply top-16 right-2 px-2 py-1;
+    }
   }
-
-  /* === REMOVED DEBUG BORDERS === */
-  /* All debug styling removed for clean UI */
 
   /* === SCROLLBAR STYLING === */
   .scrollbar-none {

@@ -56,35 +56,42 @@ const InlineAd = ({
   };
 
   return (
-    <div className={`inline-ad inline-ad-enter ${className}`}>
+    <div className={`w-full my-4 ${className}`}>
       <a 
         href={selectedAd.clickUrl}
         onClick={handleClick}
-        className="flex items-center w-full no-underline"
+        className="block w-full no-underline"
       >
-        <div className="inline-ad-content">
-          <div className="inline-ad-title">
-            {selectedAd.title}
-          </div>
-          <div className="inline-ad-description">
-            {selectedAd.description}
-          </div>
-        </div>
-        
-        <div className="inline-ad-image relative">
-          {selectedAd.imageUrl ? (
-            <img 
-              src={selectedAd.imageUrl} 
-              alt={selectedAd.title}
-              className="rounded"
-            />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-blue-400 to-blue-600 rounded flex items-center justify-center">
-              <span className="text-white text-xs font-bold">AD</span>
+        <div className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-4 hover:shadow-md transition-all duration-300 w-full">
+          <div className="flex items-center justify-between w-full">
+            <div className="flex-1 pr-4">
+              <div className="font-medium text-sm text-gray-700 dark:text-gray-300 mb-1">
+                {selectedAd.title}
+              </div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">
+                {selectedAd.description}
+              </div>
             </div>
-          )}
-          <div className="inline-ad-badge">
-            sponsored
+            
+            <div className="relative flex-shrink-0">
+              {selectedAd.imageUrl ? (
+                <img 
+                  src={selectedAd.imageUrl} 
+                  alt={selectedAd.title}
+                  className="w-12 h-12 object-cover rounded"
+                />
+              ) : (
+                <div 
+                  className="w-12 h-12 rounded flex items-center justify-center text-white text-xs font-bold"
+                  style={{ backgroundColor: 'hsl(var(--orange-accent))' }}
+                >
+                  AD
+                </div>
+              )}
+              <div className="absolute -top-1 -right-1 bg-gray-400 text-white text-xs px-1 py-0.5 rounded opacity-60 font-medium">
+                sponsored
+              </div>
+            </div>
           </div>
         </div>
       </a>

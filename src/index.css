@@ -75,45 +75,96 @@
     color: hsl(var(--header-foreground));
   }
 
-  /* VIRAL STORIES - Responsive: TALL on mobile, LONG on desktop */
+  /* === MAIN LAYOUT FIXES - Proper Spacing === */
+  .main-layout {
+    @apply flex flex-col gap-6 my-6;
+    max-width: 100%;
+    overflow-x: hidden;
+    padding: 0 1rem; /* 1 unit space on sides */
+  }
+
+  /* Mobile Layout with proper ordering */
+  @media (max-width: 1023px) {
+    .main-layout {
+      @apply flex-col px-4 gap-6; /* Increased spacing */
+    }
+    
+    .trending-main {
+      @apply order-1 w-full;
+    }
+    
+    .daily-reads-sidebar {
+      @apply order-2 w-full;
+    }
+    
+    .blindspot-sidebar {
+      @apply order-3 w-full;
+      display: block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      min-height: 400px;
+    }
+  }
+
+  /* Desktop Layout with proper spacing */
+  @media (min-width: 1024px) {
+    .main-layout {
+      @apply flex-row px-6;
+      max-width: 1400px;
+      margin: 0 auto;
+      gap: 2rem; /* 2 unit space between sections */
+    }
+    
+    .daily-reads-sidebar {
+      @apply order-1 w-1/6 min-w-0;
+    }
+    
+    .trending-main {
+      @apply order-2 w-2/3 min-w-0;
+    }
+    
+    .blindspot-sidebar {
+      @apply order-3 w-1/6 min-w-0;
+      display: block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      min-height: 400px;
+    }
+  }
+
+  /* === VIRAL STORIES - FIXED ASPECT RATIOS === */
   .viral-newscard {
     @apply bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden relative block;
     transition: transform 0.2s ease;
     position: relative;
   }
 
-  /* Mobile: TALL rectangles (2×1 ratio) - Height = 2 × Width - Scrollable like IG Reels */
+  /* Mobile: TALL rectangles for trending (4:3 ratio) */
   @media (max-width: 1023px) {
     .viral-newscard {
-      height: 400px; /* TALL for mobile */
-      width: 200px;
-      flex-shrink: 0;
+      aspect-ratio: 3/4; /* TALL - height > width */
+      width: 100%;
+      margin-bottom: 1rem;
     }
     
     .viral-stories-container {
-      overflow-x: auto;
-      scrollbar-width: none;
-      -ms-overflow-style: none;
-      padding-bottom: 8px;
-    }
-    
-    .viral-stories-container::-webkit-scrollbar {
-      display: none;
+      width: 100%;
     }
     
     .viral-stories-grid {
       display: flex;
+      flex-direction: column;
       gap: 16px;
-      padding-right: 16px;
+      width: 100%;
     }
   }
 
-  /* Desktop: LONG rectangles (1×2 ratio) - Width = 2 × Height - Spans full width */
+  /* Desktop: LONG rectangles for trending (16:9 ratio) */
   @media (min-width: 1024px) {
     .viral-newscard {
-      height: 200px; /* LONG for desktop */
+      aspect-ratio: 16/9; /* LONG - width > height */
       width: 100%;
-      margin-bottom: 16px;
+      margin-bottom: 1rem;
     }
     
     .viral-stories-container {
@@ -156,12 +207,13 @@
     @apply absolute top-3 right-3 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold;
   }
 
-  /* SIDEBAR NEWSCARDS - ALWAYS TALL (both mobile & desktop) */
+  /* === SIDEBAR NEWSCARDS - ALWAYS TALL RECTANGLES === */
   .sidebar-newscard {
     @apply bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden mb-4 relative block;
     width: 100%;
-    height: 200px; /* TALL rectangles (2×1 ratio) */
+    aspect-ratio: 3/4; /* TALL rectangles - consistent across all sidebars */
     transition: transform 0.2s ease;
+    position: relative;
   }
 
   .sidebar-newscard:hover {
@@ -185,14 +237,14 @@
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.7);
   }
 
-  /* CATEGORY NEWSCARDS - REGULAR proportions */
+  /* === CATEGORY NEWSCARDS - REGULAR proportions === */
   .category-newscard {
     @apply bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden relative block;
     width: 100%;
-    height: 200px;
+    aspect-ratio: 4/3; /* Standard ratio for category pages */
     transition: transform 0.2s ease;
   }
 
@@ -224,100 +276,123 @@
     @apply text-blue-300 text-xs font-medium mb-1;
   }
 
-  /* TRENDING HEADLINES */
+  /* === HEADLINE DISPLAY - CLEAN URLs === */
   .trending-headlines {
     @apply space-y-0;
+    margin-top: 1rem;
   }
 
   .trending-headline {
-    @apply text-base font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer py-3 border-b border-gray-200 dark:border-gray-700;
+    @apply py-3 border-b border-gray-200 dark:border-gray-700;
+    word-break: break-word;
+    line-height: 1.4;
   }
 
   .trending-headline:last-child {
     @apply border-b-0;
   }
 
-  /* SIDEBAR HEADLINES */
+  .trending-headline a {
+    @apply text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors;
+    text-decoration: none;
+  }
+
+  .trending-headline h3 {
+    @apply font-bold text-base leading-tight;
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+
+  /* === SIDEBAR HEADLINES === */
   .sidebar-headlines {
     @apply space-y-0;
   }
 
   .sidebar-headline {
-    @apply text-sm font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer py-2 border-b border-gray-200 dark:border-gray-700;
+    @apply py-2 border-b border-gray-200 dark:border-gray-700;
+    word-break: break-word;
+    line-height: 1.4;
   }
 
   .sidebar-headline:last-child {
     @apply border-b-0;
   }
 
-  /* LAYOUT - Responsive with mobile-first trending */
-  .main-layout {
-    @apply flex flex-col gap-6 my-6;
+  .sidebar-headline a {
+    @apply text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors;
+    text-decoration: none;
   }
 
-  /* Mobile: Trending first, then sidebars stacked */
-  @media (max-width: 1023px) {
-    .main-layout {
-      @apply flex-col;
-    }
-    
-    .trending-main {
-      @apply order-1 w-full;
-    }
-    
-    .daily-reads-sidebar {
-      @apply order-2 w-full;
-    }
-    
-    .blindspot-sidebar {
-      @apply order-3 w-full;
-    }
+  .sidebar-headline h3 {
+    @apply font-bold text-sm leading-tight;
+    word-break: break-word;
+    overflow-wrap: break-word;
   }
 
-  /* Desktop: 1/6 + 2/3 + 1/6 layout */
-  @media (min-width: 1024px) {
-    .main-layout {
-      @apply flex-row;
-    }
-    
-    .daily-reads-sidebar {
-      @apply order-1 w-1/6 min-w-0;
-    }
-    
-    .trending-main {
-      @apply order-2 w-2/3 min-w-0;
-    }
-    
-    .blindspot-sidebar {
-      @apply order-3 w-1/6 min-w-0;
-    }
-  }
-
-  /* Visual separators - only on desktop */
+  /* === VISUAL SEPARATORS - Enhanced spacing === */
   @media (min-width: 1024px) {
     .daily-reads-separator {
-      @apply border-r border-gray-200 dark:border-gray-600 pr-4;
+      @apply border-r border-gray-200 dark:border-gray-600 pr-6; /* Increased padding */
     }
 
     .blindspot-separator {
-      @apply border-l border-gray-200 dark:border-gray-600 pl-4;
+      @apply border-l border-gray-200 dark:border-gray-600 pl-6; /* Increased padding */
     }
   }
 
-  /* Section styling */
+  /* === SECTION STYLING === */
   .sidebar-section {
     @apply space-y-4 w-full;
+    min-height: 350px; /* Ensure sections have minimum height */
   }
 
   .sidebar-title {
     @apply text-lg font-bold text-gray-900 dark:text-white mb-4;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid hsl(var(--accent));
+    display: flex;
+    align-items: center;
   }
 
   .sidebar-featured-cards {
     @apply space-y-4 mb-4;
+    display: block !important; /* Force visibility */
   }
 
-  /* INLINE ADS */
+  /* === FORCE BLINDSPOT VISIBILITY === */
+  .blindspot-sidebar {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    min-height: 400px !important;
+  }
+
+  .blindspot-sidebar .sidebar-section {
+    display: block !important;
+    visibility: visible !important;
+    min-height: 350px;
+  }
+
+  .blindspot-sidebar .sidebar-featured-cards {
+    display: block !important;
+    margin-bottom: 1rem;
+  }
+
+  .blindspot-sidebar .sidebar-headlines {
+    display: block !important;
+  }
+
+  /* === CONTAINER IMPROVEMENTS === */
+  .trending-main > div {
+    @apply bg-white dark:bg-gray-800 rounded-lg p-6;
+    margin: 0;
+  }
+
+  .trending-stories-container {
+    width: 100%;
+  }
+
+  /* === INLINE ADS === */
   .inline-ad {
     @apply bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md p-3 my-2;
     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
@@ -358,7 +433,7 @@
     font-size: 10px;
   }
 
-  /* STREAK DISPLAY */
+  /* === STREAK DISPLAY === */
   .streak-display {
     @apply fixed top-20 right-4 z-40 bg-white dark:bg-black border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 shadow-sm;
     backdrop-filter: blur(10px);
@@ -381,18 +456,28 @@
     @apply text-orange-500 mr-1;
   }
 
-  /* Mobile adjustments */
+  /* === MOBILE RESPONSIVENESS === */
   @media (max-width: 768px) {
+    .main-layout {
+      padding: 0 0.75rem;
+      gap: 1.5rem;
+    }
+    
     .viral-newscard-title {
       font-size: 14px;
     }
     
     .sidebar-newscard {
-      height: 160px;
+      aspect-ratio: 4/5; /* Slightly different ratio for small screens */
+      margin-bottom: 0.75rem;
     }
     
     .category-newscard {
-      height: 160px;
+      aspect-ratio: 4/3;
+    }
+    
+    .sidebar-title {
+      @apply text-base;
     }
     
     .streak-display {
@@ -405,14 +490,7 @@
     }
   }
 
-  /* Force blindspot visibility */
-  .blindspot-sidebar {
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-  }
-
-  /* Related stories */
+  /* === RELATED STORIES === */
   .related-stories-list {
     @apply space-y-0;
   }
@@ -427,5 +505,60 @@
 
   .related-story-title {
     @apply font-bold text-base leading-tight text-gray-900 dark:text-white;
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+
+  /* === SCROLLBAR FIXES === */
+  .scrollbar-none {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* === UTILITY CLASSES === */
+  .force-visible {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  /* === DEBUG STYLES (Remove after testing layout) === */
+  .daily-reads-sidebar {
+    background: rgba(0, 100, 255, 0.05) !important; /* Light blue tint */
+    border: 1px solid rgba(0, 100, 255, 0.2) !important;
+    min-height: 400px !important;
+  }
+
+  .blindspot-sidebar {
+    background: rgba(255, 0, 100, 0.05) !important; /* Light red tint */
+    border: 1px solid rgba(255, 0, 100, 0.2) !important;
+    min-height: 400px !important;
+  }
+
+  .trending-main {
+    background: rgba(0, 255, 100, 0.05) !important; /* Light green tint */
+    border: 1px solid rgba(0, 255, 100, 0.2) !important;
+  }
+
+  /* === PRINT STYLES === */
+  @media print {
+    .main-layout {
+      display: flex !important;
+      flex-direction: column !important;
+    }
+    
+    .sidebar-section {
+      display: block !important;
+      page-break-inside: avoid;
+    }
+    
+    .debug-colors {
+      background: none !important;
+      border: none !important;
+    }
   }
 }

@@ -50,35 +50,157 @@ const NEGATIVE_KEYWORDS = [
   'without hope', 'dire situation', 'worst case', 'no survivors'
 ];
 
-// === Feeds
+// === NEW: Blindspot Keywords (underreported stories) ===
+const BLINDSPOT_KEYWORDS = [
+  'underreported', 'overlooked', 'ignored', 'unnoticed', 'hidden',
+  'lesser known', 'unreported', 'overlooked crisis', 'forgotten',
+  'developing world', 'rural', 'remote', 'isolated', 'marginalized',
+  'indigenous', 'local community', 'small town', 'village',
+  'grassroots', 'local hero', 'unsung hero', 'quiet revolution',
+  'behind the scenes', 'off the radar', 'untold story',
+  'rarely mentioned', 'seldom reported', 'little known fact'
+];
+
+// === NEW: Enhanced Viral Keywords for Better Detection ===
+const VIRAL_KEYWORDS = [
+  // Emotional triggers
+  'amazing', 'incredible', 'unbelievable', 'stunning', 'remarkable', 'extraordinary',
+  'heartwarming', 'inspiring', 'uplifting', 'touching', 'beautiful', 'wonderful',
+  
+  // Social proof
+  'viral', 'trending', 'everyone is talking about', 'breaks the internet', 'goes viral',
+  'thousands share', 'millions watch', 'people are loving', 'internet can\'t stop',
+  
+  // Achievement words
+  'first ever', 'record-breaking', 'historic', 'milestone', 'breakthrough', 'game-changer',
+  'revolutionary', 'never before seen', 'unprecedented success',
+  
+  // Human interest
+  'little girl', 'young boy', 'grandmother', 'veteran', 'teacher', 'nurse', 'doctor',
+  'student', 'community comes together', 'neighbors help', 'strangers unite',
+  
+  // Feel-good actions
+  'pays it forward', 'random act of kindness', 'surprises', 'gives back', 'helps out',
+  'makes a difference', 'changes lives', 'spreads joy', 'brings hope'
+];
+
+// === Enhanced Feeds with More Viral and Positive Sources ===
 const FEEDS = {
   'Health': [
+    // Current feeds (keep these)
     'https://medicalxpress.com/rss-feed/health-news/',
-    'https://www.sciencedaily.com/rss/health_medicine.xml'
+    'https://www.sciencedaily.com/rss/health_medicine.xml',
+    // NEW: More viral health sources
+    'https://www.goodnewsnetwork.org/category/health/feed/',
+    'https://feeds.feedburner.com/healthline/health-news',
+    'https://www.medicalnewstoday.com/rss',
+    'https://www.webmd.com/rss/rss.aspx?RSSSource=RSS_PUBLIC',
+    'https://www.prevention.com/feed/',
+    'https://www.upworthy.com/health/rss',
+    'https://brightvibes.com/feed/?category=health'
   ],
+
   'Innovation & Tech': [
+    // Current feeds (keep the good ones)
     'https://feeds.feedburner.com/TechCrunch/',
-    'https://feeds.arstechnica.com/arstechnica/index',
-    'https://www.theverge.com/rss/index.xml'
+    'https://www.theverge.com/rss/index.xml',
+    // NEW: More viral tech sources
+    'https://feeds.feedburner.com/oreilly/radar',
+    'https://www.wired.com/feed/rss',
+    'https://mashable.com/feeds/rss/all',
+    'https://www.fastcompany.com/technology/rss',
+    'https://spectrum.ieee.org/rss/fulltext',
+    'https://www.goodnewsnetwork.org/category/technology/feed/',
+    'https://futurism.com/feed',
+    'https://singularityhub.com/feed/',
+    'https://www.upworthy.com/tech/rss'
   ],
+
   'Environment & Sustainability': [
+    // Current feeds
     'https://grist.org/feed/',
-    'https://www.treehugger.com/feeds/rss'
+    'https://www.treehugger.com/feeds/rss',
+    // NEW: More viral environmental sources
+    'https://www.goodnewsnetwork.org/category/earth/feed/',
+    'https://www.ecowatch.com/feeds/latest.rss',
+    'https://www.greenbiz.com/feeds/all',
+    'https://e360.yale.edu/feed',
+    'https://www.worldwildlife.org/feeds/news.xml',
+    'https://brightvibes.com/feed/?category=environment',
+    'https://www.upworthy.com/environment/rss',
+    'https://www.positive.news/environment/feed/',
+    'https://cleantechnica.com/feed/'
   ],
+
   'Education': [
-    'https://hechingerreport.org/feed/'
+    // Current feed
+    'https://hechingerreport.org/feed/',
+    // NEW: More viral education sources
+    'https://www.goodnewsnetwork.org/category/inspiring/feed/',
+    'https://www.edweek.org/feeds/all.rss',
+    'https://www.edsurge.com/news.rss',
+    'https://brightvibes.com/feed/?category=education',
+    'https://www.upworthy.com/education/rss',
+    'https://www.positive.news/society/education/feed/',
+    'https://www.teachforamerica.org/feed',
+    'https://www.khanacademy.org/about/blog/rss.xml'
   ],
+
   'Science & Space': [
+    // Current feeds (keep these)
     'https://feeds.feedburner.com/spaceflightnow',
     'https://www.sciencedaily.com/rss/space_time.xml',
-    'https://phys.org/rss-feed/space-news/'
+    'https://phys.org/rss-feed/space-news/',
+    // NEW: More viral science sources
+    'https://www.space.com/feeds/all',
+    'https://www.nasa.gov/rss/dyn/breaking_news.rss',
+    'https://www.scientificamerican.com/feeds/rss/news/',
+    'https://www.livescience.com/feeds/all',
+    'https://www.goodnewsnetwork.org/category/science/feed/',
+    'https://brightvibes.com/feed/?category=science',
+    'https://www.upworthy.com/science/rss',
+    'https://www.iflscience.com/rss.xml',
+    'https://spaceflightnow.com/feed/'
   ],
+
   'Humanitarian & Rescue': [
+    // Current feeds (keep these)
     'https://reliefweb.int/updates/rss.xml',
     'https://www.unicef.org/feeds/news-releases.xml',
     'https://www.unhcr.org/rss/news.xml',
     'https://www.redcross.org/news.rss',
-    'https://www.google.com/alerts/feeds/12610777509108054570/3869133423126878870'
+    // NEW: More viral humanitarian sources
+    'https://www.goodnewsnetwork.org/category/heroes/feed/',
+    'https://www.upworthy.com/heroes/rss',
+    'https://brightvibes.com/feed/?category=heroes',
+    'https://www.positive.news/society/community/feed/',
+    'https://www.dosomething.org/us/rss.xml',
+    'https://www.volunteermatch.org/blog/feed/',
+    'https://www.globalcitizen.org/en/rss/',
+    'https://www.rescue.org/rss.xml',
+    'https://www.oxfam.org/en/rss.xml'
+  ],
+
+  // Enhanced Blindspot sources for underreported positive stories
+  'Blindspot': [
+    // Current feeds (keep the good ones)
+    'https://globalvoices.org/-/world/feed/',
+    'https://www.devex.com/news.rss',
+    'https://www.bbc.com/news/world/rss.xml',
+    // NEW: Better sources for underreported positive stories
+    'https://www.positive.news/feed/',
+    'https://www.goodnewsnetwork.org/feed/',
+    'https://brightvibes.com/feed/',
+    'https://www.upworthy.com/rss',
+    'https://www.happynews.com/feeds/index.rss',
+    'https://www.sunnyskyz.com/feeds/good-news.xml',
+    'https://www.boredpanda.com/feed/',
+    'https://mymodernmet.com/feed/',
+    'https://www.amusingplanet.com/feeds/posts/default',
+    'https://www.mentalfloss.com/feeds/rss.xml',
+    'https://restofworld.org/feed/',
+    'https://apnews.com/apf-oddnews',
+    'https://www.atlasobscura.com/feeds/latest'
   ]
 };
 
@@ -130,17 +252,72 @@ const computePositivityScore = (title, content) => {
   return Math.max((positiveMatches * 2) - negativeMatches, 0);
 };
 
+// === NEW: Enhanced Virality Scoring for Viral Content ===
+const computeViralityScore = (title, content) => {
+  const text = `${title} ${content}`.toLowerCase();
+  const titleText = title.toLowerCase();
+  
+  // Count viral keywords
+  const viralMatches = VIRAL_KEYWORDS.filter(k => text.includes(k)).length;
+  
+  // Count positive keywords
+  const positiveMatches = POSITIVE_KEYWORDS.filter(k => text.includes(k)).length;
+  
+  // Check for emotional triggers in title (more weight)
+  const titleViralMatches = VIRAL_KEYWORDS.filter(k => titleText.includes(k)).length;
+  
+  // Calculate viral score (0-10)
+  const baseScore = positiveMatches * 1.5;
+  const viralBonus = viralMatches * 2;
+  const titleBonus = titleViralMatches * 3; // Title keywords worth more
+  
+  return Math.min(baseScore + viralBonus + titleBonus, 10);
+};
+
+// === NEW: Function to determine if story is "blindspot" type ===
+const isBlindspotStory = (title, content, category) => {
+  const text = `${title} ${content}`.toLowerCase();
+  
+  // If it's from Blindspot feeds, check for underreported indicators
+  if (category === 'Blindspot') {
+    const blindspotMatches = BLINDSPOT_KEYWORDS.filter(k => text.includes(k)).length;
+    const positiveMatches = POSITIVE_KEYWORDS.filter(k => text.includes(k)).length;
+    return blindspotMatches > 0 || positiveMatches > 2; // High positivity OR blindspot keywords
+  }
+  
+  // For other categories, only if explicitly mentions underreported themes
+  const blindspotMatches = BLINDSPOT_KEYWORDS.filter(k => text.includes(k)).length;
+  return blindspotMatches >= 2; // Stricter for non-blindspot feeds
+};
+
+// === Enhanced Good News Detection for Viral Content ===
 const isGoodNews = (title, content) => {
   const text = `${title} ${content}`.toLowerCase();
+  const titleText = title.toLowerCase();
+  
+  // Original hero detection
   const hasHero = /\b(saved|rescued|hero|miracle|hope|lifesaver|brave|volunteer)\b/i.test(text);
   const hasDisasterContext = /\b(flood|disaster|storm|crisis|earthquake|wildfire)\b/i.test(text);
 
   if (hasHero && hasDisasterContext) return true;
 
+  // Enhanced viral detection
+  const hasViralTitle = VIRAL_KEYWORDS.some(keyword => titleText.includes(keyword));
+  const hasHumanInterest = /\b(boy|girl|man|woman|child|family|community|neighbor|teacher|student|veteran|grandmother|grandfather)\b/i.test(text);
+  const hasPositiveAction = /\b(helps|saves|rescues|donates|volunteers|creates|builds|inspires|surprises|gives)\b/i.test(text);
+  
+  // Original positive detection
   const positiveMatches = POSITIVE_KEYWORDS.filter(k => text.includes(k)).length;
   const negativeMatches = NEGATIVE_KEYWORDS.filter(k => text.includes(k)).length;
-
-  return (positiveMatches > 0 && (positiveMatches * 2) > negativeMatches);
+  const isOriginallyPositive = (positiveMatches > 0 && (positiveMatches * 2) > negativeMatches);
+  
+  // Virality score
+  const viralityScore = computeViralityScore(title, content);
+  
+  return isOriginallyPositive || 
+         (hasViralTitle && hasHumanInterest) || 
+         (hasPositiveAction && viralityScore >= 4) ||
+         (hasHumanInterest && hasPositiveAction && viralityScore >= 3);
 };
 
 const checkDuplicate = async (title, url) => {
@@ -157,8 +334,16 @@ const insertArticle = async (article) => {
     console.error('❌ Insert error:', error.message);
     return false;
   }
-  console.log('✅ Inserted:', article.title);
+  console.log(`✅ Inserted [${article.category}] (Viral: ${article.virality_score}):`, article.title.slice(0, 60) + '...');
   return true;
+};
+
+// === NEW: Function to reassign category for blindspot stories ===
+const determineFinalCategory = (originalCategory, title, content) => {
+  if (isBlindspotStory(title, content, originalCategory)) {
+    return 'Blindspot';
+  }
+  return originalCategory;
 };
 
 const processFeed = async (feedUrl, category) => {
@@ -168,12 +353,18 @@ const processFeed = async (feedUrl, category) => {
     'Environment & Sustainability': 'https://source.unsplash.com/featured/?nature',
     Education: 'https://source.unsplash.com/featured/?education',
     'Science & Space': 'https://source.unsplash.com/featured/?space',
-    'Humanitarian & Rescue': 'https://source.unsplash.com/featured/?rescue,hero,aid'
+    'Humanitarian & Rescue': 'https://source.unsplash.com/featured/?rescue,hero,aid',
+    'Blindspot': 'https://source.unsplash.com/featured/?hidden,story,news'
   };
 
   try {
+    console.log(`🔗 Processing: ${feedUrl}`);
     const feed = await parser.parseURL(feedUrl);
-    for (const item of feed.items.slice(0, 10)) {
+    let processedCount = 0;
+    let blindspotCount = 0;
+    let viralCount = 0;
+
+    for (const item of feed.items.slice(0, 20)) { // Increased limit for more stories
       if (!item.title || !item.link || !isValidUrl(item.link)) continue;
       if (await checkDuplicate(item.title, item.link)) continue;
 
@@ -181,9 +372,16 @@ const processFeed = async (feedUrl, category) => {
       const content = clean(rawContent);
       if (!isGoodNews(item.title, content)) continue;
 
+      // === NEW: Determine final category (may reassign to Blindspot) ===
+      const finalCategory = determineFinalCategory(category, item.title, content);
+      if (finalCategory === 'Blindspot') blindspotCount++;
+
       const positivity_score = computePositivityScore(item.title, content);
+      const virality_score = computeViralityScore(item.title, content);
+      if (virality_score >= 6) viralCount++;
+
       const imageFromContent = extractImageFromHTML(rawContent);
-      let finalImage = fallbackImages[category];
+      let finalImage = fallbackImages[finalCategory];
 
       if (item.enclosure?.url && await isValidImageUrl(item.enclosure.url)) {
         finalImage = item.enclosure.url;
@@ -197,7 +395,7 @@ const processFeed = async (feedUrl, category) => {
         summary: content.slice(0, 300),
         content,
         published_at: item.pubDate ? new Date(item.pubDate).toISOString() : null,
-        category,
+        category: finalCategory, // This may be "Blindspot" now
         author: item.author?.trim()?.slice(0, 200) || null,
         image_url: finalImage,
         thumbnail_url: finalImage,
@@ -206,27 +404,59 @@ const processFeed = async (feedUrl, category) => {
         source_name: new URL(item.link).hostname.replace('www.', ''),
         sentiment: 'positive',
         positivity_score,
-        is_ad: false
+        virality_score, // NEW: Added virality scoring
+        is_ad: false,
+        // === NEW: Add metadata for tracking ===
+        original_category: category,
+        is_blindspot: finalCategory === 'Blindspot'
       };
 
       await insertArticle(article);
-      await new Promise(res => setTimeout(res, 300));
+      processedCount++;
+      await new Promise(res => setTimeout(res, 200)); // Slightly faster processing
     }
+
+    console.log(`📊 ${new URL(feedUrl).hostname}: ${processedCount} stories (${blindspotCount} → Blindspot, ${viralCount} viral)`);
   } catch (err) {
     console.error(`❌ Failed feed: ${feedUrl}`, err.message);
   }
 };
 
 const main = async () => {
-  console.log('🚀 Starting RSS News Scraper...');
+  console.log('🚀 Starting Enhanced RSS News Scraper with Viral Detection & Blindspot Support...');
+  
+  let totalStories = 0;
+  let totalBlindspot = 0;
+  let totalViral = 0;
+  
   for (const [category, urls] of Object.entries(FEEDS)) {
-    console.log(`\n📰 Category: ${category}`);
+    console.log(`\n📰 Category: ${category} (${urls.length} feeds)`);
     for (const url of urls) {
-      console.log(`🔗 Fetching: ${url}`);
       await processFeed(url, category);
+      totalStories += 15; // Approximate
     }
   }
-  console.log('\n✨ Scraping completed!');
+  
+  // === Summary report ===
+  console.log('\n📈 SCRAPING SUMMARY:');
+  console.log(`📚 Total stories processed: ~${totalStories}`);
+  
+  // Check actual counts from database
+  const { data: blindspotStories } = await supabase
+    .from('news')
+    .select('id')
+    .eq('category', 'Blindspot')
+    .gte('created_at', new Date(Date.now() - 24*60*60*1000).toISOString());
+    
+  const { data: viralStories } = await supabase
+    .from('news')
+    .select('id')
+    .gte('virality_score', 6)
+    .gte('created_at', new Date(Date.now() - 24*60*60*1000).toISOString());
+    
+  console.log(`🔍 Blindspot stories in DB (24h): ${blindspotStories?.length || 0}`);
+  console.log(`🔥 Viral stories in DB (24h): ${viralStories?.length || 0}`);
+  console.log('\n✨ Enhanced scraping with viral detection completed!');
 };
 
-main();
+main().catch(console.error);

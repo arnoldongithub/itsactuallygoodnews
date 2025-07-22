@@ -1,11 +1,11 @@
-// FIXED: Proper import from supa.js
+// OPTIMIZED: Updated to use the new optimized Supabase functions
 import { supabase } from './supa.js';
 import { placeholderArticles, getAllStories } from './placeholder-data.js';
 import { useState, useEffect, useCallback } from 'react';
 
 const LAST_FETCHED_KEY = 'newsLastFetched';
 const NEWS_CACHE_KEY = 'newsCache';
-const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+const CACHE_DURATION = 15 * 60 * 1000; // Reduced to 15 minutes for fresher content
 
 // Enhanced category mappings - FIXED to match database categories exactly
 const CATEGORY_MAPPINGS = {
@@ -19,16 +19,21 @@ const CATEGORY_MAPPINGS = {
   'blindspot': ['Blindspot']
 };
 
-// === ENHANCED: Single optimized call for homepage data ===
+// === OPTIMIZED: Primary function using the new optimized schema ===
 export const fetchHomepageData = async () => {
   try {
-    console.log('🔄 Fetching homepage data...');
+    console.log('🚀 Using optimized homepage data fetch...');
     
-    // Try database function first
-    const { data, error } = await supabase.rpc('get_homepage_data');
+    const startTime = performance.now();
     
-    if (!error && data && data.trending?.length > 0) {
-      console.log('✅ Got data from RPC function');
+    // Try the optimized function first
+    const { data, error } = await supabase.rpc('get_homepage_data_optimized');
+    
+    const endTime = performance.now();
+    console.log(`⚡ Optimized fetch took: ${(endTime - startTime).toFixed(2)}ms`);
+    
+    if (!error && data) {
+      console.log('✅ Got optimized data from materialized views');
       return {
         trending: data.trending || [],
         dailyReads: data.daily_reads || [],
@@ -36,23 +41,47 @@ export const fetchHomepageData = async () => {
       };
     }
     
-    console.warn('⚠️ RPC function failed or empty, using fallback queries');
+    console.warn('⚠️ Optimized function failed, trying direct function');
+    return await fetchHomepageDataDirect();
+  } catch (error) {
+    console.error('❌ Error in optimized fetch:', error);
+    return await fetchHomepageDataDirect();
+  }
+};
+
+// FALLBACK: Direct function if materialized views fail
+const fetchHomepageDataDirect = async () => {
+  try {
+    console.log('🔄 Using direct homepage data fetch...');
+    
+    const { data, error } = await supabase.rpc('get_homepage_data_direct');
+    
+    if (!error && data) {
+      console.log('✅ Got data from direct function');
+      return {
+        trending: data.trending || [],
+        dailyReads: data.daily_reads || [],
+        blindspot: data.blindspot || []
+      };
+    }
+    
+    console.warn('⚠️ Direct function failed, using individual queries');
     return await fetchHomepageDataFallback();
   } catch (error) {
-    console.error('❌ Error in fetchHomepageData:', error);
+    console.error('❌ Error in direct fetch:', error);
     return await fetchHomepageDataFallback();
   }
 };
 
-// ENHANCED fallback with better filtering
+// LAST RESORT: Individual queries fallback
 const fetchHomepageDataFallback = async () => {
   try {
     console.log('🔄 Using fallback individual queries...');
     
     const [trending, dailyReads, blindspot] = await Promise.all([
-      fetchTrendingNews(20),
-      fetchDailyReads(15), 
-      fetchBlindspotStories(10)
+      fetchTrendingNews(15),
+      fetchDailyReads(10), 
+      fetchBlindspotStories(8)
     ]);
 
     console.log(`📊 Fallback results: ${trending.length} trending, ${dailyReads.length} daily, ${blindspot.length} blindspot`);
@@ -84,11 +113,23 @@ const fetchHomepageDataFallback = async () => {
   }
 };
 
-// ENHANCED: Trending with viral content
-export const fetchTrendingNews = async (limit = 20) => {
+// OPTIMIZED: Trending with materialized view fallback
+export const fetchTrendingNews = async (limit = 15) => {
   try {
     console.log('🔥 Fetching trending stories...');
     
+    // Try materialized view first
+    const { data: mvData } = await supabase
+      .from('mv_trending_news')
+      .select('*')
+      .limit(limit);
+      
+    if (mvData && mvData.length > 0) {
+      console.log(`🔥 Trending from materialized view: ${mvData.length}`);
+      return mvData;
+    }
+
+    // Fallback to direct query
     const fromTime = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
 
     const { data, error } = await supabase
@@ -100,35 +141,15 @@ export const fetchTrendingNews = async (limit = 20) => {
       .eq('is_ad', false)
       .eq('sentiment', 'positive')
       .gte('published_at', fromTime)
-      .gte('positivity_score', 6) // Only high-quality content
+      .gte('positivity_score', 6)
       .order('virality_score', { ascending: false })
       .order('positivity_score', { ascending: false })
       .order('published_at', { ascending: false })
       .limit(limit);
 
     if (error) throw error;
-
-    if (!data || data.length === 0) {
-      console.warn('⚠️ No recent trending data, trying without time restriction');
-      // Try without time restriction
-      const { data: fallbackData } = await supabase
-        .from('news')
-        .select(`
-          id, title, url, summary, content, image_url, thumbnail_url,
-          category, published_at, positivity_score, virality_score, author, source_name
-        `)
-        .eq('is_ad', false)
-        .eq('sentiment', 'positive')
-        .gte('positivity_score', 7)
-        .order('positivity_score', { ascending: false })
-        .limit(limit);
-      
-      console.log(`📈 Fallback trending: ${fallbackData?.length || 0} stories`);
-      return fallbackData || [];
-    }
-
-    console.log(`🔥 Trending stories: ${data.length}`);
-    return data;
+    console.log(`🔥 Trending stories: ${data?.length || 0}`);
+    return data || [];
 
   } catch (error) {
     console.error('❌ fetchTrendingStories error:', error);
@@ -136,12 +157,23 @@ export const fetchTrendingNews = async (limit = 20) => {
   }
 };
 
-// ENHANCED: Daily reads with category diversity
-export const fetchDailyReads = async (limit = 15) => {
+// OPTIMIZED: Daily reads with materialized view fallback
+export const fetchDailyReads = async (limit = 10) => {
   try {
     console.log('📰 Fetching daily reads...');
     
-    // Try to get one story from each category
+    // Try materialized view first
+    const { data: mvData } = await supabase
+      .from('mv_daily_reads')
+      .select('*')
+      .limit(limit);
+      
+    if (mvData && mvData.length > 0) {
+      console.log(`📰 Daily reads from materialized view: ${mvData.length}`);
+      return mvData;
+    }
+
+    // Fallback to category-based fetch
     const categories = ['Health', 'Innovation & Tech', 'Environment & Sustainability', 'Education', 'Science & Space', 'Humanitarian & Rescue'];
     const dailyReads = [];
     
@@ -158,10 +190,10 @@ export const fetchDailyReads = async (limit = 15) => {
         .gte('positivity_score', 6)
         .order('positivity_score', { ascending: false })
         .order('published_at', { ascending: false })
-        .limit(2); // Get 2 per category, pick best one
+        .limit(1);
       
       if (data && data.length > 0) {
-        dailyReads.push(data[0]); // Take the best one from each category
+        dailyReads.push(data[0]);
       }
     }
     
@@ -174,12 +206,23 @@ export const fetchDailyReads = async (limit = 15) => {
   }
 };
 
-// ENHANCED: Blindspot with proper fallback
-export const fetchBlindspotStories = async (limit = 10) => {
+// OPTIMIZED: Blindspot with materialized view fallback
+export const fetchBlindspotStories = async (limit = 8) => {
   try {
     console.log('🔍 Fetching blindspot stories...');
     
-    // First try to get actual Blindspot category stories
+    // Try materialized view first
+    const { data: mvData } = await supabase
+      .from('mv_blindspot_reads')
+      .select('*')
+      .limit(limit);
+      
+    if (mvData && mvData.length > 0) {
+      console.log(`🔍 Blindspot from materialized view: ${mvData.length}`);
+      return mvData;
+    }
+
+    // Fallback to direct query
     let { data, error } = await supabase
       .from('news')
       .select(`
@@ -196,7 +239,6 @@ export const fetchBlindspotStories = async (limit = 10) => {
     if (error || !data || data.length === 0) {
       console.warn('⚠️ No Blindspot data, using Humanitarian as fallback');
       
-      // Fallback to Humanitarian & Rescue stories
       ({ data } = await supabase
         .from('news')
         .select(`
@@ -238,7 +280,7 @@ export const fetchNews = async (category = 'All', retryCount = 0) => {
   const decodedCategory = decodeURIComponent(category);
   const normalizedCategory = decodedCategory.toLowerCase().trim();
 
-  // Check cache first
+  // Check cache first (reduced cache time for fresher content)
   if (isBrowser && lastFetched && cachedNews && now - parseInt(lastFetched, 10) < CACHE_DURATION) {
     try {
       const parsedCache = JSON.parse(cachedNews);
@@ -253,7 +295,7 @@ export const fetchNews = async (category = 'All', retryCount = 0) => {
   }
 
   try {
-    // Build query with proper category filtering
+    // Build optimized query
     let query = supabase
       .from('news')
       .select(`
@@ -265,17 +307,15 @@ export const fetchNews = async (category = 'All', retryCount = 0) => {
       .eq('sentiment', 'positive')
       .order('positivity_score', { ascending: false })
       .order('published_at', { ascending: false })
-      .limit(100);
+      .limit(50); // Reduced limit for better performance
 
     // FIXED: Proper category filtering
     if (normalizedCategory && normalizedCategory !== 'all') {
       const categoryMappings = CATEGORY_MAPPINGS[normalizedCategory];
       if (categoryMappings && categoryMappings.length > 0) {
-        // Use exact category matching
         query = query.in('category', categoryMappings);
         console.log(`🎯 Filtering by categories: ${categoryMappings.join(', ')}`);
       } else {
-        // Fallback to partial matching
         query = query.ilike('category', `%${decodedCategory}%`);
         console.log(`🔍 Using partial match for: ${decodedCategory}`);
       }
@@ -288,12 +328,12 @@ export const fetchNews = async (category = 'All', retryCount = 0) => {
     if (data && data.length > 0) {
       console.log(`✅ Fetched ${data.length} articles for category: ${category}`);
       
-      // Process and cache data
       const processedData = data.map(item => ({
         ...item,
         virality_score: item.virality_score || (item.positivity_score > 9 ? 8 : 0)
       }));
 
+      // Cache with shorter duration
       if (isBrowser) {
         try {
           localStorage.setItem(NEWS_CACHE_KEY, JSON.stringify(processedData));
@@ -334,13 +374,11 @@ const filterByCategory = (data, category) => {
   const categoryMappings = CATEGORY_MAPPINGS[category.toLowerCase()];
   
   if (categoryMappings && categoryMappings.length > 0) {
-    // Use exact category matching
     return data.filter(article => 
       article.category && categoryMappings.includes(article.category)
     );
   }
   
-  // Fallback to partial matching
   return data.filter(article => {
     if (!article.category) return false;
     const articleCategory = article.category.toLowerCase();
@@ -349,7 +387,57 @@ const filterByCategory = (data, category) => {
   });
 };
 
-// Export other utility functions
+// ENHANCED: React hook with performance optimizations
+export const useHomepageData = () => {
+  const [data, setData] = useState({
+    trending: [],
+    dailyReads: [],
+    blindspot: []
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      console.log('🏠 Fetching optimized homepage data...');
+      const startTime = performance.now();
+      
+      const result = await fetchHomepageData();
+      
+      const endTime = performance.now();
+      console.log(`⚡ Total homepage fetch time: ${(endTime - startTime).toFixed(2)}ms`);
+      
+      console.log('📊 Homepage data result:', {
+        trending: result.trending?.length || 0,
+        dailyReads: result.dailyReads?.length || 0, 
+        blindspot: result.blindspot?.length || 0
+      });
+      
+      setData(result);
+      
+    } catch (err) {
+      console.error('❌ Homepage data fetch error:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+    
+    // Reduced refresh interval to match materialized view refresh
+    const interval = setInterval(fetchData, 20 * 60 * 1000); // 20 minutes
+    return () => clearInterval(interval);
+  }, [fetchData]);
+
+  return { data, loading, error, refetch: fetchData };
+};
+
+// Utility functions
 export const checkNewsHealth = async () => {
   try {
     const { data, error } = await supabase
@@ -379,47 +467,17 @@ export const clearNewsCache = () => {
   }
 };
 
-// ENHANCED: React hook with better error handling
-export const useHomepageData = () => {
-  const [data, setData] = useState({
-    trending: [],
-    dailyReads: [],
-    blindspot: []
-  });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  const fetchData = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      console.log('🏠 Fetching homepage data...');
-      const result = await fetchHomepageData();
-      
-      console.log('📊 Homepage data result:', {
-        trending: result.trending?.length || 0,
-        dailyReads: result.dailyReads?.length || 0, 
-        blindspot: result.blindspot?.length || 0
-      });
-      
-      setData(result);
-      
-    } catch (err) {
-      console.error('❌ Homepage data fetch error:', err);
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchData();
+// Manual refresh function for materialized views
+export const refreshMaterializedViews = async () => {
+  try {
+    const { data, error } = await supabase.rpc('refresh_homepage_views');
     
-    // Optional: Refresh every 15 minutes
-    const interval = setInterval(fetchData, 15 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, [fetchData]);
-
-  return { data, loading, error, refetch: fetchData };
+    if (error) throw error;
+    
+    console.log('🔄 Materialized views refreshed:', data);
+    return { success: true, message: data };
+  } catch (error) {
+    console.error('❌ Failed to refresh materialized views:', error);
+    return { success: false, error: error.message };
+  }
 };

@@ -13,8 +13,9 @@ import Button from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { motion, AnimatePresence } from 'framer-motion';
 import { fetchTrendingNews, fetchDailyReads, fetchBlindspotStories, fetchNews, useHomepageData } from '@/lib/news-api';
+import { cleanTitle, createBulletPoints, getSourceName, getSourceLogo } from '@/lib/utils';
 
-// ENHANCED Story Summary Page Component with bullet point summaries
+// ENHANCED Story Page with Mobile Title Fixes and Clean Display
 const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -22,20 +23,6 @@ const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
   const [relatedStories, setRelatedStories] = useState([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-
-  // Helper function to convert text to bullet points
-  const createBulletPoints = (text) => {
-    if (!text) return [];
-    
-    // Split by sentences and clean up
-    const sentences = text
-      .split(/[.!?]+/)
-      .map(s => s.trim())
-      .filter(s => s.length > 10)
-      .slice(0, 5); // Max 5 bullet points
-    
-    return sentences.map(sentence => sentence.charAt(0).toUpperCase() + sentence.slice(1));
-  };
 
   useEffect(() => {
     const fetchStory = async () => {
@@ -167,104 +154,158 @@ const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
         setIsDarkMode={setIsDarkMode}
       />
       
-      <div className="max-w-4xl mx-auto my-8 px-4">
-        <article className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 mb-8 border border-gray-100 dark:border-gray-700">
-          <div className="mb-6">
-            <span 
-              className="text-sm font-semibold uppercase tracking-wide px-3 py-1 rounded-full text-white" 
-              style={{ backgroundColor: 'hsl(var(--orange-accent))' }}
-            >
-              {story.category}
-            </span>
-          </div>
+      <div className="max-w-7xl mx-auto my-4 px-4 lg:my-8">
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
           
-          <h1 className="text-4xl font-bold mb-6 leading-tight text-gray-900 dark:text-white">
-            {story.title}
-          </h1>
-          
-          {story.image_url && (
-            <img 
-              src={story.image_url} 
-              alt={story.title}
-              className="w-full h-80 object-cover rounded-xl mb-8 shadow-md"
-              onError={(e) => {
-                e.target.style.display = 'none';
-              }}
-            />
-          )}
-          
-          {/* SINGLE BULLET POINT SUMMARY */}
-          {bulletPoints.length > 0 && (
-            <div className="story-summary">
-              <h3>Story Summary</h3>
-              <ul className="summary-bullets">
-                {bulletPoints.map((point, index) => (
-                  <li key={index}>{point}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-          
-          <div className="flex items-center justify-between pt-6 border-t border-gray-200 dark:border-gray-600">
-            <div className="text-sm text-gray-500 dark:text-gray-400 space-y-1">
-              <p><strong>Source:</strong> {story.source || story.source_name || 'Unknown'}</p>
-              <p><strong>Published:</strong> {new Date(story.published_at).toLocaleDateString()}</p>
-              {story.author && <p><strong>Author:</strong> {story.author}</p>}
-              {story.positivity_score && (
-                <p><strong>Positivity Score:</strong> 
-                  <span 
-                    className="ml-2 px-2 py-1 rounded text-xs font-semibold text-white"
-                    style={{ backgroundColor: 'hsl(var(--orange-accent))' }}
-                  >
-                    {story.positivity_score}/10
-                  </span>
-                </p>
+          {/* Main Story Content - Left Side */}
+          <div className="lg:w-2/3">
+            {/* Story Card - NO BORDERS */}
+            <article className="story-card-borderless mb-6 lg:mb-8">
+              <div className="mb-4 lg:mb-6">
+                <span 
+                  className="text-xs lg:text-sm font-semibold uppercase tracking-wide px-2 py-1 lg:px-3 lg:py-1 rounded-full text-white" 
+                  style={{ backgroundColor: 'hsl(var(--orange-accent))' }}
+                >
+                  {story.category}
+                </span>
+              </div>
+              
+              {/* MOBILE-RESPONSIVE CLEAN TITLE */}
+              <h1 className="mobile-story-title">
+                {cleanTitle(story.title)}
+              </h1>
+              
+              {story.image_url && (
+                <div className="story-image-borderless mb-6 lg:mb-8">
+                  <img 
+                    src={story.image_url} 
+                    alt={cleanTitle(story.title)}
+                    className="w-full h-48 lg:h-80 object-cover rounded-xl shadow-md"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                    }}
+                  />
+                </div>
               )}
-            </div>
-            
-            <a 
-              href={story.url} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="px-6 py-3 rounded-lg font-medium transition-all duration-300 hover:shadow-lg text-white"
-              style={{ backgroundColor: 'hsl(var(--purple-text))' }}
-            >
-              Read Full Article →
-            </a>
-          </div>
-        </article>
+              
+              {/* CLEAN BULLET POINT SUMMARY - NO BORDERS */}
+              {bulletPoints.length > 0 && (
+                <div className="story-summary-borderless">
+                  <h3>Story Summary</h3>
+                  <ul className="summary-bullets">
+                    {bulletPoints.map((point, index) => (
+                      <li key={index}>{point}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </article>
 
-        {/* Enhanced Related Stories */}
-        {relatedStories.length > 0 && (
-          <div className="bg-gray-50 dark:bg-gray-800 rounded-xl shadow-lg p-8 border border-gray-100 dark:border-gray-700">
-            <h2 
-              className="text-2xl font-bold mb-6 text-gray-900 dark:text-white" 
-              style={{ color: 'hsl(var(--purple-text))' }}
-            >
-              Related Stories
-            </h2>
-            <div className="related-stories-list">
-              {relatedStories.map((relatedStory, index) => (
-                <React.Fragment key={relatedStory.id}>
-                  <div className="related-story-item">
-                    <button
-                      onClick={() => navigate(`/article/${relatedStory.id}`)}
-                      className="related-story-link w-full text-left"
+            {/* Related Stories with Source Bars */}
+            {relatedStories.length > 0 && (
+              <div className="bg-gray-50 dark:bg-gray-800 rounded-xl shadow-lg p-4 lg:p-8 border border-gray-100 dark:border-gray-700">
+                <h2 
+                  className="text-xl lg:text-2xl font-bold mb-4 lg:mb-6 text-gray-900 dark:text-white" 
+                  style={{ color: 'hsl(var(--purple-text))' }}
+                >
+                  Related Stories
+                </h2>
+                <div className="related-stories-list">
+                  {relatedStories.map((relatedStory, index) => (
+                    <React.Fragment key={relatedStory.id}>
+                      <div className="related-story-item">
+                        <button
+                          onClick={() => navigate(`/article/${relatedStory.id}`)}
+                          className="related-story-link w-full text-left"
+                        >
+                          <h3 className="related-story-title-mobile mb-3">
+                            {cleanTitle(relatedStory.title)}
+                          </h3>
+                        </button>
+                        
+                        {/* Source & Positivity Bar for Related Stories */}
+                        <div className="source-positivity-bar mt-2">
+                          <div className="source-info">
+                            <div className="source-logo">
+                              {getSourceLogo(relatedStory.source_name || relatedStory.source)}
+                            </div>
+                            <span>{getSourceName(relatedStory.source_name || relatedStory.source)}</span>
+                          </div>
+                          <div className="positivity-score">
+                            Positivity: {Math.round(relatedStory.positivity_score || 0)}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Insert inline ad every 3rd related story */}
+                      {(index + 1) % 3 === 0 && index < relatedStories.length - 1 && (
+                        <InlineAd key={`related-ad-${index}`} />
+                      )}
+                    </React.Fragment>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Metadata Sidebar - Right Side */}
+          <div className="lg:w-1/3">
+            <div className="story-metadata-sidebar">
+              <h3 className="text-base lg:text-lg font-bold mb-3 lg:mb-4 text-gray-900 dark:text-white">
+                Story Details
+              </h3>
+              
+              <div className="metadata-thin-separator"></div>
+              
+              <ul className="metadata-bullets">
+                <li>
+                  <strong>Source:</strong> {getSourceName(story.source || story.source_name)}
+                </li>
+                <li>
+                  <strong>Published:</strong> {new Date(story.published_at).toLocaleDateString()}
+                </li>
+                {story.author && (
+                  <li>
+                    <strong>Author:</strong> {story.author}
+                  </li>
+                )}
+                {story.positivity_score && (
+                  <li>
+                    <strong>Positivity Score:</strong> 
+                    <span 
+                      className="ml-2 px-2 py-1 rounded text-xs font-semibold text-white"
+                      style={{ backgroundColor: 'hsl(var(--orange-accent))' }}
                     >
-                      <h3 className="related-story-title">
-                        {relatedStory.title}
-                      </h3>
-                    </button>
-                  </div>
-                  {/* Insert inline ad every 3rd related story */}
-                  {(index + 1) % 3 === 0 && index < relatedStories.length - 1 && (
-                    <InlineAd key={`related-ad-${index}`} />
-                  )}
-                </React.Fragment>
-              ))}
+                      {story.positivity_score}/10
+                    </span>
+                  </li>
+                )}
+                {story.category && (
+                  <li>
+                    <strong>Category:</strong> {story.category}
+                  </li>
+                )}
+                {story.virality_score && (
+                  <li>
+                    <strong>Viral Score:</strong> {story.virality_score}/10
+                  </li>
+                )}
+              </ul>
+              
+              <div className="mt-4 lg:mt-6">
+                <a 
+                  href={story.url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="block w-full text-center px-4 py-2 lg:px-6 lg:py-3 rounded-lg font-medium transition-all duration-300 hover:shadow-lg text-white text-sm lg:text-base"
+                  style={{ backgroundColor: 'hsl(var(--purple-text))' }}
+                >
+                  Read Full Article →
+                </a>
+              </div>
             </div>
           </div>
-        )}
+        </div>
       </div>
       
       <Footer />
@@ -337,7 +378,7 @@ const CategoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
 
 // === OPTIMIZED HOMEPAGE with single data fetch ===
 const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
-  // Use the new optimized hook instead of multiple API calls
+  // Use the optimized hook
   const { data, loading, error, refetch } = useHomepageData();
   const [streak, setStreak] = useState(0);
   const { toast } = useToast();
@@ -399,7 +440,7 @@ const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
             <p className="text-muted-foreground">Loading good news...</p>
-            <p className="text-sm text-muted-foreground mt-2">This should only take a moment</p>
+            <p className="text-sm text-muted-foreground mt-2">This should be much faster now!</p>
           </div>
         </div>
         <Footer />
@@ -520,7 +561,6 @@ const App = () => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('darkMode');
       if (saved !== null) return JSON.parse(saved);
-      // Follow system preference as default
       return window.matchMedia('(prefers-color-scheme: dark)').matches;
     }
     return false;
@@ -533,7 +573,6 @@ const App = () => {
     localStorage.setItem('darkMode', JSON.stringify(isDarkMode));
   }, [isDarkMode]);
 
-  // Listen for system theme changes if no manual preference is set
   useEffect(() => {
     const saved = localStorage.getItem('darkMode');
     if (saved === null) {

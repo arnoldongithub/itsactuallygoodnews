@@ -1,3 +1,4 @@
+// Complete App.jsx - Final Corrected Version (FULL FILE)
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, BrowserRouter as Router, useParams, useNavigate } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
@@ -313,6 +314,7 @@ const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
   );
 };
 
+// Category Page Component
 const CategoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
   const { category } = useParams();
   const [filteredNews, setFilteredNews] = useState([]);
@@ -376,14 +378,13 @@ const CategoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
   );
 };
 
-// === OPTIMIZED HOMEPAGE with single data fetch ===
+// === OPTIMIZED HOMEPAGE - PERFECT ALIGNMENT & BORDERLESS ===
 const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
-  // Use the optimized hook
   const { data, loading, error, refetch } = useHomepageData();
   const [streak, setStreak] = useState(0);
   const { toast } = useToast();
 
-  // Streak logic remains the same
+  // Streak logic
   useEffect(() => {
     const today = new Date().toDateString();
     const lastVisit = localStorage.getItem('lastVisitDate');
@@ -402,7 +403,6 @@ const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
       localStorage.setItem('streak', newStreak.toString());
       setStreak(newStreak);
       
-      // Show streak notification
       setTimeout(() => {
         toast({
           title: "🔥 Streak Updated!",
@@ -414,7 +414,6 @@ const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
       localStorage.setItem('streak', '1');
       setStreak(1);
       
-      // Welcome back message
       setTimeout(() => {
         toast({
           title: "Welcome back!",
@@ -426,7 +425,6 @@ const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
     localStorage.setItem('lastVisitDate', today);
   }, [toast]);
 
-  // Loading state with better UX
   if (loading) {
     return (
       <div className="min-h-screen bg-white dark:bg-black">
@@ -448,7 +446,6 @@ const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
     );
   }
 
-  // Error state with retry option
   if (error) {
     return (
       <div className="min-h-screen bg-white dark:bg-black">
@@ -496,14 +493,7 @@ const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
     );
   }
 
-  // Extract data from the optimized hook
   const { trending: trendingNews, dailyReads, blindspot: blindspots } = data;
-
-  console.log('🏠 Homepage render:', {
-    trending: trendingNews?.length || 0,
-    dailyReads: dailyReads?.length || 0,
-    blindspot: blindspots?.length || 0
-  });
 
   return (
     <div className="min-h-screen bg-white dark:bg-black">
@@ -515,35 +505,37 @@ const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
       />
       
       <div className="main-layout">
-        {/* Daily Reads - Left Sidebar (1/6 width) */}
+        {/* Daily Reads - Left Sidebar (1/6 width) - PERFECT ALIGNMENT */}
         <aside className="daily-reads-sidebar">
           <div className="daily-reads-separator">
             <DailyReads stories={dailyReads} />
           </div>
         </aside>
 
-        {/* Main Trending Stories (2/3 width) */}
+        {/* Main Trending Stories (2/3 width) - BORDERLESS & PERFECT ALIGNMENT */}
         <main className="trending-main">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6">
-            <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">
-              <svg className="inline-block w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-              Trending Stories
-            </h2>
-            <TrendingStories stories={trendingNews} />
-            {(!trendingNews || trendingNews.length === 0) && (
-              <div className="text-center py-8">
-                <p className="text-gray-500 dark:text-gray-400 mb-2">No trending stories available right now</p>
-                <Button onClick={refetch} variant="outline" size="sm">
-                  Refresh Stories
-                </Button>
-              </div>
-            )}
-          </div>
+          {/* Title on same horizontal plane as sidebar titles */}
+          <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white" style={{ color: 'hsl(var(--purple-text))' }}>
+            <svg className="inline-block w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            Trending Stories
+          </h2>
+          
+          {/* BORDERLESS TrendingStories component */}
+          <TrendingStories stories={trendingNews} />
+          
+          {(!trendingNews || trendingNews.length === 0) && (
+            <div className="text-center py-8">
+              <p className="text-gray-500 dark:text-gray-400 mb-2">No trending stories available right now</p>
+              <Button onClick={refetch} variant="outline" size="sm">
+                Refresh Stories
+              </Button>
+            </div>
+          )}
         </main>
 
-        {/* Blindspot - Right Sidebar (1/6 width) */}
+        {/* Blindspot - Right Sidebar (1/6 width) - PERFECT ALIGNMENT */}
         <aside className="blindspot-sidebar">
           <div className="blindspot-separator">
             <Blindspot stories={blindspots} />
@@ -556,6 +548,7 @@ const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
   );
 };
 
+// Main App Component
 const App = () => {
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {

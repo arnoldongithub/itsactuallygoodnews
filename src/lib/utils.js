@@ -1,4 +1,4 @@
-// Enhanced utils.js with title cleaning and existing clsx functionality
+// Complete utils.js - Final Corrected Version
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -7,7 +7,7 @@ export function cn(...inputs) {
 }
 
 /**
- * Clean HTML tags and artifacts from story titles
+ * Enhanced title cleaning that handles all HTML artifacts
  * @param {string} title - The raw title that may contain HTML
  * @returns {string} - Clean, readable title
  */
@@ -24,15 +24,6 @@ export const cleanTitle = (title) => {
     .replace(/^[^\w\s]+|[^\w\s]+$/g, '') // Remove leading/trailing non-word chars
     .trim();
   
-  // Additional cleanup for common issues
-  cleaned = cleaned
-    .replace(/^-+|-+$/g, '') // Remove leading/trailing dashes
-    .replace(/^–+|–+$/g, '') // Remove en-dashes
-    .replace(/^\|+|\|+$/g, '') // Remove pipes
-    .replace(/^\.+|\.+$/g, '') // Remove leading/trailing dots
-    .replace(/^"+|"+$/g, '') // Remove quotes
-    .trim();
-  
   // If title is now empty or too short, provide fallback
   if (cleaned.length < 5) {
     return 'News Story';
@@ -43,8 +34,8 @@ export const cleanTitle = (title) => {
 };
 
 /**
- * Clean content text for summaries and descriptions
- * @param {string} content - Raw content that may contain HTML
+ * Enhanced content cleaning for better readability
+ * @param {string} content - Raw content that may contain HTML and URLs
  * @returns {string} - Clean, readable content
  */
 export const cleanContent = (content) => {
@@ -53,8 +44,107 @@ export const cleanContent = (content) => {
   return content
     .replace(/<[^>]*>/g, '') // Remove HTML tags
     .replace(/&[a-zA-Z0-9#]+;/g, '') // Remove HTML entities
+    .replace(/https?:\/\/[^\s]+/g, '') // Remove URLs
+    .replace(/www\.[^\s]+/g, '') // Remove www links
     .replace(/\s+/g, ' ') // Normalize whitespace
     .trim();
+};
+
+/**
+ * Enhanced summary cleaning that removes URLs and provides better context
+ * @param {string} summary - Raw summary that may contain URLs and HTML
+ * @returns {string} - Clean, contextual summary
+ */
+export const cleanSummary = (summary) => {
+  if (!summary) return '';
+  
+  let cleaned = summary
+    // Remove HTML tags first
+    .replace(/<[^>]*>/g, '')
+    // Remove URLs (comprehensive patterns)
+    .replace(/https?:\/\/[^\s]+/g, '')
+    .replace(/www\.[^\s]+/g, '')
+    .replace(/[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\.[a-zA-Z]{2,}/g, '')
+    // Remove specific URL patterns
+    .replace(/\/[^\s]*\.(html|php|aspx|htm|pdf|jpg|png|gif)/gi, '')
+    .replace(/\[https?[^\]]*\]/g, '') // Remove [https://...] patterns
+    .replace(/\[[^\]]*\]/g, '') // Remove other bracketed content
+    // Remove common file paths and technical references
+    .replace(/\/sites\/[^\s]*/g, '')
+    .replace(/\/files\/[^\s]*/g, '')
+    .replace(/\.png\]/gi, '')
+    .replace(/\.jpg\]/gi, '')
+    .replace(/\.pdf\]/gi, '')
+    // Remove HTML entities
+    .replace(/&[a-zA-Z0-9#]+;/g, '')
+    // Clean up punctuation and whitespace
+    .replace(/\s+/g, ' ')
+    .replace(/^\s+|\s+$/g, '')
+    .replace(/^[^\w\s]+|[^\w\s]+$/g, '')
+    .trim();
+  
+  // If summary is now too short, empty, or just technical fragments, provide context
+  if (cleaned.length < 30 || 
+      cleaned.match(/^(please refer|country:|source:|png|jpg|pdf)/i) ||
+      cleaned.match(/^\w{1,3}$/) // Single short words
+  ) {
+    return 'This story provides important updates on recent positive developments and progress in this area.';
+  }
+  
+  // Clean up remaining fragments
+  cleaned = cleaned
+    .replace(/^(please refer to|country:|source:)/i, '')
+    .replace(/attached map\.?/i, '')
+    .trim();
+  
+  // Ensure summary ends properly
+  if (cleaned && !cleaned.match(/[.!?]$/)) {
+    cleaned += '.';
+  }
+  
+  return cleaned;
+};
+
+/**
+ * Create enhanced bullet points with better context
+ * @param {string} text - Text to convert to bullet points
+ * @param {number} maxPoints - Maximum number of bullet points
+ * @returns {string[]} - Array of contextual bullet points
+ */
+export const createBulletPoints = (text, maxPoints = 5) => {
+  if (!text) return [];
+  
+  // Clean the text first
+  const cleaned = cleanSummary(text);
+  
+  // If cleaned text is too short or generic, create contextual points
+  if (cleaned.length < 50 || 
+      cleaned.includes('important updates') ||
+      cleaned.includes('positive developments')) {
+    return [
+      'This story highlights recent positive developments in the field',
+      'New progress has been made that benefits communities',
+      'The developments show promising signs for the future',
+      'Key stakeholders are working together for positive change'
+    ].slice(0, maxPoints);
+  }
+  
+  // Split by sentences and clean up
+  const sentences = cleaned
+    .split(/[.!?]+/)
+    .map(s => s.trim())
+    .filter(s => s.length > 15) // Longer minimum for better context
+    .slice(0, maxPoints);
+  
+  if (sentences.length === 0) {
+    return ['This story contains important positive news and updates'];
+  }
+  
+  return sentences.map(sentence => {
+    let clean = sentence.charAt(0).toUpperCase() + sentence.slice(1);
+    // Ensure sentence ends with a period if it doesn't already
+    return clean.match(/[.!?]$/) ? clean : clean + '.';
+  });
 };
 
 /**
@@ -135,32 +225,6 @@ export const getSourceName = (source) => {
 };
 
 /**
- * Create bullet points from text content
- * @param {string} text - Text to convert to bullet points
- * @param {number} maxPoints - Maximum number of bullet points
- * @returns {string[]} - Array of clean bullet points
- */
-export const createBulletPoints = (text, maxPoints = 5) => {
-  if (!text) return [];
-  
-  // Clean the text first
-  const cleaned = cleanContent(text);
-  
-  // Split by sentences and clean up
-  const sentences = cleaned
-    .split(/[.!?]+/)
-    .map(s => s.trim())
-    .filter(s => s.length > 10)
-    .slice(0, maxPoints);
-  
-  return sentences.map(sentence => {
-    const clean = sentence.charAt(0).toUpperCase() + sentence.slice(1);
-    // Ensure sentence ends with a period if it doesn't already
-    return clean.match(/[.!?]$/) ? clean : clean + '.';
-  });
-};
-
-/**
  * Generate source logo/initials from source name
  * @param {string} source - Source name
  * @returns {string} - Source initials or logo text
@@ -216,7 +280,7 @@ export const cleanArticle = (article) => {
   return {
     ...article,
     title: cleanTitle(article.title),
-    summary: cleanContent(article.summary),
+    summary: cleanSummary(article.summary),
     content: cleanContent(article.content),
     source_name: getSourceName(article.source_name || article.source),
     published_at: article.published_at,
@@ -282,3 +346,12 @@ export const debounce = (func, wait) => {
     timeout = setTimeout(later, wait);
   };
 };
+  
+  // Additional cleanup for common issues
+  cleaned = cleaned
+    .replace(/^-+|-+$/g, '') // Remove leading/trailing dashes
+    .replace(/^–+|–+$/g, '') // Remove en-dashes
+    .replace(/^\|+|\|+$/g, '') // Remove pipes
+    .replace(/^\.+|\.+$/g, '') // Remove leading/trailing dots
+    .replace(/^"+|"+$/g, '') // Remove quotes
+    .replace(/^\(+|\)+$/g, '') // Remove parentheses

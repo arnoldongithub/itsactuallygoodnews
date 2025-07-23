@@ -88,13 +88,13 @@
     color: hsl(var(--header-foreground));
   }
 
-  /* === MAIN LAYOUT - CLEAN BACKGROUND === */
+  /* === PERFECT HORIZONTAL TITLE ALIGNMENT - MAIN LAYOUT === */
   .main-layout {
     @apply flex flex-col gap-8 my-8;
     max-width: 100%;
     overflow-x: hidden;
     padding: 0 1rem;
-    background: hsl(var(--background)); /* Pure white background */
+    background: hsl(var(--background));
   }
 
   /* Mobile Layout */
@@ -102,14 +102,17 @@
     .main-layout {
       @apply flex-col px-4 gap-6;
       background: hsl(var(--background));
+      padding-top: 0;
     }
     
     .trending-main {
       @apply order-1 w-full;
+      margin-top: 0 !important;
     }
     
     .daily-reads-sidebar {
       @apply order-2 w-full;
+      margin-top: 0 !important;
     }
     
     .blindspot-sidebar {
@@ -118,10 +121,11 @@
       visibility: visible !important;
       opacity: 1 !important;
       min-height: 400px;
+      margin-top: 0 !important;
     }
   }
 
-  /* Desktop Layout with clean spacing and level alignment */
+  /* Desktop Layout - PERFECT TITLE ALIGNMENT */
   @media (min-width: 1024px) {
     .main-layout {
       @apply flex-row px-8;
@@ -129,27 +133,194 @@
       margin: 0 auto;
       gap: 3rem;
       background: hsl(var(--background));
-      align-items: flex-start; /* LEVEL ALIGNMENT FIX */
+      align-items: flex-start;
+      /* CRITICAL: 1 unit space below header */
+      padding-top: 2rem;
+    }
+    
+    /* All sections start at EXACT same level */
+    .daily-reads-sidebar,
+    .trending-main,
+    .blindspot-sidebar {
+      @apply min-w-0;
+      margin-top: 0 !important;
+      padding-top: 0 !important;
+      vertical-align: top;
+      align-self: flex-start;
+    }
+    
+    /* Ensure all section titles are on same horizontal plane */
+    .sidebar-title,
+    .trending-main h2 {
+      margin-top: 0 !important;
+      padding-top: 0 !important;
+      /* CRITICAL: Same height for perfect alignment */
+      min-height: 2.5rem;
+      display: flex;
+      align-items: center;
     }
     
     .daily-reads-sidebar {
-      @apply order-1 w-1/6 min-w-0;
-      margin-top: 0; /* Remove any top margins that cause misalignment */
+      @apply order-1 w-1/6;
     }
     
     .trending-main {
-      @apply order-2 w-2/3 min-w-0;
-      margin-top: 0; /* Remove any top margins that cause misalignment */
+      @apply order-2 w-2/3;
     }
     
     .blindspot-sidebar {
-      @apply order-3 w-1/6 min-w-0;
+      @apply order-3 w-1/6;
       display: block !important;
       visibility: visible !important;
       opacity: 1 !important;
       min-height: 400px;
-      margin-top: 0; /* Remove any top margins that cause misalignment */
     }
+  }
+
+  /* === BORDERLESS TRENDING COMPONENTS === */
+  .trending-stories-borderless {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .viral-stories-section-borderless {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  .trending-headlines-section-borderless {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  .viral-newscard-borderless {
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+  }
+
+  /* Mobile: TALL rectangles for viral stories */
+  @media (max-width: 1023px) {
+    .viral-newscard-borderless {
+      aspect-ratio: 3/4;
+      width: 100%;
+      margin-bottom: 1.5rem;
+    }
+  }
+
+  /* Desktop: LONG rectangles for viral stories */
+  @media (min-width: 1024px) {
+    .viral-newscard-borderless {
+      aspect-ratio: 16/9;
+      width: 100%;
+      margin-bottom: 1.5rem;
+    }
+  }
+
+  /* Fade effect for borderless viral cards */
+  .viral-newscard-borderless::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+      to bottom,
+      transparent 0%,
+      transparent 70%,
+      rgba(255, 255, 255, 0.1) 85%,
+      rgba(255, 255, 255, 0.3) 100%
+    );
+    pointer-events: none;
+    border-radius: inherit;
+  }
+
+  .dark .viral-newscard-borderless::after {
+    background: linear-gradient(
+      to bottom,
+      transparent 0%,
+      transparent 70%,
+      rgba(0, 0, 0, 0.1) 85%,
+      rgba(0, 0, 0, 0.3) 100%
+    );
+  }
+
+  .viral-newscard-borderless:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+  }
+
+  /* === ENSURE TRENDING MAIN IS BORDERLESS === */
+  .trending-main {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  .trending-main > div,
+  .trending-main .trending-stories-container {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* === SEAMLESS BACKGROUND === */
+  .main-layout,
+  .trending-main,
+  .trending-main > div,
+  .trending-stories-container {
+    background: hsl(var(--background)) !important;
+  }
+
+  /* === CLEAN HEADLINE STYLING === */
+  .trending-headlines {
+    @apply space-y-0;
+    margin-top: 0;
+    background: transparent;
+    border: none;
+    padding: 0;
+  }
+
+  .trending-headline {
+    @apply py-4 border-b border-gray-100 dark:border-gray-700;
+    word-break: break-word;
+    line-height: 1.5;
+    background: transparent;
+  }
+
+  .trending-headline:first-child {
+    padding-top: 0;
+  }
+
+  .trending-headline:last-child {
+    @apply border-b-0;
+  }
+
+  .trending-headline-title,
+  .trending-headline h3 {
+    @apply font-semibold text-base leading-tight;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 500;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    margin: 0;
+    padding: 0;
+  }
+
+  .trending-headline-title::before,
+  .trending-headline-title::after {
+    content: none !important;
   }
 
   /* === HALF UNIT SPACING FOR NEWSCARDS === */
@@ -158,6 +329,8 @@
     min-height: 400px;
     padding-left: 0.5rem;
     padding-right: 0.5rem;
+    margin-top: 0 !important;
+    padding-top: 0 !important;
   }
 
   /* === SOURCE & POSITIVITY BAR === */
@@ -237,10 +410,10 @@
     overflow-wrap: break-word;
   }
 
-  /* Mobile: Smaller, more readable title (24px like Venezuela example) */
+  /* Mobile: 24px like Venezuela example */
   @media (max-width: 767px) {
     .mobile-story-title {
-      font-size: 1.5rem; /* 24px - same as Venezuela example */
+      font-size: 1.5rem; /* 24px */
       line-height: 1.4;
       margin-bottom: 1rem;
       padding: 0 0.5rem;
@@ -276,7 +449,6 @@
     transition: color 0.3s ease;
   }
 
-  /* Mobile: Smaller related story titles */
   @media (max-width: 767px) {
     .related-story-title-mobile {
       font-size: 0.95rem; /* 15px */
@@ -284,7 +456,6 @@
     }
   }
 
-  /* Tablet and Desktop */
   @media (min-width: 768px) {
     .related-story-title-mobile {
       font-size: 1.125rem; /* 18px */
@@ -473,100 +644,7 @@
     background: hsl(var(--orange-accent));
   }
 
-  /* === CATEGORY NEWSCARDS - REGULAR proportions === */
-  .category-newscard {
-    @apply bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden relative block;
-    width: 100%;
-    aspect-ratio: 4/3;
-    transition: all 0.3s ease;
-  }
-
-  .category-newscard:hover {
-    transform: translateY(-2px);
-  }
-
-  .category-newscard-image {
-    @apply absolute inset-0 w-full h-full object-cover;
-  }
-
-  .category-newscard-overlay {
-    @apply absolute bottom-0 left-0 w-full;
-    background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.7) 50%, transparent 100%);
-    padding: 16px;
-  }
-
-  .category-newscard-title {
-    @apply text-white font-semibold leading-tight;
-    font-size: 15px;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-  }
-
-  .category-newscard-category {
-    @apply text-blue-300 text-xs font-medium mb-1;
-  }
-
-  /* === HEADLINE DISPLAY - CLEAN STYLING === */
-  .trending-headlines {
-    @apply space-y-0;
-    margin-top: 1.5rem;
-  }
-
-  .trending-headline {
-    @apply py-4 border-b border-gray-100 dark:border-gray-700;
-    word-break: break-word;
-    line-height: 1.5;
-  }
-
-  .trending-headline:last-child {
-    @apply border-b-0;
-  }
-
-  .trending-headline h3 {
-    @apply font-semibold text-base leading-tight;
-    font-family: 'Poppins', sans-serif;
-    font-weight: 500;
-    word-break: break-word;
-    overflow-wrap: break-word;
-  }
-
-  /* === SIDEBAR HEADLINES === */
-  .sidebar-headlines {
-    @apply space-y-0;
-  }
-
-  .sidebar-headline {
-    @apply py-3 border-b border-gray-100 dark:border-gray-700;
-    word-break: break-word;
-    line-height: 1.5;
-  }
-
-  .sidebar-headline:last-child {
-    @apply border-b-0;
-  }
-
-  .sidebar-headline h3 {
-    @apply font-medium text-sm leading-tight;
-    font-family: 'Poppins', sans-serif;
-    font-weight: 500;
-    word-break: break-word;
-    overflow-wrap: break-word;
-  }
-
-  /* === VISUAL SEPARATORS - SUBTLE === */
-  @media (min-width: 1024px) {
-    .daily-reads-separator {
-      @apply border-r border-gray-100 dark:border-gray-700 pr-8;
-    }
-
-    .blindspot-separator {
-      @apply border-l border-gray-100 dark:border-gray-700 pl-8;
-    }
-  }
-
+  /* === SIDEBAR ALIGNMENT === */
   .sidebar-title {
     @apply text-xl font-bold mb-6;
     font-family: 'Poppins', sans-serif;
@@ -576,6 +654,7 @@
     border-bottom: 3px solid hsl(var(--orange-accent));
     display: flex;
     align-items: center;
+    margin-top: 0 !important;
   }
 
   .sidebar-featured-cards {
@@ -597,21 +676,11 @@
     min-height: 400px;
   }
 
-  .force-visible {
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-  }
-
-  /* === CONTAINER IMPROVEMENTS === */
-  .trending-main > div {
-    @apply bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8;
-    margin: 0;
-    border: 1px solid hsl(var(--border));
-  }
-
-  .trending-stories-container {
-    width: 100%;
+  /* === FORCE CONSISTENT HEIGHTS === */
+  .daily-reads-sidebar .sidebar-section,
+  .blindspot-sidebar .sidebar-section,
+  .trending-main {
+    min-height: 500px;
   }
 
   /* === STORY SUMMARY BULLET POINTS === */
@@ -727,13 +796,25 @@
     box-shadow: 0 6px 16px hsl(var(--purple-text) / 0.3);
   }
 
+  /* === VISUAL SEPARATORS - SUBTLE === */
+  @media (min-width: 1024px) {
+    .daily-reads-separator {
+      @apply border-r border-gray-100 dark:border-gray-700 pr-8;
+      margin-top: 0 !important;
+    }
+
+    .blindspot-separator {
+      @apply border-l border-gray-100 dark:border-gray-700 pl-8;
+      margin-top: 0 !important;
+    }
+  }
+
   /* === INLINE ADS - FULL WIDTH FIX === */
   .w-full {
     width: 100% !important;
     max-width: 100% !important;
   }
 
-  /* Ensure ads take full container width */
   .inline-ad,
   .inline-ad > *,
   .inline-ad a {
@@ -741,7 +822,6 @@
     display: block !important;
   }
 
-  /* === INLINE ADS STYLING === */
   .inline-ad {
     width: 100% !important;
     margin: 16px 0;
@@ -802,6 +882,7 @@
     .main-layout {
       padding: 0 1rem;
       gap: 1.5rem;
+      padding-top: 0;
     }
     
     .sidebar-section {
@@ -861,13 +942,14 @@
       line-height: 1.5;
       margin-bottom: 10px;
     }
-  }
 
-  /* === NO POLITICAL SPECTRUM BAR === */
-  .political-spectrum-bar,
-  .bias-comparison,
-  .spectrum-indicator {
-    display: none !important;
+    /* Mobile: Also remove borders */
+    .trending-main > div {
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+    }
   }
 
   /* === SCROLLBAR STYLING === */

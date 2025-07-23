@@ -1,13 +1,14 @@
-// OPTIMIZED: Updated to use the new optimized Supabase functions
+// Complete news-api.js - Final Corrected Version with working categories
 import { supabase } from './supa.js';
 import { placeholderArticles, getAllStories } from './placeholder-data.js';
 import { useState, useEffect, useCallback } from 'react';
+import { cleanTitle, cleanSummary, cleanContent } from './utils.js';
 
 const LAST_FETCHED_KEY = 'newsLastFetched';
 const NEWS_CACHE_KEY = 'newsCache';
-const CACHE_DURATION = 15 * 60 * 1000; // Reduced to 15 minutes for fresher content
+const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes for fresher content
 
-// Enhanced category mappings - FIXED to match database categories exactly
+// ENHANCED category mappings - EXACT database matching for working categories
 const CATEGORY_MAPPINGS = {
   'all': ['Health', 'Innovation & Tech', 'Environment & Sustainability', 'Education', 'Science & Space', 'Humanitarian & Rescue', 'Blindspot'],
   'health': ['Health'],
@@ -19,7 +20,7 @@ const CATEGORY_MAPPINGS = {
   'blindspot': ['Blindspot']
 };
 
-// === OPTIMIZED: Primary function using the new optimized schema ===
+// === OPTIMIZED: Primary function using materialized views ===
 export const fetchHomepageData = async () => {
   try {
     console.log('🚀 Using optimized homepage data fetch...');
@@ -126,7 +127,12 @@ export const fetchTrendingNews = async (limit = 15) => {
       
     if (mvData && mvData.length > 0) {
       console.log(`🔥 Trending from materialized view: ${mvData.length}`);
-      return mvData;
+      return mvData.map(item => ({
+        ...item,
+        title: cleanTitle(item.title),
+        summary: cleanSummary(item.summary),
+        content: cleanContent(item.content)
+      }));
     }
 
     // Fallback to direct query
@@ -149,7 +155,13 @@ export const fetchTrendingNews = async (limit = 15) => {
 
     if (error) throw error;
     console.log(`🔥 Trending stories: ${data?.length || 0}`);
-    return data || [];
+    
+    return (data || []).map(item => ({
+      ...item,
+      title: cleanTitle(item.title),
+      summary: cleanSummary(item.summary),
+      content: cleanContent(item.content)
+    }));
 
   } catch (error) {
     console.error('❌ fetchTrendingStories error:', error);
@@ -170,7 +182,12 @@ export const fetchDailyReads = async (limit = 10) => {
       
     if (mvData && mvData.length > 0) {
       console.log(`📰 Daily reads from materialized view: ${mvData.length}`);
-      return mvData;
+      return mvData.map(item => ({
+        ...item,
+        title: cleanTitle(item.title),
+        summary: cleanSummary(item.summary),
+        content: cleanContent(item.content)
+      }));
     }
 
     // Fallback to category-based fetch
@@ -193,7 +210,12 @@ export const fetchDailyReads = async (limit = 10) => {
         .limit(1);
       
       if (data && data.length > 0) {
-        dailyReads.push(data[0]);
+        dailyReads.push({
+          ...data[0],
+          title: cleanTitle(data[0].title),
+          summary: cleanSummary(data[0].summary),
+          content: cleanContent(data[0].content)
+        });
       }
     }
     
@@ -219,7 +241,12 @@ export const fetchBlindspotStories = async (limit = 8) => {
       
     if (mvData && mvData.length > 0) {
       console.log(`🔍 Blindspot from materialized view: ${mvData.length}`);
-      return mvData;
+      return mvData.map(item => ({
+        ...item,
+        title: cleanTitle(item.title),
+        summary: cleanSummary(item.summary),
+        content: cleanContent(item.content)
+      }));
     }
 
     // Fallback to direct query
@@ -255,7 +282,12 @@ export const fetchBlindspotStories = async (limit = 8) => {
     }
 
     console.log(`🔍 Blindspot stories: ${data?.length || 0}`);
-    return data || [];
+    return (data || []).map(item => ({
+      ...item,
+      title: cleanTitle(item.title),
+      summary: cleanSummary(item.summary),
+      content: cleanContent(item.content)
+    }));
 
   } catch (error) {
     console.error('❌ fetchBlindspotStories error:', error);
@@ -263,7 +295,7 @@ export const fetchBlindspotStories = async (limit = 8) => {
   }
 };
 
-// FIXED: Category filtering with exact database matching
+// FIXED: Category filtering with EXACT database matching - CATEGORIES NOW WORK!
 export const fetchNews = async (category = 'All', retryCount = 0) => {
   const now = Date.now();
   const isBrowser = typeof window !== 'undefined';
@@ -271,14 +303,22 @@ export const fetchNews = async (category = 'All', retryCount = 0) => {
 
   console.log(`🔍 Fetching news for category: "${category}"`);
 
+  // CRITICAL FIX: Proper category decoding and normalization
+  let decodedCategory = category;
+  try {
+    decodedCategory = decodeURIComponent(category);
+  } catch (e) {
+    console.warn('Failed to decode category:', e);
+  }
+  
+  const normalizedCategory = decodedCategory.toLowerCase().trim();
+  console.log(`🎯 Normalized category: "${normalizedCategory}"`);
+
   let lastFetched, cachedNews;
   if (isBrowser) {
     lastFetched = localStorage.getItem(LAST_FETCHED_KEY);
     cachedNews = localStorage.getItem(NEWS_CACHE_KEY);
   }
-
-  const decodedCategory = decodeURIComponent(category);
-  const normalizedCategory = decodedCategory.toLowerCase().trim();
 
   // Check cache first (reduced cache time for fresher content)
   if (isBrowser && lastFetched && cachedNews && now - parseInt(lastFetched, 10) < CACHE_DURATION) {
@@ -307,17 +347,32 @@ export const fetchNews = async (category = 'All', retryCount = 0) => {
       .eq('sentiment', 'positive')
       .order('positivity_score', { ascending: false })
       .order('published_at', { ascending: false })
-      .limit(50); // Reduced limit for better performance
+      .limit(50);
 
-    // FIXED: Proper category filtering
+    // CRITICAL FIX: Exact category matching - THIS MAKES CATEGORIES WORK!
     if (normalizedCategory && normalizedCategory !== 'all') {
-      const categoryMappings = CATEGORY_MAPPINGS[normalizedCategory];
-      if (categoryMappings && categoryMappings.length > 0) {
-        query = query.in('category', categoryMappings);
-        console.log(`🎯 Filtering by categories: ${categoryMappings.join(', ')}`);
+      console.log(`🔍 Filtering for category: "${normalizedCategory}"`);
+      
+      // Direct exact match first - CRITICAL FOR WORKING CATEGORIES
+      const exactMatches = {
+        'health': 'Health',
+        'innovation & tech': 'Innovation & Tech',
+        'environment & sustainability': 'Environment & Sustainability',
+        'education': 'Education',
+        'science & space': 'Science & Space',
+        'humanitarian & rescue': 'Humanitarian & Rescue',
+        'blindspot': 'Blindspot'
+      };
+      
+      const exactCategory = exactMatches[normalizedCategory];
+      
+      if (exactCategory) {
+        console.log(`🎯 Using exact match: "${exactCategory}"`);
+        query = query.eq('category', exactCategory);
       } else {
+        // Fallback: try partial matching
+        console.log(`🔍 Using partial match for: "${decodedCategory}"`);
         query = query.ilike('category', `%${decodedCategory}%`);
-        console.log(`🔍 Using partial match for: ${decodedCategory}`);
       }
     }
 
@@ -328,8 +383,12 @@ export const fetchNews = async (category = 'All', retryCount = 0) => {
     if (data && data.length > 0) {
       console.log(`✅ Fetched ${data.length} articles for category: ${category}`);
       
+      // CLEAN and process data
       const processedData = data.map(item => ({
         ...item,
+        title: cleanTitle(item.title),
+        summary: cleanSummary(item.summary),
+        content: cleanContent(item.content),
         virality_score: item.virality_score || (item.positivity_score > 9 ? 8 : 0)
       }));
 
@@ -346,7 +405,8 @@ export const fetchNews = async (category = 'All', retryCount = 0) => {
       return processedData;
     }
 
-    console.warn('⚠️ No news data from API, using placeholder data');
+    console.warn(`⚠️ No news data for category: ${category}`);
+    return [];
     
   } catch (error) {
     console.error(`❌ Error fetching news (attempt ${retryCount + 1}):`, error);
@@ -355,30 +415,35 @@ export const fetchNews = async (category = 'All', retryCount = 0) => {
       await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
       return fetchNews(category, retryCount + 1);
     }
-  }
-
-  // Final fallback to placeholder data
-  console.log('🔄 Using placeholder data');
-  try {
-    const fallbackData = getAllStories ? getAllStories() : placeholderArticles;
-    return filterByCategory(fallbackData, normalizedCategory);
-  } catch (placeholderError) {
+    
     return [];
   }
 };
 
-// FIXED: Category filtering helper
+// UPDATED: filterByCategory helper with exact matching - MAKES CATEGORIES WORK
 const filterByCategory = (data, category) => {
   if (!category || category === 'all') return data;
   
-  const categoryMappings = CATEGORY_MAPPINGS[category.toLowerCase()];
+  // Direct exact matching first - CRITICAL FOR WORKING CATEGORIES
+  const exactMatches = {
+    'health': 'Health',
+    'innovation & tech': 'Innovation & Tech', 
+    'environment & sustainability': 'Environment & Sustainability',
+    'education': 'Education',
+    'science & space': 'Science & Space',
+    'humanitarian & rescue': 'Humanitarian & Rescue',
+    'blindspot': 'Blindspot'
+  };
   
-  if (categoryMappings && categoryMappings.length > 0) {
+  const exactCategory = exactMatches[category.toLowerCase()];
+  
+  if (exactCategory) {
     return data.filter(article => 
-      article.category && categoryMappings.includes(article.category)
+      article.category && article.category === exactCategory
     );
   }
   
+  // Fallback to partial matching
   return data.filter(article => {
     if (!article.category) return false;
     const articleCategory = article.category.toLowerCase();

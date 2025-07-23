@@ -1,6 +1,7 @@
+// Complete TrendingStories.jsx - Final Corrected Version
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import ViralNewsCard from './ViralNewsCard';
+import { cleanTitle, cleanSummary } from '@/lib/utils';
 import InlineAd from './InlineAd';
 import SourcePositivityBar from './SourcePositivityBar';
 
@@ -41,26 +42,21 @@ const TrendingStories = ({ stories }) => {
     .slice(0, 12); // Increased to 12 for more content
 
   return (
-    <div className="space-y-8">
-      {/* Viral Stories Section */}
+    <div className="trending-stories-borderless">
+      {/* Viral Stories Section - NO "VIRAL GOOD NEWS" TITLE */}
       {viralStories.length > 0 && (
-        <div>
-          <h2 className="text-xl font-bold mb-4" style={{ color: 'hsl(var(--purple-text))' }}>
-            <svg className="inline-block w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
-            Viral Good News
-          </h2>
+        <div className="viral-stories-section-borderless mb-8">
+          {/* REMOVED: "Viral Good News" title completely */}
           <div className="viral-stories-grid">
             {viralStories.map((story) => (
               <button
                 key={story.id}
                 onClick={() => navigate(`/article/${story.id}`)}
-                className="viral-newscard group"
+                className="viral-newscard-borderless group"
               >
                 <img
                   src={story.image_url || story.thumbnail_url || 'https://source.unsplash.com/800x600/?news,positive'}
-                  alt={story.title}
+                  alt={cleanTitle(story.title)}
                   className="viral-newscard-image group-hover:scale-105 transition-transform duration-500"
                   onError={(e) => {
                     e.target.src = 'https://source.unsplash.com/800x600/?news,positive';
@@ -68,7 +64,7 @@ const TrendingStories = ({ stories }) => {
                 />
                 <div className="viral-newscard-overlay">
                   <h3 className="viral-newscard-title">
-                    {story.title}
+                    {cleanTitle(story.title)}
                   </h3>
                 </div>
                 {(story.virality_score >= 8 || story.viral_score >= 8) && (
@@ -82,15 +78,10 @@ const TrendingStories = ({ stories }) => {
         </div>
       )}
 
-      {/* Regular Headlines Section */}
+      {/* Regular Headlines Section - BORDERLESS */}
       {regularStories.length > 0 && (
-        <div>
-          <h2 className="text-xl font-bold mb-6" style={{ color: 'hsl(var(--purple-text))' }}>
-            <svg className="inline-block w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-            </svg>
-            Trending Headlines
-          </h2>
+        <div className="trending-headlines-section-borderless">
+          {/* Title removed - handled by parent component */}
           <div className="trending-headlines">
             {regularStories.map((story, index) => (
               <React.Fragment key={story.id}>
@@ -105,14 +96,14 @@ const TrendingStories = ({ stories }) => {
                 <div className="trending-headline">
                   <button
                     onClick={() => navigate(`/article/${story.id}`)}
-                    className="w-full text-left hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+                    className="w-full text-left hover:text-purple-600 dark:hover:text-purple-400 transition-colors duration-200"
                   >
                     <h3 className="font-semibold text-base md:text-lg leading-tight text-gray-800 dark:text-white">
-                      {story.title}
+                      {cleanTitle(story.title)}
                     </h3>
                     {story.summary && (
                       <p className="text-sm text-gray-600 dark:text-gray-400 mt-2 line-clamp-2">
-                        {story.summary.slice(0, 120)}...
+                        {cleanSummary(story.summary).slice(0, 120)}...
                       </p>
                     )}
                     <div className="flex items-center justify-between mt-3">

@@ -6,21 +6,21 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%; /* Pure white background */
-    --foreground: 0 0% 0%; /* Pure black text */
+    --background: 0 0% 100%;
+    --foreground: 0 0% 0%;
     --card: 0 0% 100%;
     --card-foreground: 0 0% 0%;
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 0%;
-    --primary: 239 49% 77%; /* Purple from logo */
+    --primary: 239 49% 77%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 170 45% 90%; /* Lighter mint green */
+    --secondary: 170 45% 90%;
     --secondary-foreground: 170 30% 30%;
     --muted: 0 0% 96%;
     --muted-foreground: 0 0% 45%;
-    --accent: 25 95% 65%; /* Orange from logo */
+    --accent: 25 95% 65%;
     --accent-foreground: 0 0% 100%;
-    --header-background: 158 50% 75%; /* Mint green from logo */
+    --header-background: 158 50% 75%;
     --header-foreground: 0 0% 15%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
@@ -29,15 +29,14 @@
     --ring: 158 50% 60%;
     --radius: 0.75rem;
     
-    /* Custom color variables from logo */
     --mint-green: 158 50% 75%;
     --orange-accent: 25 95% 65%;
     --purple-text: 239 49% 77%;
   }
   
   .dark {
-    --background: 0 0% 7%; /* Dark background */
-    --foreground: 0 0% 95%; /* Light text */
+    --background: 0 0% 7%;
+    --foreground: 0 0% 95%;
     --card: 0 0% 10%;
     --card-foreground: 0 0% 95%;
     --popover: 0 0% 7%;
@@ -58,7 +57,6 @@
     --input: 0 0% 15%;
     --ring: 158 50% 60%;
     
-    /* Dark theme adjustments */
     --mint-green: 158 40% 25%;
     --orange-accent: 25 85% 60%;
     --purple-text: 239 49% 85%;
@@ -72,13 +70,17 @@
     @apply bg-background text-foreground;
     font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
     font-feature-settings: "rlig" 1, "calt" 1;
+    /* FIXED: Proper vendor prefixes for text-size-adjust */
     -webkit-text-size-adjust: 100%;
-    text-size-adjust: 100%;
+    -moz-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
   }
   
   html {
+    /* FIXED: Proper vendor prefixes */
     -webkit-text-size-adjust: 100%;
-    text-size-adjust: 100%;
+    -moz-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
   }
 }
 
@@ -88,7 +90,7 @@
     color: hsl(var(--header-foreground));
   }
 
-  /* === PERFECT HORIZONTAL TITLE ALIGNMENT - MAIN LAYOUT === */
+  /* === PERFECT HORIZONTAL TITLE ALIGNMENT === */
   .main-layout {
     @apply flex flex-col gap-8 my-8;
     max-width: 100%;
@@ -134,11 +136,9 @@
       gap: 3rem;
       background: hsl(var(--background));
       align-items: flex-start;
-      /* CRITICAL: 1 unit space below header */
       padding-top: 2rem;
     }
     
-    /* All sections start at EXACT same level */
     .daily-reads-sidebar,
     .trending-main,
     .blindspot-sidebar {
@@ -149,12 +149,10 @@
       align-self: flex-start;
     }
     
-    /* Ensure all section titles are on same horizontal plane */
     .sidebar-title,
     .trending-main h2 {
       margin-top: 0 !important;
       padding-top: 0 !important;
-      /* CRITICAL: Same height for perfect alignment */
       min-height: 2.5rem;
       display: flex;
       align-items: center;
@@ -207,7 +205,6 @@
     transition: all 0.3s ease;
   }
 
-  /* Mobile: TALL rectangles for viral stories */
   @media (max-width: 1023px) {
     .viral-newscard-borderless {
       aspect-ratio: 3/4;
@@ -216,7 +213,6 @@
     }
   }
 
-  /* Desktop: LONG rectangles for viral stories */
   @media (min-width: 1024px) {
     .viral-newscard-borderless {
       aspect-ratio: 16/9;
@@ -225,7 +221,6 @@
     }
   }
 
-  /* Fade effect for borderless viral cards */
   .viral-newscard-borderless::after {
     content: '';
     position: absolute;
@@ -259,7 +254,7 @@
     box-shadow: 0 20px 40px rgba(0,0,0,0.15);
   }
 
-  /* === ENSURE TRENDING MAIN IS BORDERLESS === */
+  /* === TRENDING MAIN BORDERLESS === */
   .trending-main {
     background: transparent !important;
     border: none !important;
@@ -273,14 +268,6 @@
     box-shadow: none !important;
     padding: 0 !important;
     margin: 0 !important;
-  }
-
-  /* === SEAMLESS BACKGROUND === */
-  .main-layout,
-  .trending-main,
-  .trending-main > div,
-  .trending-stories-container {
-    background: hsl(var(--background)) !important;
   }
 
   /* === CLEAN HEADLINE STYLING === */
@@ -318,12 +305,7 @@
     padding: 0;
   }
 
-  .trending-headline-title::before,
-  .trending-headline-title::after {
-    content: none !important;
-  }
-
-  /* === HALF UNIT SPACING FOR NEWSCARDS === */
+  /* === SIDEBAR SECTION === */
   .sidebar-section {
     @apply space-y-6 w-full;
     min-height: 400px;
@@ -377,7 +359,7 @@
     border-radius: 4px;
   }
 
-  /* === BORDERLESS STORY CARDS === */
+  /* === STORY CARDS === */
   .story-card-borderless {
     background: transparent;
     border: none;
@@ -399,7 +381,7 @@
     box-shadow: none;
   }
 
-  /* === MOBILE STORY TITLE STYLES === */
+  /* === MOBILE STORY TITLE === */
   .mobile-story-title {
     font-family: 'Poppins', sans-serif;
     font-weight: 700;
@@ -410,35 +392,32 @@
     overflow-wrap: break-word;
   }
 
-  /* Mobile: 24px like Venezuela example */
   @media (max-width: 767px) {
     .mobile-story-title {
-      font-size: 1.5rem; /* 24px */
+      font-size: 1.5rem;
       line-height: 1.4;
       margin-bottom: 1rem;
       padding: 0 0.5rem;
     }
   }
 
-  /* Tablet */
   @media (min-width: 768px) and (max-width: 1023px) {
     .mobile-story-title {
-      font-size: 2rem; /* 32px */
+      font-size: 2rem;
       line-height: 1.3;
       margin-bottom: 1.25rem;
     }
   }
 
-  /* Desktop */
   @media (min-width: 1024px) {
     .mobile-story-title {
-      font-size: 2.5rem; /* 40px */
+      font-size: 2.5rem;
       line-height: 1.2;
       margin-bottom: 1.5rem;
     }
   }
 
-  /* === RELATED STORIES MOBILE TITLES === */
+  /* === RELATED STORIES === */
   .related-story-title-mobile {
     font-family: 'Poppins', sans-serif;
     font-weight: 600;
@@ -451,14 +430,14 @@
 
   @media (max-width: 767px) {
     .related-story-title-mobile {
-      font-size: 0.95rem; /* 15px */
+      font-size: 0.95rem;
       line-height: 1.4;
     }
   }
 
   @media (min-width: 768px) {
     .related-story-title-mobile {
-      font-size: 1.125rem; /* 18px */
+      font-size: 1.125rem;
       line-height: 1.4;
     }
   }
@@ -467,7 +446,7 @@
     color: hsl(var(--purple-text));
   }
 
-  /* === STORY METADATA SIDEBAR === */
+  /* === METADATA SIDEBAR === */
   .story-metadata-sidebar {
     background: hsl(var(--background));
     padding: 24px;
@@ -509,7 +488,7 @@
     font-size: 16px;
   }
 
-  /* === BORDERLESS NEWSCARDS WITH FADE === */
+  /* === NEWSCARDS === */
   .sidebar-newscard {
     border: none !important;
     box-shadow: none !important;
@@ -531,7 +510,6 @@
     transition: all 0.3s ease;
   }
 
-  /* Mobile: TALL rectangles for trending */
   @media (max-width: 1023px) {
     .viral-newscard {
       aspect-ratio: 3/4;
@@ -551,7 +529,6 @@
     }
   }
 
-  /* Desktop: LONG rectangles for trending */
   @media (min-width: 1024px) {
     .viral-newscard {
       aspect-ratio: 16/9;
@@ -571,7 +548,6 @@
     }
   }
 
-  /* Fade effect for newscard boundaries */
   .sidebar-newscard::after,
   .viral-newscard::after {
     content: '';
@@ -644,7 +620,7 @@
     background: hsl(var(--orange-accent));
   }
 
-  /* === SIDEBAR ALIGNMENT === */
+  /* === SIDEBAR TITLES === */
   .sidebar-title {
     @apply text-xl font-bold mb-6;
     font-family: 'Poppins', sans-serif;
@@ -662,7 +638,7 @@
     display: block !important;
   }
 
-  /* === FORCE BLINDSPOT VISIBILITY === */
+  /* === BLINDSPOT VISIBILITY === */
   .blindspot-sidebar {
     display: block !important;
     visibility: visible !important;
@@ -676,14 +652,7 @@
     min-height: 400px;
   }
 
-  /* === FORCE CONSISTENT HEIGHTS === */
-  .daily-reads-sidebar .sidebar-section,
-  .blindspot-sidebar .sidebar-section,
-  .trending-main {
-    min-height: 500px;
-  }
-
-  /* === STORY SUMMARY BULLET POINTS === */
+  /* === SUMMARY BULLETS === */
   .story-summary {
     background: hsl(var(--secondary) / 0.3);
     border-radius: 12px;
@@ -727,7 +696,7 @@
     line-height: 1;
   }
 
-  /* === ENHANCED RELATED STORIES === */
+  /* === RELATED STORIES === */
   .related-stories-list {
     @apply space-y-0;
   }
@@ -755,32 +724,7 @@
     color: hsl(var(--purple-text));
   }
 
-  /* === CATEGORY BUTTONS - ORANGE THEME === */
-  .category-button {
-    font-family: 'Poppins', sans-serif;
-    font-weight: 500;
-    transition: all 0.3s ease;
-    border-radius: 24px;
-  }
-
-  .category-button.active {
-    background: hsl(var(--orange-accent)) !important;
-    color: white !important;
-    box-shadow: 0 4px 12px hsl(var(--orange-accent) / 0.3);
-  }
-
-  .category-button:not(.active) {
-    background: hsl(var(--background));
-    color: hsl(var(--foreground));
-    border: 1px solid hsl(var(--border));
-  }
-
-  .category-button:not(.active):hover {
-    background: hsl(var(--orange-accent) / 0.1);
-    border-color: hsl(var(--orange-accent));
-  }
-
-  /* === BUTTONS - PURPLE THEME === */
+  /* === BUTTONS === */
   .btn-primary {
     background: hsl(var(--purple-text));
     color: white;
@@ -796,7 +740,7 @@
     box-shadow: 0 6px 16px hsl(var(--purple-text) / 0.3);
   }
 
-  /* === VISUAL SEPARATORS - SUBTLE === */
+  /* === SEPARATORS === */
   @media (min-width: 1024px) {
     .daily-reads-separator {
       @apply border-r border-gray-100 dark:border-gray-700 pr-8;
@@ -809,75 +753,7 @@
     }
   }
 
-  /* === INLINE ADS - FULL WIDTH FIX === */
-  .w-full {
-    width: 100% !important;
-    max-width: 100% !important;
-  }
-
-  .inline-ad,
-  .inline-ad > *,
-  .inline-ad a {
-    width: 100% !important;
-    display: block !important;
-  }
-
-  .inline-ad {
-    width: 100% !important;
-    margin: 16px 0;
-  }
-
-  .inline-ad a {
-    display: block !important;
-    width: 100% !important;
-    text-decoration: none;
-  }
-
-  .inline-ad-content {
-    @apply flex-1 pr-3;
-  }
-
-  .inline-ad-title {
-    @apply text-sm font-medium text-gray-700 dark:text-gray-300 mb-1;
-  }
-
-  .inline-ad-description {
-    @apply text-xs text-gray-500 dark:text-gray-400;
-  }
-
-  .inline-ad-image {
-    @apply w-12 h-12 bg-gray-200 dark:bg-gray-600 rounded flex-shrink-0 overflow-hidden;
-  }
-
-  .inline-ad-badge {
-    @apply absolute top-1 right-1 bg-gray-400 text-white text-xs px-1 py-0.5 rounded opacity-60;
-    font-size: 10px;
-  }
-
-  /* === STREAK DISPLAY === */
-  .streak-display {
-    @apply fixed top-20 right-4 z-40 bg-white dark:bg-black border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 shadow-sm;
-    backdrop-filter: blur(10px);
-    background-color: rgba(255, 255, 255, 0.9);
-  }
-
-  .dark .streak-display {
-    background-color: rgba(0, 0, 0, 0.9);
-  }
-
-  .streak-number {
-    @apply text-orange-500 font-bold text-lg;
-  }
-
-  .streak-text {
-    @apply text-gray-600 dark:text-gray-300 text-xs;
-  }
-
-  .streak-icon {
-    @apply text-orange-500 mr-1;
-  }
-
-  /* === MOBILE RESPONSIVENESS === */
+  /* === MOBILE RESPONSIVE === */
   @media (max-width: 768px) {
     .main-layout {
       padding: 0 1rem;
@@ -925,12 +801,7 @@
       font-size: 14px;
       padding-left: 20px;
     }
-    
-    .streak-display {
-      @apply top-16 right-2 px-2 py-1;
-    }
 
-    /* Mobile story page adjustments */
     .story-metadata-sidebar {
       position: static;
       margin-top: 24px;
@@ -943,49 +814,11 @@
       margin-bottom: 10px;
     }
 
-    /* Mobile: Also remove borders */
     .trending-main > div {
       background: transparent !important;
       border: none !important;
       box-shadow: none !important;
       padding: 0 !important;
-    }
-  }
-
-  /* === SCROLLBAR STYLING === */
-  .scrollbar-none {
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-  }
-
-  .scrollbar-none::-webkit-scrollbar {
-    display: none;
-  }
-
-  /* === UTILITY CLASSES === */
-  .force-visible {
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-  }
-
-  /* === LOADING STATES === */
-  .loading-card {
-    @apply bg-gray-100 dark:bg-gray-800 rounded-xl;
-    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  }
-
-  /* === PRINT STYLES === */
-  @media print {
-    .main-layout {
-      display: flex !important;
-      flex-direction: column !important;
-      background: white !important;
-    }
-    
-    .sidebar-section {
-      display: block !important;
-      page-break-inside: avoid;
     }
   }
 }

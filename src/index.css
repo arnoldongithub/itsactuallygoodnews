@@ -70,16 +70,14 @@
     @apply bg-background text-foreground;
     font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
     font-feature-settings: "rlig" 1, "calt" 1;
-    /* FIXED: Proper vendor prefixes for text-size-adjust */
+    /* FIXED: Only widely supported text-size-adjust properties */
     -webkit-text-size-adjust: 100%;
-    -moz-text-size-adjust: 100%;
     -ms-text-size-adjust: 100%;
   }
   
   html {
-    /* FIXED: Proper vendor prefixes */
+    /* FIXED: Only widely supported text-size-adjust properties */
     -webkit-text-size-adjust: 100%;
-    -moz-text-size-adjust: 100%;
     -ms-text-size-adjust: 100%;
   }
 }

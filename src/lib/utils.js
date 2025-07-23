@@ -1,4 +1,4 @@
-// Complete utils.js - Final Corrected Version
+// Fixed utils.js - Resolves 'cleaned is not defined' error
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -24,6 +24,16 @@ export const cleanTitle = (title) => {
     .replace(/^[^\w\s]+|[^\w\s]+$/g, '') // Remove leading/trailing non-word chars
     .trim();
   
+  // Additional cleanup for common issues
+  cleaned = cleaned
+    .replace(/^-+|-+$/g, '') // Remove leading/trailing dashes
+    .replace(/^–+|–+$/g, '') // Remove en-dashes
+    .replace(/^\|+|\|+$/g, '') // Remove pipes
+    .replace(/^\.+|\.+$/g, '') // Remove leading/trailing dots
+    .replace(/^"+|"+$/g, '') // Remove quotes
+    .replace(/^\(+|\)+$/g, '') // Remove parentheses
+    .trim();
+  
   // If title is now empty or too short, provide fallback
   if (cleaned.length < 5) {
     return 'News Story';
@@ -41,13 +51,15 @@ export const cleanTitle = (title) => {
 export const cleanContent = (content) => {
   if (!content) return '';
   
-  return content
+  let cleaned = content
     .replace(/<[^>]*>/g, '') // Remove HTML tags
     .replace(/&[a-zA-Z0-9#]+;/g, '') // Remove HTML entities
     .replace(/https?:\/\/[^\s]+/g, '') // Remove URLs
     .replace(/www\.[^\s]+/g, '') // Remove www links
     .replace(/\s+/g, ' ') // Normalize whitespace
     .trim();
+    
+  return cleaned;
 };
 
 /**
@@ -115,12 +127,12 @@ export const createBulletPoints = (text, maxPoints = 5) => {
   if (!text) return [];
   
   // Clean the text first
-  const cleaned = cleanSummary(text);
+  const cleanedText = cleanSummary(text);
   
   // If cleaned text is too short or generic, create contextual points
-  if (cleaned.length < 50 || 
-      cleaned.includes('important updates') ||
-      cleaned.includes('positive developments')) {
+  if (cleanedText.length < 50 || 
+      cleanedText.includes('important updates') ||
+      cleanedText.includes('positive developments')) {
     return [
       'This story highlights recent positive developments in the field',
       'New progress has been made that benefits communities',
@@ -130,7 +142,7 @@ export const createBulletPoints = (text, maxPoints = 5) => {
   }
   
   // Split by sentences and clean up
-  const sentences = cleaned
+  const sentences = cleanedText
     .split(/[.!?]+/)
     .map(s => s.trim())
     .filter(s => s.length > 15) // Longer minimum for better context
@@ -141,9 +153,9 @@ export const createBulletPoints = (text, maxPoints = 5) => {
   }
   
   return sentences.map(sentence => {
-    let clean = sentence.charAt(0).toUpperCase() + sentence.slice(1);
+    let cleanSentence = sentence.charAt(0).toUpperCase() + sentence.slice(1);
     // Ensure sentence ends with a period if it doesn't already
-    return clean.match(/[.!?]$/) ? clean : clean + '.';
+    return cleanSentence.match(/[.!?]$/) ? cleanSentence : cleanSentence + '.';
   });
 };
 
@@ -346,12 +358,3 @@ export const debounce = (func, wait) => {
     timeout = setTimeout(later, wait);
   };
 };
-  
-  // Additional cleanup for common issues
-  cleaned = cleaned
-    .replace(/^-+|-+$/g, '') // Remove leading/trailing dashes
-    .replace(/^–+|–+$/g, '') // Remove en-dashes
-    .replace(/^\|+|\|+$/g, '') // Remove pipes
-    .replace(/^\.+|\.+$/g, '') // Remove leading/trailing dots
-    .replace(/^"+|"+$/g, '') // Remove quotes
-    .replace(/^\(+|\)+$/g, '') // Remove parentheses

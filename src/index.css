@@ -83,7 +83,6 @@
     color: hsl(var(--header-foreground));
   }
 
-  /* === PERFECT HORIZONTAL TITLE ALIGNMENT === */
   .main-layout {
     @apply flex flex-col gap-8 my-8;
     max-width: 100%;
@@ -92,7 +91,6 @@
     background: hsl(var(--background));
   }
 
-  /* Mobile Layout */
   @media (max-width: 1023px) {
     .main-layout {
       @apply flex-col px-4 gap-6;
@@ -120,7 +118,6 @@
     }
   }
 
-  /* Desktop Layout - PERFECT TITLE ALIGNMENT */
   @media (min-width: 1024px) {
     .main-layout {
       @apply flex-row px-8;
@@ -168,7 +165,6 @@
     }
   }
 
-  /* === BORDERLESS TRENDING COMPONENTS === */
   .trending-stories-borderless {
     background: transparent !important;
     border: none !important;
@@ -247,7 +243,6 @@
     box-shadow: 0 20px 40px rgba(0,0,0,0.15);
   }
 
-  /* === TRENDING MAIN BORDERLESS === */
   .trending-main {
     background: transparent !important;
     border: none !important;
@@ -263,7 +258,6 @@
     margin: 0 !important;
   }
 
-  /* === CLEAN HEADLINE STYLING === */
   .trending-headlines {
     @apply space-y-0;
     margin-top: 0;
@@ -298,7 +292,6 @@
     padding: 0;
   }
 
-  /* === SIDEBAR SECTION === */
   .sidebar-section {
     @apply space-y-6 w-full;
     min-height: 400px;
@@ -308,7 +301,6 @@
     padding-top: 0 !important;
   }
 
-  /* === SOURCE & POSITIVITY BAR === */
   .source-positivity-bar {
     display: flex;
     align-items: center;
@@ -352,7 +344,6 @@
     border-radius: 4px;
   }
 
-  /* === STORY CARDS === */
   .story-card-borderless {
     background: transparent;
     border: none;
@@ -374,7 +365,6 @@
     box-shadow: none;
   }
 
-  /* === MOBILE STORY TITLE === */
   .mobile-story-title {
     font-family: 'Poppins', sans-serif;
     font-weight: 700;
@@ -410,7 +400,6 @@
     }
   }
 
-  /* === RELATED STORIES === */
   .related-story-title-mobile {
     font-family: 'Poppins', sans-serif;
     font-weight: 600;
@@ -439,7 +428,6 @@
     color: hsl(var(--purple-text));
   }
 
-  /* === METADATA SIDEBAR === */
   .story-metadata-sidebar {
     background: hsl(var(--background));
     padding: 24px;
@@ -481,7 +469,6 @@
     font-size: 16px;
   }
 
-  /* === NEWSCARDS === */
   .sidebar-newscard {
     border: none !important;
     box-shadow: none !important;
@@ -613,7 +600,6 @@
     background: hsl(var(--orange-accent));
   }
 
-  /* === SIDEBAR TITLES === */
   .sidebar-title {
     @apply text-xl font-bold mb-6;
     font-family: 'Poppins', sans-serif;
@@ -631,7 +617,6 @@
     display: block !important;
   }
 
-  /* === BLINDSPOT VISIBILITY === */
   .blindspot-sidebar {
     display: block !important;
     visibility: visible !important;
@@ -645,7 +630,6 @@
     min-height: 400px;
   }
 
-  /* === SUMMARY BULLETS === */
   .story-summary {
     background: hsl(var(--secondary) / 0.3);
     border-radius: 12px;
@@ -689,7 +673,6 @@
     line-height: 1;
   }
 
-  /* === RELATED STORIES === */
   .related-stories-list {
     @apply space-y-0;
   }
@@ -717,7 +700,6 @@
     color: hsl(var(--purple-text));
   }
 
-  /* === BUTTONS === */
   .btn-primary {
     background: hsl(var(--purple-text));
     color: white;
@@ -733,7 +715,6 @@
     box-shadow: 0 6px 16px hsl(var(--purple-text) / 0.3);
   }
 
-  /* === SEPARATORS === */
   @media (min-width: 1024px) {
     .daily-reads-separator {
       @apply border-r border-gray-100 dark:border-gray-700 pr-8;
@@ -746,7 +727,6 @@
     }
   }
 
-  /* === INLINE ADS === */
   .inline-ad {
     width: 100% !important;
     margin: 16px 0;
@@ -779,7 +759,6 @@
     font-size: 10px;
   }
 
-  /* === CATEGORY BUTTONS === */
   .category-button {
     font-family: 'Poppins', sans-serif;
     font-weight: 500;
@@ -804,7 +783,6 @@
     border-color: hsl(var(--orange-accent));
   }
 
-  /* === MOBILE RESPONSIVE === */
   @media (max-width: 768px) {
     .main-layout {
       padding: 0 1rem;
@@ -873,7 +851,6 @@
     }
   }
 
-  /* === UTILITY CLASSES === */
   .force-visible {
     display: block !important;
     visibility: visible !important;

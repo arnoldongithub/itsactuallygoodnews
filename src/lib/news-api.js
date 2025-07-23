@@ -1,4 +1,4 @@
-// Complete news-api.js - Final Corrected Version with working categories
+// Complete Corrected news-api.js - Cache Fixed Version
 import { supabase } from './supa.js';
 import { placeholderArticles, getAllStories } from './placeholder-data.js';
 import { useState, useEffect, useCallback } from 'react';
@@ -6,7 +6,7 @@ import { cleanTitle, cleanSummary, cleanContent } from './utils.js';
 
 const LAST_FETCHED_KEY = 'newsLastFetched';
 const NEWS_CACHE_KEY = 'newsCache';
-const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes for fresher content
+const CACHE_DURATION = 5 * 60 * 1000; // REDUCED: 5 minutes for fresher content
 
 // ENHANCED category mappings - EXACT database matching for working categories
 const CATEGORY_MAPPINGS = {
@@ -20,8 +20,24 @@ const CATEGORY_MAPPINGS = {
   'blindspot': ['Blindspot']
 };
 
+// NEW: Force clear all caches
+export const forceClearAllCaches = () => {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem(NEWS_CACHE_KEY);
+    localStorage.removeItem(LAST_FETCHED_KEY);
+    console.log('🧹 All news caches cleared');
+  }
+};
+
+// NEW: Cache-busting fetch with timestamp
+const fetchWithCacheBust = async (url, options = {}) => {
+  const cacheBuster = Date.now();
+  const separator = url.includes('?') ? '&' : '?';
+  return fetch(`${url}${separator}_cb=${cacheBuster}`, options);
+};
+
 // === OPTIMIZED: Primary function using materialized views ===
-export const fetchHomepageData = async () => {
+export const fetchHomepageData = async (bypassCache = false) => {
   try {
     console.log('🚀 Using optimized homepage data fetch...');
     
@@ -43,15 +59,15 @@ export const fetchHomepageData = async () => {
     }
     
     console.warn('⚠️ Optimized function failed, trying direct function');
-    return await fetchHomepageDataDirect();
+    return await fetchHomepageDataDirect(bypassCache);
   } catch (error) {
     console.error('❌ Error in optimized fetch:', error);
-    return await fetchHomepageDataDirect();
+    return await fetchHomepageDataDirect(bypassCache);
   }
 };
 
 // FALLBACK: Direct function if materialized views fail
-const fetchHomepageDataDirect = async () => {
+const fetchHomepageDataDirect = async (bypassCache = false) => {
   try {
     console.log('🔄 Using direct homepage data fetch...');
     
@@ -67,22 +83,22 @@ const fetchHomepageDataDirect = async () => {
     }
     
     console.warn('⚠️ Direct function failed, using individual queries');
-    return await fetchHomepageDataFallback();
+    return await fetchHomepageDataFallback(bypassCache);
   } catch (error) {
     console.error('❌ Error in direct fetch:', error);
-    return await fetchHomepageDataFallback();
+    return await fetchHomepageDataFallback(bypassCache);
   }
 };
 
 // LAST RESORT: Individual queries fallback
-const fetchHomepageDataFallback = async () => {
+const fetchHomepageDataFallback = async (bypassCache = false) => {
   try {
     console.log('🔄 Using fallback individual queries...');
     
     const [trending, dailyReads, blindspot] = await Promise.all([
-      fetchTrendingNews(15),
-      fetchDailyReads(10), 
-      fetchBlindspotStories(8)
+      fetchTrendingNews(15, bypassCache),
+      fetchDailyReads(10, bypassCache), 
+      fetchBlindspotStories(8, bypassCache)
     ]);
 
     console.log(`📊 Fallback results: ${trending.length} trending, ${dailyReads.length} daily, ${blindspot.length} blindspot`);
@@ -115,7 +131,7 @@ const fetchHomepageDataFallback = async () => {
 };
 
 // OPTIMIZED: Trending with materialized view fallback
-export const fetchTrendingNews = async (limit = 15) => {
+export const fetchTrendingNews = async (limit = 15, bypassCache = false) => {
   try {
     console.log('🔥 Fetching trending stories...');
     
@@ -135,10 +151,10 @@ export const fetchTrendingNews = async (limit = 15) => {
       }));
     }
 
-    // Fallback to direct query
+    // Fallback to direct query with cache busting
     const fromTime = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
 
-    const { data, error } = await supabase
+    let query = supabase
       .from('news')
       .select(`
         id, title, url, summary, content, image_url, thumbnail_url,
@@ -152,6 +168,8 @@ export const fetchTrendingNews = async (limit = 15) => {
       .order('positivity_score', { ascending: false })
       .order('published_at', { ascending: false })
       .limit(limit);
+
+    const { data, error } = await query;
 
     if (error) throw error;
     console.log(`🔥 Trending stories: ${data?.length || 0}`);
@@ -170,7 +188,7 @@ export const fetchTrendingNews = async (limit = 15) => {
 };
 
 // OPTIMIZED: Daily reads with materialized view fallback
-export const fetchDailyReads = async (limit = 10) => {
+export const fetchDailyReads = async (limit = 10, bypassCache = false) => {
   try {
     console.log('📰 Fetching daily reads...');
     
@@ -229,7 +247,7 @@ export const fetchDailyReads = async (limit = 10) => {
 };
 
 // OPTIMIZED: Blindspot with materialized view fallback
-export const fetchBlindspotStories = async (limit = 8) => {
+export const fetchBlindspotStories = async (limit = 8, bypassCache = false) => {
   try {
     console.log('🔍 Fetching blindspot stories...');
     
@@ -296,12 +314,12 @@ export const fetchBlindspotStories = async (limit = 8) => {
 };
 
 // FIXED: Category filtering with EXACT database matching - CATEGORIES NOW WORK!
-export const fetchNews = async (category = 'All', retryCount = 0) => {
+export const fetchNews = async (category = 'All', retryCount = 0, bypassCache = false) => {
   const now = Date.now();
   const isBrowser = typeof window !== 'undefined';
   const maxRetries = 3;
 
-  console.log(`🔍 Fetching news for category: "${category}"`);
+  console.log(`🔍 Fetching news for category: "${category}" (bypass cache: ${bypassCache})`);
 
   // CRITICAL FIX: Proper category decoding and normalization
   let decodedCategory = category;
@@ -315,13 +333,13 @@ export const fetchNews = async (category = 'All', retryCount = 0) => {
   console.log(`🎯 Normalized category: "${normalizedCategory}"`);
 
   let lastFetched, cachedNews;
-  if (isBrowser) {
+  if (isBrowser && !bypassCache) { // Only check cache if not bypassing
     lastFetched = localStorage.getItem(LAST_FETCHED_KEY);
     cachedNews = localStorage.getItem(NEWS_CACHE_KEY);
   }
 
-  // Check cache first (reduced cache time for fresher content)
-  if (isBrowser && lastFetched && cachedNews && now - parseInt(lastFetched, 10) < CACHE_DURATION) {
+  // Check cache first (but skip if bypassCache is true)
+  if (!bypassCache && isBrowser && lastFetched && cachedNews && now - parseInt(lastFetched, 10) < CACHE_DURATION) {
     try {
       const parsedCache = JSON.parse(cachedNews);
       const filteredCache = filterByCategory(parsedCache, normalizedCategory);
@@ -392,8 +410,8 @@ export const fetchNews = async (category = 'All', retryCount = 0) => {
         virality_score: item.virality_score || (item.positivity_score > 9 ? 8 : 0)
       }));
 
-      // Cache with shorter duration
-      if (isBrowser) {
+      // Cache with shorter duration (but skip if bypassing cache)
+      if (!bypassCache && isBrowser) {
         try {
           localStorage.setItem(NEWS_CACHE_KEY, JSON.stringify(processedData));
           localStorage.setItem(LAST_FETCHED_KEY, now.toString());
@@ -413,7 +431,7 @@ export const fetchNews = async (category = 'All', retryCount = 0) => {
     
     if (retryCount < maxRetries) {
       await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
-      return fetchNews(category, retryCount + 1);
+      return fetchNews(category, retryCount + 1, bypassCache);
     }
     
     return [];
@@ -452,6 +470,38 @@ const filterByCategory = (data, category) => {
   });
 };
 
+// NEW: Force refresh function that bypasses all caches
+export const forceRefreshData = async () => {
+  try {
+    console.log('🔄 Force refreshing all data...');
+    
+    // Clear local caches
+    forceClearAllCaches();
+    
+    // Try to refresh materialized views
+    try {
+      await refreshMaterializedViews();
+      console.log('✅ Materialized views refreshed');
+    } catch (mvError) {
+      console.warn('⚠️ Could not refresh materialized views:', mvError);
+    }
+    
+    // Fetch fresh data bypassing all caches
+    const freshData = await fetchHomepageDataFallback(true); // Force bypass cache
+    
+    console.log('✅ Fresh data fetched:', {
+      trending: freshData.trending?.length || 0,
+      dailyReads: freshData.dailyReads?.length || 0,
+      blindspot: freshData.blindspot?.length || 0
+    });
+    
+    return freshData;
+  } catch (error) {
+    console.error('❌ Failed to force refresh:', error);
+    throw error;
+  }
+};
+
 // ENHANCED: React hook with performance optimizations
 export const useHomepageData = () => {
   const [data, setData] = useState({
@@ -462,7 +512,7 @@ export const useHomepageData = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (bypassCache = false) => {
     try {
       setLoading(true);
       setError(null);
@@ -470,7 +520,9 @@ export const useHomepageData = () => {
       console.log('🏠 Fetching optimized homepage data...');
       const startTime = performance.now();
       
-      const result = await fetchHomepageData();
+      const result = bypassCache ? 
+        await forceRefreshData() : 
+        await fetchHomepageData();
       
       const endTime = performance.now();
       console.log(`⚡ Total homepage fetch time: ${(endTime - startTime).toFixed(2)}ms`);
@@ -494,12 +546,18 @@ export const useHomepageData = () => {
   useEffect(() => {
     fetchData();
     
-    // Reduced refresh interval to match materialized view refresh
-    const interval = setInterval(fetchData, 20 * 60 * 1000); // 20 minutes
+    // Reduced refresh interval for fresher data
+    const interval = setInterval(() => fetchData(false), 10 * 60 * 1000); // 10 minutes
     return () => clearInterval(interval);
   }, [fetchData]);
 
-  return { data, loading, error, refetch: fetchData };
+  return { 
+    data, 
+    loading, 
+    error, 
+    refetch: () => fetchData(false),
+    forceRefresh: () => fetchData(true) // NEW: Force refresh bypassing cache
+  };
 };
 
 // Utility functions

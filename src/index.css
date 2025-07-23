@@ -70,15 +70,10 @@
     @apply bg-background text-foreground;
     font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
     font-feature-settings: "rlig" 1, "calt" 1;
-    /* FIXED: Only widely supported text-size-adjust properties */
-    -webkit-text-size-adjust: 100%;
-    -ms-text-size-adjust: 100%;
   }
   
   html {
-    /* FIXED: Only widely supported text-size-adjust properties */
-    -webkit-text-size-adjust: 100%;
-    -ms-text-size-adjust: 100%;
+    font-size: 16px;
   }
 }
 
@@ -751,6 +746,64 @@
     }
   }
 
+  /* === INLINE ADS === */
+  .inline-ad {
+    width: 100% !important;
+    margin: 16px 0;
+  }
+
+  .inline-ad a {
+    display: block !important;
+    width: 100% !important;
+    text-decoration: none;
+  }
+
+  .inline-ad-content {
+    @apply flex-1 pr-3;
+  }
+
+  .inline-ad-title {
+    @apply text-sm font-medium text-gray-700 dark:text-gray-300 mb-1;
+  }
+
+  .inline-ad-description {
+    @apply text-xs text-gray-500 dark:text-gray-400;
+  }
+
+  .inline-ad-image {
+    @apply w-12 h-12 bg-gray-200 dark:bg-gray-600 rounded flex-shrink-0 overflow-hidden;
+  }
+
+  .inline-ad-badge {
+    @apply absolute top-1 right-1 bg-gray-400 text-white text-xs px-1 py-0.5 rounded opacity-60;
+    font-size: 10px;
+  }
+
+  /* === CATEGORY BUTTONS === */
+  .category-button {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border-radius: 24px;
+  }
+
+  .category-button.active {
+    background: hsl(var(--orange-accent)) !important;
+    color: white !important;
+    box-shadow: 0 4px 12px hsl(var(--orange-accent) / 0.3);
+  }
+
+  .category-button:not(.active) {
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+    border: 1px solid hsl(var(--border));
+  }
+
+  .category-button:not(.active):hover {
+    background: hsl(var(--orange-accent) / 0.1);
+    border-color: hsl(var(--orange-accent));
+  }
+
   /* === MOBILE RESPONSIVE === */
   @media (max-width: 768px) {
     .main-layout {
@@ -818,5 +871,26 @@
       box-shadow: none !important;
       padding: 0 !important;
     }
+  }
+
+  /* === UTILITY CLASSES === */
+  .force-visible {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  .loading-card {
+    @apply bg-gray-100 dark:bg-gray-800 rounded-xl;
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .scrollbar-none {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
   }
 }

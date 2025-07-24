@@ -78,6 +78,98 @@
 }
 
 @layer components {
+  /* ENHANCED IMAGE ERROR HANDLING */
+  .smart-image-container {
+    @apply relative overflow-hidden;
+  }
+  
+  .smart-image-loading {
+    @apply absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-800;
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  .smart-image-error {
+    @apply absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded opacity-75;
+    font-size: 10px;
+  }
+  
+  .image-fallback-placeholder {
+    @apply bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9CA3AF;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  /* Enhanced newscard image styles with error handling */
+  .category-newscard-image,
+  .viral-newscard-image,
+  .sidebar-newscard-image {
+    @apply absolute inset-0 w-full h-full object-cover transition-all duration-300;
+    background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+  }
+
+  .category-newscard-image:before,
+  .viral-newscard-image:before,
+  .sidebar-newscard-image:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(243, 244, 246, 0.5), rgba(229, 231, 235, 0.5));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .category-newscard-image[src=""],
+  .category-newscard-image[src="null"],
+  .category-newscard-image[src="undefined"] {
+    background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+  }
+
+  .category-newscard-image[src=""]:before,
+  .category-newscard-image[src="null"]:before,
+  .category-newscard-image[src="undefined"]:before {
+    opacity: 1;
+  }
+
+  /* REMOVE VIRAL TAGS COMPLETELY */
+  .viral-newscard-badge,
+  .viral-tag,
+  .badge-viral,
+  .trending-viral-indicator,
+  .viral-indicator,
+  .virality-badge,
+  .viral-score-badge {
+    display: none !important;
+  }
+
+  /* FIX TRENDING CARD TITLE SIZES */
+  .trending-main .viral-newscard-title,
+  .trending-main .sidebar-newscard-title {
+    font-size: 1.125rem !important; /* 18px - reduced from larger */
+    line-height: 1.4 !important;
+    font-weight: 600 !important;
+    max-height: 3.36rem !important; /* Exactly 3 lines */
+    overflow: hidden !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 3 !important;
+    -webkit-box-orient: vertical !important;
+  }
+  
+  /* FIX DAILY READS TITLE SIZES */
+  .daily-reads-sidebar .sidebar-newscard-title {
+    font-size: 0.95rem !important; /* 15px */
+    line-height: 1.3 !important;
+    font-weight: 500 !important;
+    max-height: 2.47rem !important; /* Exactly 2 lines */
+    -webkit-line-clamp: 2 !important;
+  }
+
   .bg-header {
     background-color: hsl(var(--mint-green));
     color: hsl(var(--header-foreground));
@@ -564,11 +656,6 @@
     box-shadow: 0 20px 40px rgba(0,0,0,0.15);
   }
 
-  .viral-newscard-image,
-  .sidebar-newscard-image {
-    @apply absolute inset-0 w-full h-full object-cover;
-  }
-
   .viral-newscard-overlay,
   .sidebar-newscard-overlay {
     @apply absolute bottom-0 left-0 w-full;
@@ -593,11 +680,6 @@
     font-size: 15px;
     font-weight: 500;
     padding: 20px;
-  }
-
-  .viral-newscard-badge {
-    @apply absolute top-4 right-4 text-white px-3 py-1 rounded-full text-xs font-bold;
-    background: hsl(var(--orange-accent));
   }
 
   .sidebar-title {
@@ -783,6 +865,48 @@
     border-color: hsl(var(--orange-accent));
   }
 
+  /* ENHANCED: Add category-specific newscard styles */
+  .category-newscard {
+    @apply relative rounded-xl overflow-hidden transition-all duration-300 ease-in-out;
+    aspect-ratio: 16/9;
+    cursor: pointer;
+    background: hsl(var(--background));
+    border: 1px solid hsl(var(--border));
+  }
+
+  .category-newscard:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 28px rgba(0,0,0,0.15);
+    border-color: hsl(var(--orange-accent) / 0.3);
+  }
+
+  .category-newscard-image {
+    @apply absolute inset-0 w-full h-full object-cover transition-transform duration-300;
+  }
+
+  .category-newscard-overlay {
+    @apply absolute bottom-0 left-0 w-full p-4;
+    background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 60%, transparent 100%);
+  }
+
+  .category-newscard-category {
+    @apply text-xs font-semibold text-white mb-2 uppercase tracking-wide;
+    background: hsl(var(--orange-accent));
+    padding: 4px 8px;
+    border-radius: 4px;
+    display: inline-block;
+  }
+
+  .category-newscard-title {
+    @apply text-white font-bold text-lg leading-tight;
+    font-family: 'Poppins', sans-serif;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
   @media (max-width: 768px) {
     .main-layout {
       padding: 0 1rem;
@@ -849,6 +973,82 @@
       box-shadow: none !important;
       padding: 0 !important;
     }
+
+    .category-newscard {
+      aspect-ratio: 4/5;
+    }
+
+    .category-newscard-title {
+      font-size: 16px;
+    }
+
+    .category-newscard-category {
+      font-size: 10px;
+      padding: 2px 6px;
+    }
+  }
+
+  /* ADDITIONAL IMAGE ERROR HANDLING STYLES */
+  .image-error-state {
+    @apply bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #9CA3AF;
+    font-size: 12px;
+    font-weight: 500;
+    text-align: center;
+    padding: 20px;
+  }
+
+  .image-error-icon {
+    font-size: 24px;
+    margin-bottom: 8px;
+    opacity: 0.5;
+  }
+
+  .image-retry-button {
+    @apply mt-2 px-3 py-1 bg-blue-500 text-white text-xs rounded cursor-pointer;
+    font-size: 10px;
+    transition: background-color 0.2s;
+  }
+
+  .image-retry-button:hover {
+    @apply bg-blue-600;
+  }
+
+  /* LOADING ANIMATIONS */
+  .skeleton-pulse {
+    animation: skeleton-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  @keyframes skeleton-pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+
+  .shimmer {
+    background: linear-gradient(90deg, 
+      rgba(255,255,255,0) 0%, 
+      rgba(255,255,255,0.2) 20%, 
+      rgba(255,255,255,0.5) 60%, 
+      rgba(255,255,255,0)
+    );
+    animation: shimmer 2s infinite;
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: -468px 0;
+    }
+    100% {
+      background-position: 468px 0;
+    }
   }
 
   .force-visible {
@@ -869,5 +1069,73 @@
 
   .scrollbar-none::-webkit-scrollbar {
     display: none;
+  }
+
+  /* PRINT STYLES */
+  @media print {
+    .viral-newscard-badge,
+    .viral-tag,
+    .badge-viral,
+    .trending-viral-indicator,
+    .viral-indicator,
+    .virality-badge,
+    .viral-score-badge {
+      display: none !important;
+    }
+    
+    .category-newscard,
+    .viral-newscard,
+    .sidebar-newscard {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+  }
+
+  /* ACCESSIBILITY IMPROVEMENTS */
+  .category-newscard:focus,
+  .viral-newscard:focus,
+  .sidebar-newscard:focus {
+    outline: 2px solid hsl(var(--orange-accent));
+    outline-offset: 2px;
+  }
+
+  .category-newscard:focus-visible,
+  .viral-newscard:focus-visible,
+  .sidebar-newscard:focus-visible {
+    outline: 2px solid hsl(var(--orange-accent));
+    outline-offset: 2px;
+  }
+
+  /* REDUCED MOTION SUPPORT */
+  @media (prefers-reduced-motion: reduce) {
+    .category-newscard,
+    .viral-newscard,
+    .sidebar-newscard,
+    .smart-image-loading,
+    .image-retry-button {
+      animation: none;
+      transition: none;
+    }
+    
+    .category-newscard:hover,
+    .viral-newscard:hover,
+    .sidebar-newscard:hover {
+      transform: none;
+    }
+  }
+
+  /* HIGH CONTRAST MODE SUPPORT */
+  @media (prefers-contrast: high) {
+    .category-newscard,
+    .viral-newscard,
+    .sidebar-newscard {
+      border: 2px solid;
+    }
+    
+    .category-newscard-overlay,
+    .viral-newscard-overlay,
+    .sidebar-newscard-overlay {
+      background: rgba(0,0,0,0.9);
+    }
   }
 }

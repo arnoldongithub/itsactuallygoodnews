@@ -18,7 +18,9 @@ if (!process.env.SUPABASE_URL || !process.env.SUPABASE_KEY) {
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 const parser = new RSSParser({
   timeout: 20000,
-  customFields: { item: ['pubDate', 'description', 'content', 'author'] }
+  customFields: { 
+    item: ['pubDate', 'description', 'content', 'author', 'media:content', 'media:thumbnail', 'enclosure'] 
+  }
 });
 
 // === Enhanced Keywords for Catastrophe Heroes ===
@@ -204,6 +206,7 @@ const FEEDS = {
   ]
 };
 
+// === ENHANCED IMAGE EXTRACTION ===
 const isValidUrl = (url) => {
   try {
     const parsedUrl = new URL(url);
@@ -218,7 +221,13 @@ const isValidImageUrl = async (url) => {
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000);
-    const response = await fetch(url, { method: 'HEAD', signal: controller.signal });
+    const response = await fetch(url, { 
+      method: 'HEAD', 
+      signal: controller.signal,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; NewsBot/1.0)'
+      }
+    });
     clearTimeout(timeoutId);
     const contentType = response.headers.get('content-type');
     return response.ok && contentType?.startsWith('image/');
@@ -227,10 +236,118 @@ const isValidImageUrl = async (url) => {
   }
 };
 
+// === ENHANCED: Multiple image extraction methods ===
 const extractImageFromHTML = (html) => {
   if (!html) return null;
-  const match = html.match(/<img[^>]+src="([^">]+)"/i);
-  return match && isValidUrl(match[1]) ? match[1] : null;
+  
+  // Try multiple image extraction patterns
+  const patterns = [
+    /<img[^>]+src=["']([^"']+)["'][^>]*>/gi,
+    /<img[^>]+src=([^\s>]+)[^>]*>/gi,
+    /<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["'][^>]*>/gi,
+    /<meta[^>]*name=["']twitter:image["'][^>]*content=["']([^"']+)["'][^>]*>/gi
+  ];
+  
+  for (const pattern of patterns) {
+    const matches = Array.from(html.matchAll(pattern));
+    for (const match of matches) {
+      const url = match[1];
+      if (url && isValidUrl(url) && !url.includes('icon') && !url.includes('logo')) {
+        return url;
+      }
+    }
+  }
+  
+  return null;
+};
+
+// === ENHANCED: Smart image extraction from RSS item ===
+const extractBestImage = async (item, rawContent, category) => {
+  const fallbackImages = {
+    Health: 'https://source.unsplash.com/800x600/?health,medical,wellness',
+    'Innovation & Tech': 'https://source.unsplash.com/800x600/?technology,innovation,computer',
+    'Environment & Sustainability': 'https://source.unsplash.com/800x600/?environment,nature,green',
+    Education: 'https://source.unsplash.com/800x600/?education,learning,school',
+    'Science & Space': 'https://source.unsplash.com/800x600/?science,space,research',
+    'Humanitarian & Rescue': 'https://source.unsplash.com/800x600/?humanitarian,help,rescue',
+    'Blindspot': 'https://source.unsplash.com/800x600/?world,global,people'
+  };
+
+  console.log(`🖼️ Extracting image for: ${item.title?.substring(0, 50)}...`);
+
+  // Method 1: RSS enclosure (most reliable)
+  if (item.enclosure?.url) {
+    if (await isValidImageUrl(item.enclosure.url)) {
+      console.log(`📎 Found enclosure image: ${item.enclosure.url}`);
+      return item.enclosure.url;
+    }
+  }
+
+  // Method 2: Media namespace (common in news feeds)
+  if (item['media:content']) {
+    const mediaContent = Array.isArray(item['media:content']) ? item['media:content'][0] : item['media:content'];
+    if (mediaContent?.$ && mediaContent.$.url) {
+      if (await isValidImageUrl(mediaContent.$.url)) {
+        console.log(`📺 Found media namespace image: ${mediaContent.$.url}`);
+        return mediaContent.$.url;
+      }
+    }
+  }
+
+  // Method 3: Media thumbnail
+  if (item['media:thumbnail']) {
+    const thumbnail = Array.isArray(item['media:thumbnail']) ? item['media:thumbnail'][0] : item['media:thumbnail'];
+    if (thumbnail?.$ && thumbnail.$.url) {
+      if (await isValidImageUrl(thumbnail.$.url)) {
+        console.log(`🖼️ Found media thumbnail: ${thumbnail.$.url}`);
+        return thumbnail.$.url;
+      }
+    }
+  }
+
+  // Method 4: Extract from HTML content
+  const imageFromContent = extractImageFromHTML(rawContent);
+  if (imageFromContent && await isValidImageUrl(imageFromContent)) {
+    console.log(`📄 Found content image: ${imageFromContent}`);
+    return imageFromContent;
+  }
+
+  // Method 5: Check for GoodNewsNetwork specific patterns
+  if (item.link && item.link.includes('goodnewsnetwork.org')) {
+    const gnImagePatterns = [
+      rawContent?.match(/src="([^"]*goodnewsnetwork[^"]*)"/i),
+      item.description?.match(/src="([^"]*goodnewsnetwork[^"]*)"/i)
+    ];
+    
+    for (const pattern of gnImagePatterns) {
+      if (pattern && pattern[1] && await isValidImageUrl(pattern[1])) {
+        console.log(`📰 Found GoodNewsNetwork image: ${pattern[1]}`);
+        return pattern[1];
+      }
+    }
+  }
+
+  // Method 6: Try to fetch image from the article page (optional, slower)
+  if (process.env.FETCH_FULL_IMAGES === 'true' && item.link) {
+    try {
+      const response = await fetch(item.link, {
+        timeout: 10000,
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; NewsBot/1.0)' }
+      });
+      const html = await response.text();
+      const pageImage = extractImageFromHTML(html);
+      if (pageImage && await isValidImageUrl(pageImage)) {
+        console.log(`🌐 Found page image: ${pageImage}`);
+        return pageImage;
+      }
+    } catch (error) {
+      console.log(`⚠️ Could not fetch page image from ${item.link}`);
+    }
+  }
+
+  // Fallback: Category-specific placeholder
+  console.log(`🎲 Using fallback image for category: ${category}`);
+  return fallbackImages[category] || fallbackImages['Blindspot'];
 };
 
 const clean = (html) => {
@@ -334,7 +451,7 @@ const insertArticle = async (article) => {
     console.error('❌ Insert error:', error.message);
     return false;
   }
-  console.log(`✅ Inserted [${article.category}] (Viral: ${article.virality_score}):`, article.title.slice(0, 60) + '...');
+  console.log(`✅ Inserted [${article.category}] (Viral: ${article.virality_score}, Image: ${article.image_url ? '✅' : '❌'}):`, article.title.slice(0, 60) + '...');
   return true;
 };
 
@@ -347,22 +464,13 @@ const determineFinalCategory = (originalCategory, title, content) => {
 };
 
 const processFeed = async (feedUrl, category) => {
-  const fallbackImages = {
-    Health: 'https://source.unsplash.com/featured/?health',
-    'Innovation & Tech': 'https://source.unsplash.com/featured/?technology',
-    'Environment & Sustainability': 'https://source.unsplash.com/featured/?nature',
-    Education: 'https://source.unsplash.com/featured/?education',
-    'Science & Space': 'https://source.unsplash.com/featured/?space',
-    'Humanitarian & Rescue': 'https://source.unsplash.com/featured/?rescue,hero,aid',
-    'Blindspot': 'https://source.unsplash.com/featured/?hidden,story,news'
-  };
-
   try {
     console.log(`🔗 Processing: ${feedUrl}`);
     const feed = await parser.parseURL(feedUrl);
     let processedCount = 0;
     let blindspotCount = 0;
     let viralCount = 0;
+    let imagesFound = 0;
 
     for (const item of feed.items.slice(0, 20)) { // Increased limit for more stories
       if (!item.title || !item.link || !isValidUrl(item.link)) continue;
@@ -380,13 +488,10 @@ const processFeed = async (feedUrl, category) => {
       const virality_score = computeViralityScore(item.title, content);
       if (virality_score >= 6) viralCount++;
 
-      const imageFromContent = extractImageFromHTML(rawContent);
-      let finalImage = fallbackImages[finalCategory];
-
-      if (item.enclosure?.url && await isValidImageUrl(item.enclosure.url)) {
-        finalImage = item.enclosure.url;
-      } else if (imageFromContent && await isValidImageUrl(imageFromContent)) {
-        finalImage = imageFromContent;
+      // === ENHANCED: Better image extraction ===
+      const finalImage = await extractBestImage(item, rawContent, finalCategory);
+      if (finalImage && !finalImage.includes('unsplash.com')) {
+        imagesFound++;
       }
 
       const article = {
@@ -398,7 +503,7 @@ const processFeed = async (feedUrl, category) => {
         category: finalCategory, // This may be "Blindspot" now
         author: item.author?.trim()?.slice(0, 200) || null,
         image_url: finalImage,
-        thumbnail_url: finalImage,
+        thumbnail_url: finalImage, // Could be made smaller later
         source_feed: feedUrl,
         source_url: item.link.trim(),
         source_name: new URL(item.link).hostname.replace('www.', ''),
@@ -416,14 +521,14 @@ const processFeed = async (feedUrl, category) => {
       await new Promise(res => setTimeout(res, 200)); // Slightly faster processing
     }
 
-    console.log(`📊 ${new URL(feedUrl).hostname}: ${processedCount} stories (${blindspotCount} → Blindspot, ${viralCount} viral)`);
+    console.log(`📊 ${new URL(feedUrl).hostname}: ${processedCount} stories (${blindspotCount} → Blindspot, ${viralCount} viral, ${imagesFound} real images)`);
   } catch (err) {
     console.error(`❌ Failed feed: ${feedUrl}`, err.message);
   }
 };
 
 const main = async () => {
-  console.log('🚀 Starting Enhanced RSS News Scraper with Viral Detection & Blindspot Support...');
+  console.log('🚀 Starting Enhanced RSS News Scraper with Viral Detection, Blindspot Support & Better Images...');
   
   let totalStories = 0;
   let totalBlindspot = 0;
@@ -453,10 +558,17 @@ const main = async () => {
     .select('id')
     .gte('virality_score', 6)
     .gte('created_at', new Date(Date.now() - 24*60*60*1000).toISOString());
+
+  const { data: storiesWithImages } = await supabase
+    .from('news')
+    .select('id')
+    .not('image_url', 'like', '%unsplash%')
+    .gte('created_at', new Date(Date.now() - 24*60*60*1000).toISOString());
     
   console.log(`🔍 Blindspot stories in DB (24h): ${blindspotStories?.length || 0}`);
   console.log(`🔥 Viral stories in DB (24h): ${viralStories?.length || 0}`);
-  console.log('\n✨ Enhanced scraping with viral detection completed!');
+  console.log(`🖼️ Stories with real images in DB (24h): ${storiesWithImages?.length || 0}`);
+  console.log('\n✨ Enhanced scraping with viral detection & better images completed!');
 };
 
 main().catch(console.error);

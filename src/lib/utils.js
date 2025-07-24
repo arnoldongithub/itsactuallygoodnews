@@ -1,4 +1,4 @@
-// Fixed utils.js - Resolves 'cleaned is not defined' error
+// Enhanced utils.js - Complete Text Cleaning
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -7,21 +7,50 @@ export function cn(...inputs) {
 }
 
 /**
- * Enhanced title cleaning that handles all HTML artifacts
+ * Enhanced title cleaning that handles all HTML artifacts and the <b>Boy</b> issue
  * @param {string} title - The raw title that may contain HTML
  * @returns {string} - Clean, readable title
  */
 export const cleanTitle = (title) => {
   if (!title) return 'Untitled Story';
   
-  // Remove HTML tags and entities
   let cleaned = title
-    .replace(/<[^>]*>/g, '') // Remove all HTML tags like <b>, </b>, <em>, etc.
-    .replace(/&[a-zA-Z0-9#]+;/g, '') // Remove HTML entities like &amp;, &quot;
-    .replace(/&[a-zA-Z0-9#]+/g, '') // Remove incomplete entities
-    .replace(/\s+/g, ' ') // Normalize whitespace
-    .replace(/^\s+|\s+$/g, '') // Trim whitespace
-    .replace(/^[^\w\s]+|[^\w\s]+$/g, '') // Remove leading/trailing non-word chars
+    // Remove all HTML tags (including <b>, <i>, <strong>, etc.)
+    .replace(/<[^>]*>/g, '')
+    // Remove HTML entities with comprehensive mapping
+    .replace(/&[a-zA-Z0-9#]+;/g, (match) => {
+      const entities = {
+        '&amp;': '&',
+        '&lt;': '<',
+        '&gt;': '>',
+        '&quot;': '"',
+        '&#39;': "'",
+        '&apos;': "'",
+        '&nbsp;': ' ',
+        '&ndash;': '–',
+        '&mdash;': '—',
+        '&hellip;': '…',
+        '&copy;': '©',
+        '&reg;': '®',
+        '&trade;': '™',
+        '&euro;': '€',
+        '&pound;': '£',
+        '&yen;': '¥'
+      };
+      return entities[match] || '';
+    })
+    // Remove incomplete HTML entities
+    .replace(/&[a-zA-Z0-9#]+/g, '')
+    // Remove URLs and image references
+    .replace(/https?:\/\/[^\s\]]+/g, '')
+    .replace(/www\.[^\s\]]+/g, '')
+    .replace(/\[https?:\/\/[^\]]+\]/g, '')
+    .replace(/\[[^\]]*\.(jpg|png|gif|jpeg|webp|svg)\]/gi, '')
+    // Clean up whitespace
+    .replace(/\s+/g, ' ')
+    .replace(/^\s+|\s+$/g, '')
+    // Remove leading/trailing special characters
+    .replace(/^[^\w\s]+|[^\w\s]+$/g, '')
     .trim();
   
   // Additional cleanup for common issues
@@ -32,15 +61,148 @@ export const cleanTitle = (title) => {
     .replace(/^\.+|\.+$/g, '') // Remove leading/trailing dots
     .replace(/^"+|"+$/g, '') // Remove quotes
     .replace(/^\(+|\)+$/g, '') // Remove parentheses
+    .replace(/^\[+|\]+$/g, '') // Remove brackets
     .trim();
   
   // If title is now empty or too short, provide fallback
-  if (cleaned.length < 5) {
+  if (cleaned.length < 3) {
     return 'News Story';
   }
   
-  // Capitalize first letter if needed
-  return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+  // Ensure proper capitalization
+  if (cleaned) {
+    cleaned = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+  }
+  
+  return cleaned;
+};
+
+/**
+ * Enhanced summary cleaning that removes URLs and provides complete context
+ * @param {string} summary - Raw summary that may contain URLs and HTML
+ * @returns {string} - Clean, complete summary
+ */
+export const cleanSummary = (summary) => {
+  if (!summary) return 'No summary available';
+  
+  let cleaned = summary
+    // Remove HTML tags first
+    .replace(/<[^>]*>/g, '')
+    
+    // Remove URLs and image references (comprehensive)
+    .replace(/https?:\/\/[^\s\]]+/g, '')
+    .replace(/www\.[^\s\]]+/g, '')
+    .replace(/\[https?:\/\/[^\]]+\]/g, '')
+    .replace(/\[[^\]]*\.(jpg|png|gif|jpeg|webp|svg)\]/gi, '')
+    
+    // Remove WordPress and CMS specific content
+    .replace(/wordpress-assets\.[^\s\]]+/gi, '')
+    .replace(/cdn\.[^\s\]]+/gi, '')
+    .replace(/static\.[^\s\]]+/gi, '')
+    
+    // Remove common CMS fragments
+    .replace(/\[Read more\]/gi, '')
+    .replace(/\[Continue reading\]/gi, '')
+    .replace(/\[Source:?[^\]]*\]/gi, '')
+    .replace(/\[Image:?[^\]]*\]/gi, '')
+    .replace(/\[Photo:?[^\]]*\]/gi, '')
+    
+    // Remove HTML entities
+    .replace(/&[a-zA-Z0-9#]+;/g, (match) => {
+      const entities = {
+        '&amp;': '&',
+        '&lt;': '<',
+        '&gt;': '>',
+        '&quot;': '"',
+        '&#39;': "'",
+        '&apos;': "'",
+        '&nbsp;': ' ',
+        '&ndash;': '–',
+        '&mdash;': '—',
+        '&hellip;': '…'
+      };
+      return entities[match] || '';
+    })
+    
+    // Clean up whitespace and newlines
+    .replace(/\s+/g, ' ')
+    .replace(/\n+/g, ' ')
+    .trim();
+  
+  // Fix truncated sentences (like "and for peo.")
+  if (cleaned.length > 0) {
+    const sentences = cleaned.split(/[.!?]+/);
+    const completeSentences = [];
+    
+    for (let i = 0; i < sentences.length; i++) {
+      const sentence = sentences[i].trim();
+      if (!sentence) continue;
+      
+      const isLastSentence = (i === sentences.length - 1);
+      
+      if (isLastSentence && sentence) {
+        // Check if last sentence seems truncated
+        const seemsTruncated = (
+          sentence.length < 10 ||
+          sentence.endsWith(' and') ||
+          sentence.endsWith(' or') ||
+          sentence.endsWith(' for') ||
+          sentence.endsWith(' to') ||
+          sentence.endsWith(' the') ||
+          sentence.endsWith(' peo') ||
+          sentence.endsWith(' peopl') ||
+          sentence.endsWith(' technol') ||
+          sentence.endsWith(' technolo') ||
+          /\b[a-z]{1,3}$/.test(sentence) // Ends with very short word
+        );
+        
+        if (!seemsTruncated) {
+          completeSentences.push(sentence);
+        }
+      } else {
+        completeSentences.push(sentence);
+      }
+    }
+    
+    if (completeSentences.length > 0) {
+      cleaned = completeSentences.join('. ');
+    }
+  }
+  
+  // Ensure proper sentence ending
+  if (cleaned && !cleaned.endsWith('.') && !cleaned.endsWith('!') && !cleaned.endsWith('?')) {
+    cleaned += '.';
+  }
+  
+  // Ensure proper capitalization
+  if (cleaned) {
+    cleaned = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+  }
+  
+  // If summary is too short or contains generic content, enhance it
+  if (cleaned.length < 30 || 
+      cleaned.match(/^(please refer|country:|source:|png|jpg|pdf)/i) ||
+      cleaned === 'No summary available.' ||
+      cleaned.match(/^\w{1,5}\.?$/)) {
+    return 'This story provides important updates on recent positive developments and meaningful progress in this area.';
+  }
+  
+  // Limit length but keep complete sentences
+  if (cleaned.length > 300) {
+    const sentences = cleaned.split(/[.!?]+/);
+    let result = '';
+    for (const sentence of sentences) {
+      const potentialResult = result + sentence.trim() + '. ';
+      if (potentialResult.length <= 300) {
+        result = potentialResult;
+      } else {
+        break;
+      }
+    }
+    cleaned = result.trim();
+  }
+  
+  return cleaned;
 };
 
 /**
@@ -52,68 +214,40 @@ export const cleanContent = (content) => {
   if (!content) return '';
   
   let cleaned = content
-    .replace(/<[^>]*>/g, '') // Remove HTML tags
-    .replace(/&[a-zA-Z0-9#]+;/g, '') // Remove HTML entities
-    .replace(/https?:\/\/[^\s]+/g, '') // Remove URLs
-    .replace(/www\.[^\s]+/g, '') // Remove www links
-    .replace(/\s+/g, ' ') // Normalize whitespace
+    // Remove script and style tags completely
+    .replace(/<script[^>]*>.*?<\/script>/gi, '')
+    .replace(/<style[^>]*>.*?<\/style>/gi, '')
+    
+    // Remove HTML tags but preserve structure
+    .replace(/<[^>]*>/g, ' ')
+    
+    // Remove URLs and image references
+    .replace(/https?:\/\/[^\s\]]+/g, '')
+    .replace(/www\.[^\s\]]+/g, '')
+    .replace(/\[https?:\/\/[^\]]+\]/g, '')
+    .replace(/\[[^\]]*\.(jpg|png|gif|jpeg|webp|svg)\]/gi, '')
+    
+    // Remove HTML entities
+    .replace(/&[a-zA-Z0-9#]+;/g, (match) => {
+      const entities = {
+        '&amp;': '&',
+        '&lt;': '<',
+        '&gt;': '>',
+        '&quot;': '"',
+        '&#39;': "'",
+        '&nbsp;': ' ',
+        '&ndash;': '–',
+        '&mdash;': '—',
+        '&hellip;': '…'
+      };
+      return entities[match] || '';
+    })
+    
+    // Clean up whitespace
+    .replace(/\s+/g, ' ')
+    .replace(/\n+/g, ' ')
     .trim();
     
-  return cleaned;
-};
-
-/**
- * Enhanced summary cleaning that removes URLs and provides better context
- * @param {string} summary - Raw summary that may contain URLs and HTML
- * @returns {string} - Clean, contextual summary
- */
-export const cleanSummary = (summary) => {
-  if (!summary) return '';
-  
-  let cleaned = summary
-    // Remove HTML tags first
-    .replace(/<[^>]*>/g, '')
-    // Remove URLs (comprehensive patterns)
-    .replace(/https?:\/\/[^\s]+/g, '')
-    .replace(/www\.[^\s]+/g, '')
-    .replace(/[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\.[a-zA-Z]{2,}/g, '')
-    // Remove specific URL patterns
-    .replace(/\/[^\s]*\.(html|php|aspx|htm|pdf|jpg|png|gif)/gi, '')
-    .replace(/\[https?[^\]]*\]/g, '') // Remove [https://...] patterns
-    .replace(/\[[^\]]*\]/g, '') // Remove other bracketed content
-    // Remove common file paths and technical references
-    .replace(/\/sites\/[^\s]*/g, '')
-    .replace(/\/files\/[^\s]*/g, '')
-    .replace(/\.png\]/gi, '')
-    .replace(/\.jpg\]/gi, '')
-    .replace(/\.pdf\]/gi, '')
-    // Remove HTML entities
-    .replace(/&[a-zA-Z0-9#]+;/g, '')
-    // Clean up punctuation and whitespace
-    .replace(/\s+/g, ' ')
-    .replace(/^\s+|\s+$/g, '')
-    .replace(/^[^\w\s]+|[^\w\s]+$/g, '')
-    .trim();
-  
-  // If summary is now too short, empty, or just technical fragments, provide context
-  if (cleaned.length < 30 || 
-      cleaned.match(/^(please refer|country:|source:|png|jpg|pdf)/i) ||
-      cleaned.match(/^\w{1,3}$/) // Single short words
-  ) {
-    return 'This story provides important updates on recent positive developments and progress in this area.';
-  }
-  
-  // Clean up remaining fragments
-  cleaned = cleaned
-    .replace(/^(please refer to|country:|source:)/i, '')
-    .replace(/attached map\.?/i, '')
-    .trim();
-  
-  // Ensure summary ends properly
-  if (cleaned && !cleaned.match(/[.!?]$/)) {
-    cleaned += '.';
-  }
-  
   return cleaned;
 };
 
@@ -160,7 +294,7 @@ export const createBulletPoints = (text, maxPoints = 5) => {
 };
 
 /**
- * Truncate text to specified length with ellipsis
+ * Truncate text to specified length with ellipsis (improved to avoid mid-word cuts)
  * @param {string} text - Text to truncate
  * @param {number} maxLength - Maximum length
  * @returns {string} - Truncated text with ellipsis if needed
@@ -168,7 +302,15 @@ export const createBulletPoints = (text, maxPoints = 5) => {
 export const truncateText = (text, maxLength = 100) => {
   if (!text || text.length <= maxLength) return text;
   
-  return text.slice(0, maxLength).trim() + '...';
+  // Find the last space before maxLength to avoid cutting words
+  const truncated = text.substring(0, maxLength);
+  const lastSpace = truncated.lastIndexOf(' ');
+  
+  if (lastSpace > 0) {
+    return truncated.substring(0, lastSpace) + '...';
+  }
+  
+  return truncated + '...';
 };
 
 /**
@@ -180,7 +322,8 @@ export const formatDate = (date) => {
   if (!date) return 'Unknown date';
   
   try {
-    return new Date(date).toLocaleDateString('en-US', {
+    const dateObj = new Date(date);
+    return dateObj.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric'
@@ -227,7 +370,11 @@ export const getSourceName = (source) => {
       'treehugger.com': 'TreeHugger',
       'reliefweb.int': 'ReliefWeb',
       'unicef.org': 'UNICEF',
-      'redcross.org': 'Red Cross'
+      'redcross.org': 'Red Cross',
+      'goodnewsnetwork.org': 'Good News Network',
+      'positive.news': 'Positive News',
+      'brightvibes.com': 'Bright Vibes',
+      'upworthy.com': 'Upworthy'
     };
     
     return sourceMap[hostname] || hostname.split('.')[0].toUpperCase();
@@ -265,7 +412,11 @@ export const getSourceLogo = (source) => {
     'TreeHugger': 'TH',
     'ReliefWeb': 'RW',
     'UNICEF': 'U',
-    'Red Cross': 'RC'
+    'Red Cross': 'RC',
+    'Good News Network': 'GNN',
+    'Positive News': 'PN',
+    'Bright Vibes': 'BV',
+    'Upworthy': 'UW'
   };
   
   if (logoMap[cleanSource]) {
@@ -357,4 +508,50 @@ export const debounce = (func, wait) => {
     clearTimeout(timeout);
     timeout = setTimeout(later, wait);
   };
+};
+
+/**
+ * NEW: Strip all HTML and return plain text (for database cleanup)
+ * @param {string} text - Text with potential HTML
+ * @returns {string} - Plain text only
+ */
+export const stripAllHtml = (text) => {
+  if (!text) return '';
+  
+  return text
+    .replace(/<[^>]*>/g, '')
+    .replace(/&[a-zA-Z0-9#]+;/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+};
+
+/**
+ * NEW: Clean database text directly (for bulk operations)
+ * @param {string} text - Raw database text
+ * @returns {string} - Cleaned text
+ */
+export const cleanDatabaseText = (text) => {
+  if (!text) return '';
+  
+  return text
+    // Remove all HTML tags
+    .replace(/<[^>]*>/g, '')
+    // Remove HTML entities
+    .replace(/&[a-zA-Z0-9#]+;/g, '')
+    // Remove URLs
+    .replace(/https?:\/\/[^\s]+/g, '')
+    .replace(/www\.[^\s]+/g, '')
+    // Clean whitespace
+    .replace(/\s+/g, ' ')
+    .trim();
+};
+
+/**
+ * NEW: Check if text contains HTML tags
+ * @param {string} text - Text to check
+ * @returns {boolean} - True if contains HTML
+ */
+export const containsHtml = (text) => {
+  if (!text) return false;
+  return /<[^>]*>/.test(text) || /&[a-zA-Z0-9#]+;/.test(text);
 };

@@ -1,4 +1,4 @@
-// Complete App.jsx - Final Corrected Version (FULL FILE)
+// Complete App.jsx - With Real-time Updates and Fixed Categories
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, BrowserRouter as Router, useParams, useNavigate } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { motion, AnimatePresence } from 'framer-motion';
 import { fetchTrendingNews, fetchDailyReads, fetchBlindspotStories, fetchNews, useHomepageData } from '@/lib/news-api';
 import { cleanTitle, createBulletPoints, getSourceName, getSourceLogo } from '@/lib/utils';
+import { supabase } from '@/lib/supa.js';
 
 // ENHANCED Story Page with Mobile Title Fixes and Clean Display
 const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
@@ -314,7 +315,7 @@ const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
   );
 };
 
-// Category Page Component
+// Category Page Component with Fixed Category Filtering
 const CategoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
   const { category } = useParams();
   const [filteredNews, setFilteredNews] = useState([]);
@@ -378,11 +379,48 @@ const CategoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
   );
 };
 
-// === OPTIMIZED HOMEPAGE - PERFECT ALIGNMENT & BORDERLESS ===
+// === OPTIMIZED HOMEPAGE WITH REAL-TIME UPDATES ===
 const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
   const { data, loading, error, refetch } = useHomepageData();
   const [streak, setStreak] = useState(0);
   const { toast } = useToast();
+
+  // Real-time database subscription
+  useEffect(() => {
+    console.log('🔄 Setting up real-time subscription...');
+    
+    const subscription = supabase
+      .channel('news_changes')
+      .on('postgres_changes', 
+        { event: 'INSERT', schema: 'public', table: 'news' },
+        (payload) => {
+          console.log('🆕 New article added:', payload.new.title);
+          toast({
+            title: "📰 New Story Available!",
+            description: "Fresh good news just arrived. Refreshing your feed...",
+            duration: 3000,
+          });
+          // Force refresh when new articles are inserted
+          setTimeout(() => refetch(), 1000);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('🔌 Unsubscribing from real-time updates');
+      subscription.unsubscribe();
+    };
+  }, [refetch, toast]);
+
+  // Auto-refresh every 5 minutes as backup
+  useEffect(() => {
+    const interval = setInterval(() => {
+      console.log('🔄 Auto-refreshing articles...');
+      refetch();
+    }, 5 * 60 * 1000); // 5 minutes
+    
+    return () => clearInterval(interval);
+  }, [refetch]);
 
   // Streak logic
   useEffect(() => {
@@ -438,7 +476,7 @@ const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
             <p className="text-muted-foreground">Loading good news...</p>
-            <p className="text-sm text-muted-foreground mt-2">This should be much faster now!</p>
+            <p className="text-sm text-muted-foreground mt-2">Real-time updates enabled!</p>
           </div>
         </div>
         <Footer />

@@ -22,10 +22,26 @@ const Header = ({ isDarkMode, setIsDarkMode, setIsDonateModalOpen, streak }) => 
   const navigate = useNavigate();
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const [isDonateDropdownOpen, setIsDonateDropdownOpen] = useState(false);
-  const currentCategory = new URLSearchParams(location.search).get('cat') || 'All';
+  
+  // FIXED: Get current category from URL path, not query params
+  const getCurrentCategory = () => {
+    if (location.pathname === '/') return 'All';
+    const match = location.pathname.match(/\/category\/(.+)/);
+    if (match) {
+      return decodeURIComponent(match[1]);
+    }
+    return 'All';
+  };
+  
+  const currentCategory = getCurrentCategory();
 
+  // FIXED: Navigate to proper category routes
   const handleCategoryClick = (cat) => {
-    navigate(`/?cat=${encodeURIComponent(cat)}`);
+    if (cat === 'All') {
+      navigate('/');
+    } else {
+      navigate(`/category/${encodeURIComponent(cat)}`);
+    }
   };
 
   const handleUnsupportedFeature = () => {
@@ -291,10 +307,6 @@ const Header = ({ isDarkMode, setIsDarkMode, setIsDonateModalOpen, streak }) => 
                           Indiegogo
                         </button>
                         <button onClick={() => handleDonationPlatform('paypal')} className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center">
-                          <ExternalLink className="mr-2 h-4 w-4" />
-                          PayPal
-                        </button>
-                        <button onClick={() => handleDonationPlatform('kickstarter')} className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center">
                           <ExternalLink className="mr-2 h-4 w-4" />
                           Kickstarter
                         </button>

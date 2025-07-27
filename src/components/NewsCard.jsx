@@ -1,73 +1,71 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
-// Smart Image Component with category-specific fallbacks
+// Smart Image Component with working fallbacks
 const SmartImage = ({ 
   src, 
   alt, 
   className, 
-  category = 'news',
-  fallbackType = 'category' // 'category' | 'generic' | 'placeholder'
+  category = 'news'
 }) => {
   const [currentSrc, setCurrentSrc] = useState(src);
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [retryCount, setRetryCount] = useState(0);
 
-  // Category-specific fallback images
+  // Reliable fallback images (using Unsplash with specific IDs that won't break)
   const categoryFallbacks = {
-    'Health': [
-      'https://source.unsplash.com/800x600/?health,medical,wellness',
-      'https://source.unsplash.com/800x600/?medicine,doctor,care',
-      'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=800&h=600&fit=crop'
-    ],
-    'Innovation & Tech': [
-      'https://source.unsplash.com/800x600/?technology,innovation,computer',
-      'https://source.unsplash.com/800x600/?tech,digital,future',
-      'https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=800&h=600&fit=crop'
-    ],
-    'Environment & Sustainability': [
-      'https://source.unsplash.com/800x600/?environment,nature,green',
-      'https://source.unsplash.com/800x600/?forest,earth,sustainability',
-      'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&h=600&fit=crop'
-    ],
-    'Education': [
-      'https://source.unsplash.com/800x600/?education,learning,school',
-      'https://source.unsplash.com/800x600/?books,student,classroom',
-      'https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=800&h=600&fit=crop'
-    ],
-    'Science & Space': [
-      'https://source.unsplash.com/800x600/?science,space,research',
-      'https://source.unsplash.com/800x600/?astronomy,laboratory,discovery',
-      'https://images.unsplash.com/photo-1446776653964-20c1d3a81b06?w=800&h=600&fit=crop'
-    ],
-    'Humanitarian & Rescue': [
-      'https://source.unsplash.com/800x600/?humanitarian,help,rescue',
-      'https://source.unsplash.com/800x600/?community,volunteer,aid',
-      'https://images.unsplash.com/photo-1469571486292-0ba58a3f068b?w=800&h=600&fit=crop'
-    ],
-    'Blindspot': [
-      'https://source.unsplash.com/800x600/?world,global,people',
-      'https://source.unsplash.com/800x600/?international,culture,story',
-      'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop'
-    ]
+    'Health': 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=800&h=600&fit=crop&crop=center',
+    'Innovation & Tech': 'https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=800&h=600&fit=crop&crop=center',
+    'Environment & Sustainability': 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&h=600&fit=crop&crop=center',
+    'Education': 'https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=800&h=600&fit=crop&crop=center',
+    'Science & Space': 'https://images.unsplash.com/photo-1446776653964-20c1d3a81b06?w=800&h=600&fit=crop&crop=center',
+    'Humanitarian & Rescue': 'https://images.unsplash.com/photo-1469571486292-0ba58a3f068b?w=800&h=600&fit=crop&crop=center',
+    'Blindspot': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop&crop=center'
   };
 
-  // Generic fallbacks for when category-specific fails
-  const genericFallbacks = [
-    'https://source.unsplash.com/800x600/?news,positive,story',
-    'https://source.unsplash.com/800x600/?newspaper,media,information',
-    'https://images.unsplash.com/photo-1495020689067-958852a7765e?w=800&h=600&fit=crop',
-    'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&h=600&fit=crop'
-  ];
+  // Final fallback - solid color with category icon
+  const getColorFallback = (category) => {
+    const colors = {
+      'Health': '#22c55e',
+      'Innovation & Tech': '#3b82f6', 
+      'Environment & Sustainability': '#10b981',
+      'Education': '#8b5cf6',
+      'Science & Space': '#6366f1',
+      'Humanitarian & Rescue': '#ef4444',
+      'Blindspot': '#f59e0b'
+    };
+    
+    const color = colors[category] || '#6b7280';
+    const icon = category === 'Health' ? '🏥' : 
+                 category === 'Innovation & Tech' ? '💻' :
+                 category === 'Environment & Sustainability' ? '🌱' :
+                 category === 'Education' ? '📚' :
+                 category === 'Science & Space' ? '🚀' :
+                 category === 'Humanitarian & Rescue' ? '🤝' : '🌍';
+    
+    return `data:image/svg+xml;base64,${btoa(`
+      <svg width="800" height="600" viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+        <rect width="800" height="600" fill="${color}"/>
+        <text x="400" y="280" text-anchor="middle" fill="white" font-family="Arial" font-size="120">${icon}</text>
+        <text x="400" y="340" text-anchor="middle" fill="white" font-family="Arial" font-size="24" opacity="0.8">${category}</text>
+      </svg>
+    `)}`;
+  };
 
   // Reset when src changes
   useEffect(() => {
-    setCurrentSrc(src);
-    setHasError(false);
-    setRetryCount(0);
-    setIsLoading(true);
-  }, [src]);
+    if (src && src !== 'null' && src !== 'undefined' && !src.includes('undefined')) {
+      setCurrentSrc(src);
+      setHasError(false);
+      setIsLoading(true);
+    } else {
+      // Use category fallback immediately if src is invalid
+      const fallback = categoryFallbacks[category] || categoryFallbacks['Blindspot'];
+      setCurrentSrc(fallback);
+      setHasError(false);
+      setIsLoading(true);
+    }
+  }, [src, category]);
 
   const handleImageLoad = () => {
     setIsLoading(false);
@@ -80,33 +78,23 @@ const SmartImage = ({
     if (!hasError) {
       setHasError(true);
       
-      // Try category-specific fallbacks first
-      const categoryImages = categoryFallbacks[category] || categoryFallbacks['Blindspot'];
+      // Try category-specific fallback first
+      const categoryFallback = categoryFallbacks[category] || categoryFallbacks['Blindspot'];
       
-      if (retryCount < categoryImages.length) {
-        console.log(`🔄 Image failed, trying category fallback ${retryCount + 1} for ${category}`);
-        setCurrentSrc(categoryImages[retryCount]);
-        setRetryCount(prev => prev + 1);
+      if (currentSrc !== categoryFallback) {
+        console.log(`🔄 Image failed, using category fallback for ${category}`);
+        setCurrentSrc(categoryFallback);
         return;
       }
       
-      // Then try generic fallbacks
-      const genericIndex = retryCount - categoryImages.length;
-      if (genericIndex < genericFallbacks.length) {
-        console.log(`🔄 Category fallbacks failed, trying generic fallback ${genericIndex + 1}`);
-        setCurrentSrc(genericFallbacks[genericIndex]);
-        setRetryCount(prev => prev + 1);
-        return;
-      }
-      
-      // Final fallback: solid color placeholder
-      console.log(`⚠️ All fallbacks failed for category: ${category}`);
-      setCurrentSrc('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgdmlld0JveD0iMCAwIDgwMCA2MDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI4MDAiIGhlaWdodD0iNjAwIiBmaWxsPSIjRjNGNEY2Ii8+Cjx0ZXh0IHg9IjQwMCIgeT0iMzAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjOUM5Q0EzIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCI+Tm8gSW1hZ2U8L3RleHQ+Cjwvc3ZnPgo=');
+      // If category fallback also failed, use color fallback
+      console.log(`⚠️ All images failed for category: ${category}, using color fallback`);
+      setCurrentSrc(getColorFallback(category));
     }
   };
 
   return (
-    <div className="relative">
+    <div className="relative overflow-hidden">
       <img
         src={currentSrc}
         alt={alt}
@@ -120,13 +108,6 @@ const SmartImage = ({
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-800">
           <div className="w-8 h-8 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
-        </div>
-      )}
-      
-      {/* Error indicator (only for final fallback) */}
-      {hasError && retryCount >= 6 && (
-        <div className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded">
-          📷
         </div>
       )}
     </div>
@@ -149,15 +130,26 @@ const NewsCard = ({ article, isBookmarked, onBookmarkToggle }) => {
     ad_link_url
   } = article;
 
-  // Enhanced fallback logic
+  // Enhanced fallback logic - try image_url first, then thumbnail_url
   const getImageSrc = () => {
-    // Priority: image_url > thumbnail_url > category fallback
-    if (image_url && image_url !== 'null' && !image_url.includes('undefined')) {
+    // Check image_url first
+    if (image_url && 
+        image_url !== 'null' && 
+        image_url !== 'undefined' && 
+        !image_url.includes('undefined') &&
+        image_url.startsWith('http')) {
       return image_url;
     }
-    if (thumbnail_url && thumbnail_url !== 'null' && !thumbnail_url.includes('undefined')) {
+    
+    // Check thumbnail_url second
+    if (thumbnail_url && 
+        thumbnail_url !== 'null' && 
+        thumbnail_url !== 'undefined' && 
+        !thumbnail_url.includes('undefined') &&
+        thumbnail_url.startsWith('http')) {
       return thumbnail_url;
     }
+    
     return null; // Let SmartImage handle fallbacks
   };
 
@@ -176,7 +168,6 @@ const NewsCard = ({ article, isBookmarked, onBookmarkToggle }) => {
             alt="Sponsored"
             className="category-newscard-image"
             category="Sponsored"
-            fallbackType="generic"
           />
           <div className="category-newscard-overlay">
             <div className="category-newscard-category">Sponsored</div>
@@ -199,7 +190,6 @@ const NewsCard = ({ article, isBookmarked, onBookmarkToggle }) => {
           alt={title}
           className="category-newscard-image group-hover:scale-105 transition-transform duration-300"
           category={category}
-          fallbackType="category"
         />
         <div className="category-newscard-overlay">
           {category && (
@@ -223,7 +213,6 @@ const NewsCard = ({ article, isBookmarked, onBookmarkToggle }) => {
         alt={title}
         className="category-newscard-image"
         category={category}
-        fallbackType="category"
       />
       <div className="category-newscard-overlay">
         {category && (

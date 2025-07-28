@@ -1,4 +1,4 @@
-// Complete App.jsx - With Real-time Updates and Fixed Categories
+// Updated App.jsx with Skeleton Loading System
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, BrowserRouter as Router, useParams, useNavigate } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
@@ -17,7 +17,17 @@ import { fetchTrendingNews, fetchDailyReads, fetchBlindspotStories, fetchNews, u
 import { cleanTitle, createBulletPoints, getSourceName, getSourceLogo } from '@/lib/utils';
 import { supabase } from '@/lib/supa.js';
 
-// ENHANCED Story Page with Mobile Title Fixes and Clean Display
+// Import skeleton components
+import {
+  SkeletonHomepage,
+  SkeletonCategoryPage, 
+  SkeletonStoryPage,
+  SkeletonCategoryGrid,
+  LoadingSpinner,
+  SkeletonCard
+} from '@/components/SkeletonComponents';
+
+// ENHANCED Story Page with Skeleton Loading
 const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -32,25 +42,24 @@ const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
         setLoading(true);
         console.log(`🔍 Looking for story with ID: ${id}`);
         
-        // Try to fetch from all news sources with better error handling
+        // Add a minimum loading time for smooth skeleton display
+        const minLoadingTime = new Promise(resolve => setTimeout(resolve, 800));
+        
         const [trending, daily, blindspot, allNews] = await Promise.all([
           fetchTrendingNews().catch(() => []),
           fetchDailyReads().catch(() => []), 
           fetchBlindspotStories().catch(() => []),
-          fetchNews().catch(() => [])
+          fetchNews().catch(() => []),
+          minLoadingTime // Ensure skeleton shows for at least 800ms
         ]);
         
-        // Combine all stories to search through
         const allStories = [...trending, ...daily, ...blindspot, ...allNews];
-        
-        // Remove duplicates by ID
         const uniqueStories = allStories.filter((story, index, self) => 
           index === self.findIndex(s => s.id === story.id)
         );
         
         console.log(`📊 Total unique stories available: ${uniqueStories.length}`);
         
-        // Try different ID formats (string and number)
         const foundStory = uniqueStories.find(item => 
           item.id === parseInt(id) || 
           item.id === id || 
@@ -61,7 +70,6 @@ const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
           console.log(`✅ Found story: ${foundStory.title}`);
           setStory(foundStory);
           
-          // Fetch related stories from same category
           const related = uniqueStories
             .filter(item => 
               item.category === foundStory.category && 
@@ -95,6 +103,7 @@ const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
     }
   }, [id, toast]);
 
+  // Show skeleton while loading
   if (loading) {
     return (
       <div className="min-h-screen bg-white dark:bg-black">
@@ -103,12 +112,7 @@ const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
           isDarkMode={isDarkMode} 
           setIsDarkMode={setIsDarkMode}
         />
-        <div className="flex justify-center items-center min-h-[400px]">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading story...</p>
-          </div>
-        </div>
+        <SkeletonStoryPage />
         <Footer />
       </div>
     );
@@ -315,7 +319,7 @@ const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
   );
 };
 
-// Category Page Component with Fixed Category Filtering
+// ENHANCED Category Page with Skeleton Loading & Wide Rectangle Layout
 const CategoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
   const { category } = useParams();
   const [filteredNews, setFilteredNews] = useState([]);
@@ -323,24 +327,35 @@ const CategoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    setLoading(true);
-    console.log(`🔍 Fetching news for category: ${category}`);
-    
-    fetchNews(category)
-      .then((data) => {
+    const fetchCategoryNews = async () => {
+      try {
+        setLoading(true);
+        console.log(`🔍 Fetching news for category: ${category}`);
+        
+        // Add minimum loading time for smooth skeleton display
+        const minLoadingTime = new Promise(resolve => setTimeout(resolve, 600));
+        
+        const [data] = await Promise.all([
+          fetchNews(category),
+          minLoadingTime
+        ]);
+        
         console.log(`✅ Got ${data.length} articles for category: ${category}`);
         setFilteredNews(data);
-        setLoading(false);
-      })
-      .catch((error) => {
+        
+      } catch (error) {
         console.error('Failed to load category news:', error);
         toast({
           title: 'Error',
           description: 'Failed to load category news',
           variant: 'destructive'
         });
+      } finally {
         setLoading(false);
-      });
+      }
+    };
+
+    fetchCategoryNews();
   }, [category, toast]);
 
   return (
@@ -350,25 +365,47 @@ const CategoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
         isDarkMode={isDarkMode} 
         setIsDarkMode={setIsDarkMode}
       />
+      
       <div className="px-4 lg:px-6 my-6">
-        <h2 className="text-xl font-bold mb-4 capitalize text-gray-900 dark:text-white">
+        <h2 className="text-xl font-bold mb-6 capitalize text-gray-900 dark:text-white">
           {decodeURIComponent(category)} News
         </h2>
+        
         {loading ? (
-          <div className="flex justify-center items-center h-60">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
+          // SKELETON LOADING STATE
+          <div className="max-w-4xl mx-auto space-y-6">
+            {Array.from({ length: 6 }, (_, i) => (
+              <SkeletonCard 
+                key={i}
+                aspectRatio="16/9"
+                className="w-full"
+                hasOverlay={true}
+                hasCategory={true}
+              />
+            ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          // WIDE RECTANGLE LAYOUT (2/3 width of page)
+          <div className="max-w-4xl mx-auto space-y-6">
             {filteredNews.length > 0 ? (
               filteredNews.map((item) => (
                 <NewsCard key={item.id} article={item} />
               ))
             ) : (
-              <div className="col-span-full text-center py-8">
-                <p className="text-gray-500 dark:text-gray-400">
-                  No stories found for this category.
+              <div className="text-center py-12">
+                <div className="text-6xl mb-4">📰</div>
+                <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">
+                  No stories found
+                </h3>
+                <p className="text-gray-500 dark:text-gray-400 mb-4">
+                  We couldn't find any stories for this category right now.
                 </p>
+                <Button 
+                  onClick={() => window.location.reload()}
+                  className="btn-primary"
+                >
+                  Refresh Page
+                </Button>
               </div>
             )}
           </div>
@@ -379,7 +416,7 @@ const CategoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
   );
 };
 
-// === OPTIMIZED HOMEPAGE WITH REAL-TIME UPDATES ===
+// ENHANCED Homepage with Skeleton Loading
 const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
   const { data, loading, error, refetch } = useHomepageData();
   const [streak, setStreak] = useState(0);
@@ -400,7 +437,6 @@ const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
             description: "Fresh good news just arrived. Refreshing your feed...",
             duration: 3000,
           });
-          // Force refresh when new articles are inserted
           setTimeout(() => refetch(), 1000);
         }
       )
@@ -412,12 +448,12 @@ const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
     };
   }, [refetch, toast]);
 
-  // Auto-refresh every 5 minutes as backup
+  // Auto-refresh every 5 minutes
   useEffect(() => {
     const interval = setInterval(() => {
       console.log('🔄 Auto-refreshing articles...');
       refetch();
-    }, 5 * 60 * 1000); // 5 minutes
+    }, 5 * 60 * 1000);
     
     return () => clearInterval(interval);
   }, [refetch]);
@@ -463,6 +499,7 @@ const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
     localStorage.setItem('lastVisitDate', today);
   }, [toast]);
 
+  // ENHANCED SKELETON LOADING STATE
   if (loading) {
     return (
       <div className="min-h-screen bg-white dark:bg-black">
@@ -472,13 +509,7 @@ const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
           setIsDarkMode={setIsDarkMode}
           streak={streak}
         />
-        <div className="flex justify-center items-center min-h-[400px]">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading good news...</p>
-            <p className="text-sm text-muted-foreground mt-2">Real-time updates enabled!</p>
-          </div>
-        </div>
+        <SkeletonHomepage />
         <Footer />
       </div>
     );
@@ -543,16 +574,15 @@ const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
       />
       
       <div className="main-layout">
-        {/* Daily Reads - Left Sidebar (1/6 width) - PERFECT ALIGNMENT */}
+        {/* Daily Reads - Left Sidebar */}
         <aside className="daily-reads-sidebar">
           <div className="daily-reads-separator">
             <DailyReads stories={dailyReads} />
           </div>
         </aside>
 
-        {/* Main Trending Stories (2/3 width) - BORDERLESS & PERFECT ALIGNMENT */}
+        {/* Main Trending Stories */}
         <main className="trending-main">
-          {/* Title on same horizontal plane as sidebar titles */}
           <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white" style={{ color: 'hsl(var(--purple-text))' }}>
             <svg className="inline-block w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -560,20 +590,19 @@ const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
             Trending Stories
           </h2>
           
-          {/* BORDERLESS TrendingStories component */}
           <TrendingStories stories={trendingNews} />
           
           {(!trendingNews || trendingNews.length === 0) && (
             <div className="text-center py-8">
-              <p className="text-gray-500 dark:text-gray-400 mb-2">No trending stories available right now</p>
-              <Button onClick={refetch} variant="outline" size="sm">
+              <LoadingSpinner text="No trending stories available right now" />
+              <Button onClick={refetch} variant="outline" size="sm" className="mt-4">
                 Refresh Stories
               </Button>
             </div>
           )}
         </main>
 
-        {/* Blindspot - Right Sidebar (1/6 width) - PERFECT ALIGNMENT */}
+        {/* Blindspot - Right Sidebar */}
         <aside className="blindspot-sidebar">
           <div className="blindspot-separator">
             <Blindspot stories={blindspots} />

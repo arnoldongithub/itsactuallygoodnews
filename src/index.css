@@ -393,6 +393,7 @@
     padding-top: 0 !important;
   }
 
+  /* FIXED: Enhanced source-positivity bar with better responsive handling */
   .source-positivity-bar {
     display: flex;
     align-items: center;
@@ -403,15 +404,19 @@
     border-radius: 6px;
     border-left: 4px solid hsl(var(--orange-accent));
     width: 100%;
+    min-height: 32px;
+    gap: 8px; /* Add gap for better spacing */
   }
 
   .source-info {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     font-size: 12px;
     font-weight: 500;
     color: hsl(var(--header-foreground));
+    flex: 1;
+    min-width: 0; /* Allow shrinking */
   }
 
   .source-logo {
@@ -425,6 +430,14 @@
     font-size: 10px;
     font-weight: 700;
     color: hsl(var(--foreground));
+    flex-shrink: 0; /* Don't shrink the logo */
+  }
+
+  .source-info span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
   }
 
   .positivity-score {
@@ -434,6 +447,8 @@
     background: hsl(var(--background) / 0.9);
     padding: 2px 6px;
     border-radius: 4px;
+    white-space: nowrap;
+    flex-shrink: 0; /* Don't shrink the score */
   }
 
   .story-card-borderless {
@@ -887,255 +902,3 @@
   .category-newscard-overlay {
     @apply absolute bottom-0 left-0 w-full p-4;
     background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 60%, transparent 100%);
-  }
-
-  .category-newscard-category {
-    @apply text-xs font-semibold text-white mb-2 uppercase tracking-wide;
-    background: hsl(var(--orange-accent));
-    padding: 4px 8px;
-    border-radius: 4px;
-    display: inline-block;
-  }
-
-  .category-newscard-title {
-    @apply text-white font-bold text-lg leading-tight;
-    font-family: 'Poppins', sans-serif;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  @media (max-width: 768px) {
-    .main-layout {
-      padding: 0 1rem;
-      gap: 1.5rem;
-      padding-top: 0;
-    }
-    
-    .sidebar-section {
-      padding-left: 0.25rem;
-      padding-right: 0.25rem;
-    }
-    
-    .sidebar-newscard {
-      aspect-ratio: 4/5;
-      margin-bottom: 1rem;
-    }
-    
-    .sidebar-title {
-      @apply text-lg;
-    }
-
-    .related-story-title {
-      font-size: 16px;
-    }
-    
-    .viral-newscard-title {
-      font-size: 16px;
-    }
-    
-    .source-positivity-bar {
-      padding: 6px 10px;
-      font-size: 11px;
-    }
-    
-    .story-summary {
-      padding: 16px;
-      margin: 16px 0;
-    }
-    
-    .story-summary h3 {
-      font-size: 16px;
-    }
-    
-    .summary-bullets li {
-      font-size: 14px;
-      padding-left: 20px;
-    }
-
-    .story-metadata-sidebar {
-      position: static;
-      margin-top: 24px;
-      padding: 16px;
-    }
-    
-    .metadata-bullets li {
-      font-size: 13px;
-      line-height: 1.5;
-      margin-bottom: 10px;
-    }
-
-    .trending-main > div {
-      background: transparent !important;
-      border: none !important;
-      box-shadow: none !important;
-      padding: 0 !important;
-    }
-
-    .category-newscard {
-      aspect-ratio: 4/5;
-    }
-
-    .category-newscard-title {
-      font-size: 16px;
-    }
-
-    .category-newscard-category {
-      font-size: 10px;
-      padding: 2px 6px;
-    }
-  }
-
-  /* ADDITIONAL IMAGE ERROR HANDLING STYLES */
-  .image-error-state {
-    @apply bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    color: #9CA3AF;
-    font-size: 12px;
-    font-weight: 500;
-    text-align: center;
-    padding: 20px;
-  }
-
-  .image-error-icon {
-    font-size: 24px;
-    margin-bottom: 8px;
-    opacity: 0.5;
-  }
-
-  .image-retry-button {
-    @apply mt-2 px-3 py-1 bg-blue-500 text-white text-xs rounded cursor-pointer;
-    font-size: 10px;
-    transition: background-color 0.2s;
-  }
-
-  .image-retry-button:hover {
-    @apply bg-blue-600;
-  }
-
-  /* LOADING ANIMATIONS */
-  .skeleton-pulse {
-    animation: skeleton-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  }
-
-  @keyframes skeleton-pulse {
-    0%, 100% {
-      opacity: 1;
-    }
-    50% {
-      opacity: 0.5;
-    }
-  }
-
-  .shimmer {
-    background: linear-gradient(90deg, 
-      rgba(255,255,255,0) 0%, 
-      rgba(255,255,255,0.2) 20%, 
-      rgba(255,255,255,0.5) 60%, 
-      rgba(255,255,255,0)
-    );
-    animation: shimmer 2s infinite;
-  }
-
-  @keyframes shimmer {
-    0% {
-      background-position: -468px 0;
-    }
-    100% {
-      background-position: 468px 0;
-    }
-  }
-
-  .force-visible {
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-  }
-
-  .loading-card {
-    @apply bg-gray-100 dark:bg-gray-800 rounded-xl;
-    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  }
-
-  .scrollbar-none {
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-  }
-
-  .scrollbar-none::-webkit-scrollbar {
-    display: none;
-  }
-
-  /* PRINT STYLES */
-  @media print {
-    .viral-newscard-badge,
-    .viral-tag,
-    .badge-viral,
-    .trending-viral-indicator,
-    .viral-indicator,
-    .virality-badge,
-    .viral-score-badge {
-      display: none !important;
-    }
-    
-    .category-newscard,
-    .viral-newscard,
-    .sidebar-newscard {
-      break-inside: avoid;
-      page-break-inside: avoid;
-    }
-  }
-
-  /* ACCESSIBILITY IMPROVEMENTS */
-  .category-newscard:focus,
-  .viral-newscard:focus,
-  .sidebar-newscard:focus {
-    outline: 2px solid hsl(var(--orange-accent));
-    outline-offset: 2px;
-  }
-
-  .category-newscard:focus-visible,
-  .viral-newscard:focus-visible,
-  .sidebar-newscard:focus-visible {
-    outline: 2px solid hsl(var(--orange-accent));
-    outline-offset: 2px;
-  }
-
-  /* REDUCED MOTION SUPPORT */
-  @media (prefers-reduced-motion: reduce) {
-    .category-newscard,
-    .viral-newscard,
-    .sidebar-newscard,
-    .smart-image-loading,
-    .image-retry-button {
-      animation: none;
-      transition: none;
-    }
-    
-    .category-newscard:hover,
-    .viral-newscard:hover,
-    .sidebar-newscard:hover {
-      transform: none;
-    }
-  }
-
-  /* HIGH CONTRAST MODE SUPPORT */
-  @media (prefers-contrast: high) {
-    .category-newscard,
-    .viral-newscard,
-    .sidebar-newscard {
-      border: 2px solid;
-    }
-    
-    .category-newscard-overlay,
-    .viral-newscard-overlay,
-    .sidebar-newscard-overlay {
-      background: rgba(0,0,0,0.9);
-    }
-  }
-}

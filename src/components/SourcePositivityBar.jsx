@@ -1,4 +1,4 @@
-// src/components/SourcePositivityBar.jsx - Create this as a new file
+// src/components/SourcePositivityBar.jsx - SAFE VERSION
 import React from 'react';
 
 const SourcePositivityBar = ({ source, positivityScore, isViral = false, isFirst = false }) => {
@@ -7,62 +7,84 @@ const SourcePositivityBar = ({ source, positivityScore, isViral = false, isFirst
     return null;
   }
 
-  // Extract source name and create logo
+  // SAFE: Sanitize source input to prevent invalid characters
+  const sanitizeSource = (sourceName) => {
+    if (!sourceName || typeof sourceName !== 'string') return 'Unknown';
+    // Remove all potentially problematic characters
+    return sourceName.replace(/[^\w\s.-]/g, '').trim() || 'Unknown';
+  };
+
+  // Extract source name and create logo with character sanitization
   const getSourceInfo = (sourceName) => {
-    if (!sourceName) return { name: 'Unknown', logo: '?' };
+    const cleanSource = sanitizeSource(sourceName).toLowerCase().replace('www.', '');
     
-    const cleanSource = sourceName.replace('www.', '').toLowerCase();
-    
-    // Common source mappings
+    // Common source mappings - all safe strings
     const sourceMap = {
-      'cnn.com': { name: 'CNN', logo: 'CNN' },
-      'bbc.com': { name: 'BBC', logo: 'BBC' },
-      'reuters.com': { name: 'Reuters', logo: 'R' },
-      'ap.org': { name: 'AP News', logo: 'AP' },
-      'npr.org': { name: 'NPR', logo: 'NPR' },
-      'guardian.com': { name: 'Guardian', logo: 'G' },
-      'nytimes.com': { name: 'NY Times', logo: 'NYT' },
-      'washingtonpost.com': { name: 'Wash Post', logo: 'WP' },
-      'techcrunch.com': { name: 'TechCrunch', logo: 'TC' },
-      'theverge.com': { name: 'The Verge', logo: 'V' },
-      'wired.com': { name: 'Wired', logo: 'W' },
-      'sciencedaily.com': { name: 'Science Daily', logo: 'SD' },
-      'medicalxpress.com': { name: 'Medical Xpress', logo: 'MX' },
-      'grist.org': { name: 'Grist', logo: 'G' },
-      'treehugger.com': { name: 'TreeHugger', logo: 'TH' },
-      'reliefweb.int': { name: 'ReliefWeb', logo: 'RW' },
-      'unicef.org': { name: 'UNICEF', logo: 'U' },
-      'redcross.org': { name: 'Red Cross', logo: 'RC' }
+      'cnn': { name: 'CNN', logo: 'CNN' },
+      'bbc': { name: 'BBC', logo: 'BBC' },
+      'reuters': { name: 'Reuters', logo: 'R' },
+      'ap': { name: 'AP News', logo: 'AP' },
+      'npr': { name: 'NPR', logo: 'NPR' },
+      'guardian': { name: 'Guardian', logo: 'G' },
+      'nytimes': { name: 'NY Times', logo: 'NYT' },
+      'washingtonpost': { name: 'Wash Post', logo: 'WP' },
+      'techcrunch': { name: 'TechCrunch', logo: 'TC' },
+      'theverge': { name: 'The Verge', logo: 'V' },
+      'wired': { name: 'Wired', logo: 'W' },
+      'sciencedaily': { name: 'Science Daily', logo: 'SD' },
+      'medicalxpress': { name: 'Medical Xpress', logo: 'MX' },
+      'grist': { name: 'Grist', logo: 'G' },
+      'treehugger': { name: 'TreeHugger', logo: 'TH' },
+      'reliefweb': { name: 'ReliefWeb', logo: 'RW' },
+      'unicef': { name: 'UNICEF', logo: 'U' },
+      'redcross': { name: 'Red Cross', logo: 'RC' },
+      'goodnewsnetwork': { name: 'Good News', logo: 'GNN' },
+      'positive': { name: 'Positive News', logo: 'PN' },
+      'brightvibes': { name: 'Bright Vibes', logo: 'BV' },
+      'upworthy': { name: 'Upworthy', logo: 'UW' }
     };
 
-    // Check if we have a mapping
+    // Check if we have a mapping (safe key lookup)
     for (const [domain, info] of Object.entries(sourceMap)) {
-      if (cleanSource.includes(domain.split('.')[0])) {
+      if (cleanSource.includes(domain)) {
         return info;
       }
     }
 
-    // Fallback: create from source name
-    const words = cleanSource.split(/[.-]/);
-    const name = words[0].charAt(0).toUpperCase() + words[0].slice(1);
-    const logo = words[0].charAt(0).toUpperCase();
-    
-    return { name, logo };
+    // Fallback: create from source name (safe processing)
+    const words = cleanSource.split(/[.-\s]+/).filter(w => w.length > 0);
+    if (words.length > 0) {
+      const firstWord = words[0];
+      const name = firstWord.charAt(0).toUpperCase() + firstWord.slice(1);
+      const logo = firstWord.charAt(0).toUpperCase();
+      return { name, logo };
+    }
+
+    // Ultimate fallback
+    return { name: 'Unknown', logo: '?' };
   };
 
   const sourceInfo = getSourceInfo(source);
-  const score = Math.round(positivityScore || 0);
+  
+  // SAFE: Sanitize score to prevent invalid values
+  const safeScore = Math.max(0, Math.min(10, Math.round(Number(positivityScore) || 0)));
 
   return (
     <div className="source-positivity-bar">
       <div className="source-info">
-        <div className="source-logo">
-          {sourceInfo.logo}
+        <div 
+          className="source-logo"
+          // SAFE: Ensure logo text contains only valid characters
+          title={sourceInfo.name.replace(/[^\w\s]/g, '')}
+        >
+          {sourceInfo.logo.replace(/[^\w]/g, '')}
         </div>
-        <span>{sourceInfo.name}</span>
+        <span title={sourceInfo.name}>
+          {sourceInfo.name.replace(/[^\w\s.-]/g, '')}
+        </span>
       </div>
       <div className="positivity-score">
-        Positivity: {score}
+        Positivity: {safeScore}
       </div>
     </div>
   );

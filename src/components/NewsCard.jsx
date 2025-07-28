@@ -1,7 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
-// BULLETPROOF Image Component - 100% Guaranteed Working Images
+// FIXED: Safe SVG generation without btoa() issues
+const createSafeSVG = (category, color) => {
+  const categoryText = String(category || 'News').replace(/[^\w\s]/g, ''); // Remove special chars
+  const cleanColor = String(color || '#6b7280').replace(/[^\w#]/g, ''); // Sanitize color
+  
+  // Create SVG as data URL without btoa() to avoid character encoding issues
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`
+    <svg width="800" height="600" viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:${cleanColor};stop-opacity:1" />
+          <stop offset="100%" style="stop-color:${cleanColor};stop-opacity:0.8" />
+        </linearGradient>
+      </defs>
+      <rect width="800" height="600" fill="url(#grad)"/>
+      <circle cx="400" cy="250" r="60" fill="white" opacity="0.3"/>
+      <rect x="340" y="290" width="120" height="8" rx="4" fill="white" opacity="0.3"/>
+      <rect x="360" y="310" width="80" height="6" rx="3" fill="white" opacity="0.2"/>
+      <text x="400" y="380" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="28" font-weight="600">${categoryText}</text>
+      <text x="400" y="410" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="16" opacity="0.8">Good News Story</text>
+    </svg>
+  `)}`;
+};
+
+// BULLETPROOF Image Component - Fixed to prevent character encoding errors
 const BulletproofImage = ({ 
   src, 
   alt, 
@@ -12,7 +36,7 @@ const BulletproofImage = ({
   const [isLoading, setIsLoading] = useState(true);
   const [errorCount, setErrorCount] = useState(0);
 
-  // GUARANTEED working fallback images - multiple reliable sources
+  // SAFE fallback images - no btoa() encoding issues
   const getReliableFallbacks = (category) => {
     const categoryColors = {
       'Health': '#22c55e',
@@ -25,35 +49,20 @@ const BulletproofImage = ({
     };
     
     const color = categoryColors[category] || '#6b7280';
-    const categoryText = category || 'News';
+    const safeCategory = String(category || 'news').replace(/[^\w\s]/g, '').toLowerCase();
     
     return [
-      // Fallback 1: Unsplash with specific category
-      `https://source.unsplash.com/800x600/?${category.toLowerCase().replace(/\s+/g, ',')}`,
+      // Fallback 1: Unsplash with safe category
+      `https://source.unsplash.com/800x600/?${safeCategory.replace(/\s+/g, ',')}`,
       
-      // Fallback 2: Picsum with seed based on category
-      `https://picsum.photos/800/600?random=${Math.abs(category.split('').reduce((a, b) => a + b.charCodeAt(0), 0))}`,
+      // Fallback 2: Picsum with safe seed
+      `https://picsum.photos/800/600?random=${Math.abs(safeCategory.split('').reduce((a, b) => a + b.charCodeAt(0), 0))}`,
       
-      // Fallback 3: Placeholder service
-      `https://via.placeholder.com/800x600/${color.slice(1)}/white?text=${encodeURIComponent(categoryText)}`,
+      // Fallback 3: Placeholder service with safe encoding
+      `https://via.placeholder.com/800x600/${color.slice(1)}/white?text=${encodeURIComponent(category || 'News')}`,
       
-      // Fallback 4: Base64 SVG (100% guaranteed to work)
-      `data:image/svg+xml;base64,${btoa(`
-        <svg width="800" height="600" viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style="stop-color:${color};stop-opacity:1" />
-              <stop offset="100%" style="stop-color:${color};stop-opacity:0.8" />
-            </linearGradient>
-          </defs>
-          <rect width="800" height="600" fill="url(#grad)"/>
-          <circle cx="400" cy="250" r="60" fill="white" opacity="0.3"/>
-          <rect x="340" y="290" width="120" height="8" rx="4" fill="white" opacity="0.3"/>
-          <rect x="360" y="310" width="80" height="6" rx="3" fill="white" opacity="0.2"/>
-          <text x="400" y="380" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="28" font-weight="600">${categoryText}</text>
-          <text x="400" y="410" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="16" opacity="0.8">Good News Story</text>
-        </svg>
-      `)}`
+      // Fallback 4: SAFE SVG using encodeURIComponent instead of btoa
+      createSafeSVG(category, color)
     ];
   };
 
@@ -62,12 +71,19 @@ const BulletproofImage = ({
     setErrorCount(0);
     setIsLoading(true);
     
-    if (!src || src === 'null' || src === 'undefined' || src.includes('undefined') || !src.trim()) {
+    // Sanitize src to prevent invalid characters
+    const sanitizedSrc = src && typeof src === 'string' ? src.trim() : null;
+    
+    if (!sanitizedSrc || 
+        sanitizedSrc === 'null' || 
+        sanitizedSrc === 'undefined' || 
+        sanitizedSrc.includes('undefined') || 
+        !sanitizedSrc.match(/^(https?:\/\/|data:)/)) {
       // Go straight to fallbacks if no valid source
       const fallbacks = getReliableFallbacks(category);
       setCurrentSrc(fallbacks[0]);
     } else {
-      setCurrentSrc(src);
+      setCurrentSrc(sanitizedSrc);
     }
   }, [src, category]);
 
@@ -85,19 +101,23 @@ const BulletproofImage = ({
       setErrorCount(nextIndex);
       setIsLoading(true);
     } else {
-      // This should never happen with SVG fallback, but just in case
       console.error(`❌ All fallbacks failed for ${category}`);
       setIsLoading(false);
     }
   };
+
+  // Sanitize className to prevent invalid CSS class names
+  const safeClassName = typeof className === 'string' 
+    ? className.replace(/[^\w\s\-_]/g, '') 
+    : '';
 
   return (
     <div className="relative overflow-hidden bg-gray-100 dark:bg-gray-800">
       {currentSrc && (
         <img
           src={currentSrc}
-          alt={alt}
-          className={`${className} transition-opacity duration-300 ${isLoading ? 'opacity-50' : 'opacity-100'}`}
+          alt={String(alt || '').replace(/[^\w\s]/g, '')} // Sanitize alt text
+          className={`${safeClassName} transition-opacity duration-300 ${isLoading ? 'opacity-50' : 'opacity-100'}`}
           onLoad={handleImageLoad}
           onError={handleImageError}
           loading="lazy"
@@ -140,17 +160,17 @@ const NewsCard = ({ article, isBookmarked, onBookmarkToggle }) => {
     positivity_score
   } = article;
 
-  // Enhanced fallback logic
+  // Enhanced fallback logic with sanitization
   const getImageSrc = () => {
-    // Try multiple sources in order of preference
-    const sources = [image_url, thumbnail_url].filter(src => 
-      src && 
-      src !== 'null' && 
-      src !== 'undefined' && 
-      !src.includes('undefined') &&
-      src.trim() &&
-      (src.startsWith('http') || src.startsWith('data:'))
-    );
+    const sources = [image_url, thumbnail_url].filter(src => {
+      if (!src || typeof src !== 'string') return false;
+      const cleanSrc = src.trim();
+      return cleanSrc &&
+             cleanSrc !== 'null' && 
+             cleanSrc !== 'undefined' && 
+             !cleanSrc.includes('undefined') &&
+             (cleanSrc.startsWith('http') || cleanSrc.startsWith('data:'));
+    });
     
     return sources[0] || null;
   };
@@ -159,6 +179,12 @@ const NewsCard = ({ article, isBookmarked, onBookmarkToggle }) => {
   
   // Check if this is a category page
   const isCategoryPage = location.pathname.includes('/category');
+  
+  // Sanitize text content to prevent invalid characters
+  const safeTitle = String(title || '').replace(/[^\w\s\-.,!?]/g, '');
+  const safeCategory = String(category || '').replace(/[^\w\s&]/g, '');
+  const safeSummary = String(summary || '').replace(/[^\w\s\-.,!?]/g, '');
+  const safeSourceName = String(source_name || '').replace(/[^\w\s.-]/g, '');
   
   // Handle ads
   if (is_ad) {
@@ -203,17 +229,17 @@ const NewsCard = ({ article, isBookmarked, onBookmarkToggle }) => {
         <div className="wide-rectangle-image-container-borderless">
           <BulletproofImage
             src={finalImageSrc}
-            alt={title}
+            alt={safeTitle}
             className="wide-rectangle-image-borderless group-hover:scale-105 transition-transform duration-300"
-            category={category}
+            category={safeCategory}
           />
         </div>
         
         <div className="wide-rectangle-content-borderless">
           {/* Category badge */}
-          {category && (
+          {safeCategory && (
             <div className="wide-rectangle-category-borderless">
-              {category}
+              {safeCategory}
             </div>
           )}
           
@@ -223,14 +249,14 @@ const NewsCard = ({ article, isBookmarked, onBookmarkToggle }) => {
               href={`/article/${id}`} 
               className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
             >
-              {title}
+              {safeTitle}
             </a>
           </h3>
           
           {/* Summary */}
-          {summary && (
+          {safeSummary && (
             <p className="wide-rectangle-summary-borderless">
-              {summary.length > 150 ? `${summary.substring(0, 150)}...` : summary}
+              {safeSummary.length > 150 ? `${safeSummary.substring(0, 150)}...` : safeSummary}
             </p>
           )}
           
@@ -238,10 +264,10 @@ const NewsCard = ({ article, isBookmarked, onBookmarkToggle }) => {
           <div className="wide-rectangle-meta-borderless">
             <div className="source-info">
               <div className="source-logo">
-                {source_name ? source_name.charAt(0).toUpperCase() : 'N'}
+                {safeSourceName ? safeSourceName.charAt(0).toUpperCase() : 'N'}
               </div>
               <span className="source-name">
-                {source_name ? source_name.replace('www.', '').replace('.com', '') : 'Unknown'}
+                {safeSourceName ? safeSourceName.replace('www.', '').replace('.com', '') : 'Unknown'}
               </span>
             </div>
             <div className="positivity-score">
@@ -271,19 +297,19 @@ const NewsCard = ({ article, isBookmarked, onBookmarkToggle }) => {
     <div className="newscard-borderless">
       <BulletproofImage
         src={finalImageSrc}
-        alt={title}
+        alt={safeTitle}
         className="newscard-image-borderless"
-        category={category}
+        category={safeCategory}
       />
       <div className="newscard-overlay-borderless">
-        {category && (
+        {safeCategory && (
           <div className="newscard-category-borderless">
-            {category}
+            {safeCategory}
           </div>
         )}
         <h3 className="newscard-title-borderless">
           <a href={`/article/${id}`} className="hover:text-blue-300 transition-colors">
-            {title}
+            {safeTitle}
           </a>
         </h3>
       </div>

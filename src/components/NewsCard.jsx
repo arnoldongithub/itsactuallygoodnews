@@ -1,120 +1,108 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
-// INFALLIBLE Smart Image Component - 100% Working Images Guaranteed
-const SmartImage = ({ 
+// BULLETPROOF Image Component - 100% Guaranteed Working Images
+const BulletproofImage = ({ 
   src, 
   alt, 
   className, 
   category = 'news'
 }) => {
   const [currentSrc, setCurrentSrc] = useState(null);
-  const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [errorCount, setErrorCount] = useState(0);
 
-  // MULTIPLE FALLBACK LAYERS - 100% guaranteed working images
-  const categoryFallbacks = {
-    'Health': [
-      'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=800&h=600&fit=crop',
-      'https://via.placeholder.com/800x600/22c55e/white?text=Health+News',
-      'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgdmlld0JveD0iMCAwIDgwMCA2MDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjgwMCIgaGVpZ2h0PSI2MDAiIGZpbGw9IiMyMmM1NWUiLz48dGV4dCB4PSI0MDAiIHk9IjI4MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0id2hpdGUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMjAiPvCfj6U8L3RleHQ+PHRleHQgeD0iNDAwIiB5PSIzNDAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IndoaXRlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjQiIG9wYWNpdHk9IjAuOCI+SGVhbHRoPC90ZXh0Pjwvc3ZnPg=='
-    ],
-    'Innovation & Tech': [
-      'https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=800&h=600&fit=crop',
-      'https://via.placeholder.com/800x600/3b82f6/white?text=Tech+News',
-      'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgdmlld0JveD0iMCAwIDgwMCA2MDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjgwMCIgaGVpZ2h0PSI2MDAiIGZpbGw9IiMzYjgyZjYiLz48dGV4dCB4PSI0MDAiIHk9IjI4MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0id2hpdGUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMjAiPvCfkrs8L3RleHQ+PHRleHQgeD0iNDAwIiB5PSIzNDAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IndoaXRlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjQiIG9wYWNpdHk9IjAuOCI+VGVjaDwvdGV4dD48L3N2Zz4='
-    ],
-    'Environment & Sustainability': [
-      'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&h=600&fit=crop',
-      'https://via.placeholder.com/800x600/10b981/white?text=Environment',
-      'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgdmlld0JveD0iMCAwIDgwMCA2MDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjgwMCIgaGVpZ2h0PSI2MDAiIGZpbGw9IiMxMGI5ODEiLz48dGV4dCB4PSI0MDAiIHk9IjI4MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0id2hpdGUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMjAiPvCfjLE8L3RleHQ+PHRleHQgeD0iNDAwIiB5PSIzNDAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IndoaXRlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjQiIG9wYWNpdHk9IjAuOCI+RW52aXJvbm1lbnQ8L3RleHQ+PC9zdmc+'
-    ],
-    'Education': [
-      'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800&h=600&fit=crop',
-      'https://via.placeholder.com/800x600/8b5cf6/white?text=Education',
-      'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgdmlld0JveD0iMCAwIDgwMCA2MDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjgwMCIgaGVpZ2h0PSI2MDAiIGZpbGw9IiM4YjVjZjYiLz48dGV4dCB4PSI0MDAiIHk9IjI4MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0id2hpdGUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMjAiPvCfk5o8L3RleHQ+PHRleHQgeD0iNDAwIiB5PSIzNDAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IndoaXRlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjQiIG9wYWNpdHk9IjAuOCI+RWR1Y2F0aW9uPC90ZXh0Pjwvc3ZnPg=='
-    ],
-    'Science & Space': [
-      'https://images.unsplash.com/photo-1446776653964-20c1d3a81b06?w=800&h=600&fit=crop',
-      'https://via.placeholder.com/800x600/6366f1/white?text=Science',
-      'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgdmlld0JveD0iMCAwIDgwMCA2MDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjgwMCIgaGVpZ2h0PSI2MDAiIGZpbGw9IiM2MzY2ZjEiLz48dGV4dCB4PSI0MDAiIHk9IjI4MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0id2hpdGUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMjAiPvCfmpA8L3RleHQ+PHRleHQgeD0iNDAwIiB5PSIzNDAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IndoaXRlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjQiIG9wYWNpdHk9IjAuOCI+U2NpZW5jZTwvdGV4dD48L3N2Zz4='
-    ],
-    'Humanitarian & Rescue': [
-      'https://images.unsplash.com/photo-1469571486292-0ba58a3f068b?w=800&h=600&fit=crop',
-      'https://via.placeholder.com/800x600/ef4444/white?text=Humanitarian',
-      'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgdmlld0JveD0iMCAwIDgwMCA2MDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjgwMCIgaGVpZ2h0PSI2MDAiIGZpbGw9IiNlZjQ0NDQiLz48dGV4dCB4PSI0MDAiIHk9IjI4MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0id2hpdGUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMjAiPvCfpJ08L3RleHQ+PHRleHQgeD0iNDAwIiB5PSIzNDAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IndoaXRlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjQiIG9wYWNpdHk9IjAuOCI+SHVtYW5pdGFyaWFuPC90ZXh0Pjwvc3ZnPg=='
-    ],
-    'Blindspot': [
-      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&h=600&fit=crop',
-      'https://via.placeholder.com/800x600/f59e0b/white?text=Blindspot',
-      'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgdmlld0JveD0iMCAwIDgwMCA2MDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjgwMCIgaGVpZ2h0PSI2MDAiIGZpbGw9IiNmNTllMGIiLz48dGV4dCB4PSI0MDAiIHk9IjI4MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0id2hpdGUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMjAiPvCfjI08L3RleHQ+PHRleHQgeD0iNDAwIiB5PSIzNDAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IndoaXRlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjQiIG9wYWNpdHk9IjAuOCI+QmxpbmRzcG90PC90ZXh0Pjwvc3ZnPg=='
-    ]
+  // GUARANTEED working fallback images - multiple reliable sources
+  const getReliableFallbacks = (category) => {
+    const categoryColors = {
+      'Health': '#22c55e',
+      'Innovation & Tech': '#3b82f6', 
+      'Environment & Sustainability': '#10b981',
+      'Education': '#8b5cf6',
+      'Science & Space': '#6366f1',
+      'Humanitarian & Rescue': '#ef4444',
+      'Blindspot': '#f59e0b'
+    };
+    
+    const color = categoryColors[category] || '#6b7280';
+    const categoryText = category || 'News';
+    
+    return [
+      // Fallback 1: Unsplash with specific category
+      `https://source.unsplash.com/800x600/?${category.toLowerCase().replace(/\s+/g, ',')}`,
+      
+      // Fallback 2: Picsum with seed based on category
+      `https://picsum.photos/800/600?random=${Math.abs(category.split('').reduce((a, b) => a + b.charCodeAt(0), 0))}`,
+      
+      // Fallback 3: Placeholder service
+      `https://via.placeholder.com/800x600/${color.slice(1)}/white?text=${encodeURIComponent(categoryText)}`,
+      
+      // Fallback 4: Base64 SVG (100% guaranteed to work)
+      `data:image/svg+xml;base64,${btoa(`
+        <svg width="800" height="600" viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:${color};stop-opacity:1" />
+              <stop offset="100%" style="stop-color:${color};stop-opacity:0.8" />
+            </linearGradient>
+          </defs>
+          <rect width="800" height="600" fill="url(#grad)"/>
+          <circle cx="400" cy="250" r="60" fill="white" opacity="0.3"/>
+          <rect x="340" y="290" width="120" height="8" rx="4" fill="white" opacity="0.3"/>
+          <rect x="360" y="310" width="80" height="6" rx="3" fill="white" opacity="0.2"/>
+          <text x="400" y="380" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="28" font-weight="600">${categoryText}</text>
+          <text x="400" y="410" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="16" opacity="0.8">Good News Story</text>
+        </svg>
+      `)}`
+    ];
   };
 
-  const [currentFallbackIndex, setCurrentFallbackIndex] = useState(0);
-
-  // Get fallback chain for current category
-  const getFallbackChain = (category) => {
-    return categoryFallbacks[category] || categoryFallbacks['Blindspot'];
-  };
-
-  // Reset when src changes
+  // Initialize image source
   useEffect(() => {
-    if (!src || src === 'null' || src === 'undefined' || src.includes('undefined') || !src.startsWith('http')) {
-      // Start with first fallback immediately
-      const fallbacks = getFallbackChain(category);
+    setErrorCount(0);
+    setIsLoading(true);
+    
+    if (!src || src === 'null' || src === 'undefined' || src.includes('undefined') || !src.trim()) {
+      // Go straight to fallbacks if no valid source
+      const fallbacks = getReliableFallbacks(category);
       setCurrentSrc(fallbacks[0]);
-      setCurrentFallbackIndex(0);
-      setHasError(false);
-      setIsLoading(true);
     } else {
       setCurrentSrc(src);
-      setCurrentFallbackIndex(-1); // -1 means using original src
-      setHasError(false);
-      setIsLoading(true);
     }
   }, [src, category]);
 
   const handleImageLoad = () => {
     setIsLoading(false);
-    setHasError(false);
   };
 
   const handleImageError = () => {
-    setIsLoading(false);
+    const fallbacks = getReliableFallbacks(category);
+    const nextIndex = errorCount + (currentSrc === src ? 0 : 1);
     
-    const fallbacks = getFallbackChain(category);
-    
-    if (currentFallbackIndex === -1) {
-      // Original image failed, try first fallback
-      console.log(`❌ Original image failed for ${category}, trying fallback 1`);
-      setCurrentSrc(fallbacks[0]);
-      setCurrentFallbackIndex(0);
-      setIsLoading(true);
-    } else if (currentFallbackIndex < fallbacks.length - 1) {
-      // Try next fallback
-      const nextIndex = currentFallbackIndex + 1;
-      console.log(`❌ Fallback ${currentFallbackIndex + 1} failed for ${category}, trying fallback ${nextIndex + 1}`);
+    if (nextIndex < fallbacks.length) {
+      console.log(`🔄 Image error, trying fallback ${nextIndex + 1}/${fallbacks.length} for ${category}`);
       setCurrentSrc(fallbacks[nextIndex]);
-      setCurrentFallbackIndex(nextIndex);
+      setErrorCount(nextIndex);
       setIsLoading(true);
     } else {
-      // All fallbacks failed - this should never happen with SVG base64
-      console.error(`❌ All fallbacks failed for ${category} - using final SVG`);
-      setHasError(true);
+      // This should never happen with SVG fallback, but just in case
+      console.error(`❌ All fallbacks failed for ${category}`);
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="relative overflow-hidden">
-      <img
-        src={currentSrc}
-        alt={alt}
-        className={`${className} transition-opacity duration-300 ${isLoading ? 'opacity-50' : 'opacity-100'}`}
-        onLoad={handleImageLoad}
-        onError={handleImageError}
-        loading="lazy"
-      />
+    <div className="relative overflow-hidden bg-gray-100 dark:bg-gray-800">
+      {currentSrc && (
+        <img
+          src={currentSrc}
+          alt={alt}
+          className={`${className} transition-opacity duration-300 ${isLoading ? 'opacity-50' : 'opacity-100'}`}
+          onLoad={handleImageLoad}
+          onError={handleImageError}
+          loading="lazy"
+        />
+      )}
       
       {/* Loading spinner */}
       {isLoading && (
@@ -123,10 +111,10 @@ const SmartImage = ({
         </div>
       )}
       
-      {/* Error badge (only for debugging) */}
-      {hasError && process.env.NODE_ENV === 'development' && (
-        <div className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded opacity-75">
-          Error
+      {/* Debug info (development only) */}
+      {process.env.NODE_ENV === 'development' && errorCount > 0 && (
+        <div className="absolute top-2 right-2 bg-orange-500 text-white text-xs px-2 py-1 rounded opacity-75">
+          Fallback {errorCount + 1}
         </div>
       )}
     </div>
@@ -154,23 +142,17 @@ const NewsCard = ({ article, isBookmarked, onBookmarkToggle }) => {
 
   // Enhanced fallback logic
   const getImageSrc = () => {
-    if (image_url && 
-        image_url !== 'null' && 
-        image_url !== 'undefined' && 
-        !image_url.includes('undefined') &&
-        image_url.startsWith('http')) {
-      return image_url;
-    }
+    // Try multiple sources in order of preference
+    const sources = [image_url, thumbnail_url].filter(src => 
+      src && 
+      src !== 'null' && 
+      src !== 'undefined' && 
+      !src.includes('undefined') &&
+      src.trim() &&
+      (src.startsWith('http') || src.startsWith('data:'))
+    );
     
-    if (thumbnail_url && 
-        thumbnail_url !== 'null' && 
-        thumbnail_url !== 'undefined' && 
-        !thumbnail_url.includes('undefined') &&
-        thumbnail_url.startsWith('http')) {
-      return thumbnail_url;
-    }
-    
-    return null;
+    return sources[0] || null;
   };
 
   const finalImageSrc = getImageSrc();
@@ -182,20 +164,32 @@ const NewsCard = ({ article, isBookmarked, onBookmarkToggle }) => {
   if (is_ad) {
     return (
       <a href={ad_link_url || "#"} target="_blank" rel="noopener noreferrer" className="block">
-        <div className={isCategoryPage ? "wide-rectangle-card" : "newscard-borderless"}>
-          <SmartImage
+        <div className={isCategoryPage ? "wide-rectangle-card-borderless" : "newscard-borderless"}>
+          <BulletproofImage
             src={ad_image_url}
-            alt="Sponsored"
-            className={isCategoryPage ? "wide-rectangle-image" : "newscard-image-borderless"}
+            alt="Sponsored Content"
+            className={isCategoryPage ? "wide-rectangle-image-borderless" : "newscard-image-borderless"}
             category="Sponsored"
           />
-          <div className={isCategoryPage ? "wide-rectangle-overlay" : "newscard-overlay-borderless"}>
-            <div className={isCategoryPage ? "wide-rectangle-category" : "newscard-category-borderless"}>
-              Sponsored
-            </div>
-            <h3 className={isCategoryPage ? "wide-rectangle-title" : "newscard-title-borderless"}>
-              This ad supports the platform
-            </h3>
+          <div className={isCategoryPage ? "wide-rectangle-content-borderless" : "newscard-overlay-borderless"}>
+            {isCategoryPage ? (
+              <>
+                <div className="wide-rectangle-category-borderless">Sponsored</div>
+                <h3 className="wide-rectangle-title-borderless">
+                  This ad supports the platform
+                </h3>
+                <p className="wide-rectangle-summary-borderless">
+                  Thank you for supporting quality journalism and positive news.
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="newscard-category-borderless">Sponsored</div>
+                <h3 className="newscard-title-borderless">
+                  This ad supports the platform
+                </h3>
+              </>
+            )}
           </div>
         </div>
       </a>
@@ -207,7 +201,7 @@ const NewsCard = ({ article, isBookmarked, onBookmarkToggle }) => {
     return (
       <article className="wide-rectangle-card-borderless group">
         <div className="wide-rectangle-image-container-borderless">
-          <SmartImage
+          <BulletproofImage
             src={finalImageSrc}
             alt={title}
             className="wide-rectangle-image-borderless group-hover:scale-105 transition-transform duration-300"
@@ -275,7 +269,7 @@ const NewsCard = ({ article, isBookmarked, onBookmarkToggle }) => {
   // Default newscard for other pages (homepage, etc.) - borderless
   return (
     <div className="newscard-borderless">
-      <SmartImage
+      <BulletproofImage
         src={finalImageSrc}
         alt={title}
         className="newscard-image-borderless"

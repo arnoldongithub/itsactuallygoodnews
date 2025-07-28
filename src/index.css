@@ -27,7 +27,6 @@
     --border: 0 0% 90%;
     --input: 0 0% 96%;
     --ring: 158 50% 60%;
-    --radius: 0.75rem;
     
     --mint-green: 158 50% 75%;
     --orange-accent: 25 95% 65%;
@@ -609,6 +608,8 @@
     -webkit-line-clamp: none !important;
     overflow: visible !important;
     display: block !important;
+    text-overflow: none !important;
+    white-space: normal !important;
   }
 
   .sidebar-section {
@@ -2140,6 +2141,377 @@
     background: rgba(0, 255, 0, 0.1) !important;
   }
   */
+
+/* ========== BULLETPROOF IMAGE LOADING SYSTEM ========== */
+
+/* Ensure all image containers have proper backgrounds */
+.sidebar-newscard,
+.newscard-borderless,
+.wide-rectangle-card-borderless,
+.viral-newscard-borderless {
+  background: hsl(var(--muted)) !important;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Image loading states with guaranteed fallbacks */
+.sidebar-newscard-image,
+.newscard-image-borderless,
+.wide-rectangle-image-borderless {
+  @apply absolute inset-0 w-full h-full object-cover transition-all duration-300;
+  background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+  min-height: 100%;
+  min-width: 100%;
+}
+
+/* Ensure images always fill their containers */
+.sidebar-newscard img,
+.newscard-borderless img,
+.wide-rectangle-card-borderless img,
+.viral-newscard-borderless img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: center !important;
+}
+
+/* Loading spinner styles */
+.image-loading-spinner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+}
+
+/* Error state handling */
+.image-error-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, hsl(var(--muted)), hsl(var(--muted) / 0.8));
+  color: hsl(var(--muted-foreground));
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: center;
+  padding: 1rem;
+}
+
+/* Category-specific background colors for loading states */
+.sidebar-newscard[data-category="Health"] {
+  background: linear-gradient(135deg, #dcfce7, #bbf7d0) !important;
+}
+
+.sidebar-newscard[data-category="Innovation & Tech"] {
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe) !important;
+}
+
+.sidebar-newscard[data-category="Environment & Sustainability"] {
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0) !important;
+}
+
+.sidebar-newscard[data-category="Education"] {
+  background: linear-gradient(135deg, #e9d5ff, #ddd6fe) !important;
+}
+
+.sidebar-newscard[data-category="Science & Space"] {
+  background: linear-gradient(135deg, #e0e7ff, #c7d2fe) !important;
+}
+
+.sidebar-newscard[data-category="Humanitarian & Rescue"] {
+  background: linear-gradient(135deg, #fee2e2, #fecaca) !important;
+}
+
+.sidebar-newscard[data-category="Blindspot"] {
+  background: linear-gradient(135deg, #fef3c7, #fde68a) !important;
+}
+
+/* Dark mode category backgrounds */
+.dark .sidebar-newscard[data-category="Health"] {
+  background: linear-gradient(135deg, #052e16, #064e3b) !important;
+}
+
+.dark .sidebar-newscard[data-category="Innovation & Tech"] {
+  background: linear-gradient(135deg, #0c1e3e, #1e3a8a) !important;
+}
+
+.dark .sidebar-newscard[data-category="Environment & Sustainability"] {
+  background: linear-gradient(135deg, #022c22, #064e3b) !important;
+}
+
+.dark .sidebar-newscard[data-category="Education"] {
+  background: linear-gradient(135deg, #2e1065, #4c1d95) !important;
+}
+
+.dark .sidebar-newscard[data-category="Science & Space"] {
+  background: linear-gradient(135deg, #1e1b4b, #312e81) !important;
+}
+
+.dark .sidebar-newscard[data-category="Humanitarian & Rescue"] {
+  background: linear-gradient(135deg, #450a0a, #7f1d1d) !important;
+}
+
+.dark .sidebar-newscard[data-category="Blindspot"] {
+  background: linear-gradient(135deg, #451a03, #92400e) !important;
+}
+
+/* ========== FORCE IMAGE VISIBILITY ========== */
+
+/* Ensure images are never hidden */
+.sidebar-newscard img,
+.newscard-borderless img,
+.wide-rectangle-card-borderless img,
+.viral-newscard-borderless img {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  max-width: none !important;
+}
+
+/* Remove any potential image blocking */
+img[src=""],
+img[src="null"],
+img[src="undefined"] {
+  display: none !important;
+}
+
+/* Ensure proper aspect ratios */
+.sidebar-newscard {
+  aspect-ratio: 3/4 !important;
+  min-height: 240px !important;
+}
+
+.newscard-borderless {
+  aspect-ratio: 16/9 !important;
+  min-height: 200px !important;
+}
+
+.wide-rectangle-image-container-borderless {
+  min-height: 200px !important;
+  flex: 0 0 40% !important;
+}
+
+.viral-newscard-borderless {
+  aspect-ratio: 16/9 !important;
+  min-height: 200px !important;
+}
+
+/* ========== ENHANCED LOADING STATES ========== */
+
+/* Skeleton loading for images */
+@keyframes image-skeleton {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+.image-skeleton {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--muted)) 25%,
+    hsl(var(--muted) / 0.5) 37%,
+    hsl(var(--muted)) 63%
+  );
+  background-size: 400% 100%;
+  animation: image-skeleton 1.5s ease-in-out infinite;
+}
+
+/* ========== RESPONSIVE IMAGE FIXES ========== */
+
+@media (max-width: 768px) {
+  .sidebar-newscard {
+    min-height: 200px !important;
+    aspect-ratio: 4/5 !important;
+  }
+  
+  .newscard-borderless,
+  .viral-newscard-borderless {
+    min-height: 180px !important;
+    aspect-ratio: 3/4 !important;
+  }
+  
+  .wide-rectangle-card-borderless {
+    flex-direction: column;
+  }
+  
+  .wide-rectangle-image-container-borderless {
+    flex: none !important;
+    width: 100% !important;
+    height: 200px !important;
+    min-height: 200px !important;
+  }
+}
+
+/* ========== ACCESSIBILITY IMPROVEMENTS ========== */
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .sidebar-newscard,
+  .newscard-borderless,
+  .wide-rectangle-card-borderless,
+  .viral-newscard-borderless {
+    background: #f5f5f5 !important;
+    border: 2px solid #333 !important;
+  }
+  
+  .dark .sidebar-newscard,
+  .dark .newscard-borderless,
+  .dark .wide-rectangle-card-borderless,
+  .dark .viral-newscard-borderless {
+    background: #2a2a2a !important;
+    border: 2px solid #ccc !important;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-newscard img,
+  .newscard-borderless img,
+  .wide-rectangle-card-borderless img,
+  .viral-newscard-borderless img {
+    transition: none !important;
+  }
+  
+  .image-skeleton {
+    animation: none !important;
+  }
+  
+  .group-hover\:scale-105:hover {
+    transform: none !important;
+  }
+}
+
+/* ========== PRINT STYLES ========== */
+
+@media print {
+  .sidebar-newscard,
+  .newscard-borderless,
+  .wide-rectangle-card-borderless,
+  .viral-newscard-borderless {
+    background: white !important;
+    border: 1px solid #ccc !important;
+  }
+  
+  .sidebar-newscard img,
+  .newscard-borderless img,
+  .wide-rectangle-card-borderless img,
+  .viral-newscard-borderless img {
+    filter: grayscale(100%) !important;
+  }
+}
+
+/* ========== FALLBACK CONTENT STYLES ========== */
+
+/* Enhanced fallback story styling */
+.sidebar-newscard[data-fallback="true"] {
+  border: 2px dashed hsl(var(--border)) !important;
+  opacity: 0.8;
+}
+
+.sidebar-newscard[data-fallback="true"] .sidebar-newscard-overlay {
+  background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 60%, transparent 100%) !important;
+}
+
+.sidebar-newscard[data-fallback="true"] .sidebar-newscard-title {
+  font-style: italic;
+}
+
+/* Preview badges */
+.preview-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: hsl(var(--orange-accent));
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 4px;
+  z-index: 20;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* ========== DEBUG STYLES (DEVELOPMENT ONLY) ========== */
+
+/* Debug borders for development */
+.debug-images .sidebar-newscard {
+  border: 2px solid red !important;
+}
+
+.debug-images .newscard-borderless {
+  border: 2px solid blue !important;
+}
+
+.debug-images .wide-rectangle-card-borderless {
+  border: 2px solid green !important;
+}
+
+.debug-images .viral-newscard-borderless {
+  border: 2px solid purple !important;
+}
+
+/* Debug info overlay */
+.debug-image-info {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0,0,0,0.8);
+  color: white;
+  font-size: 10px;
+  padding: 4px;
+  font-family: monospace;
+  z-index: 30;
+}
+
+/* ========== FINAL OVERRIDES ========== */
+
+/* Ensure no other styles can break our image loading */
+.sidebar-newscard *,
+.newscard-borderless *,
+.wide-rectangle-card-borderless *,
+.viral-newscard-borderless * {
+  box-sizing: border-box;
+}
+
+/* Force hardware acceleration for better performance */
+.sidebar-newscard img,
+.newscard-borderless img,
+.wide-rectangle-card-borderless img,
+.viral-newscard-borderless img {
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+/* Ensure proper stacking context */
+.sidebar-newscard,
+.newscard-borderless,
+.wide-rectangle-card-borderless,
+.viral-newscard-borderless {
+  isolation: isolate;
+}
+
+/* Final safety net for image visibility */
+img {
+  max-width: 100% !important;
+  height: auto !important;
+}
+
+.sidebar-newscard img,
+.newscard-borderless img,
+.wide-rectangle-card-borderless img,
+.viral-newscard-borderless img {
+  height: 100% !important;
+  width: 100% !important;
+  object-fit: cover !important;
+}
 }
 
 /* ========== END OF COMPONENTS LAYER ========== */
+

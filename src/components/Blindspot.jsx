@@ -4,6 +4,117 @@ import NewsCard from './NewsCard';
 import InlineAd from './InlineAd';
 import SourcePositivityBar from './SourcePositivityBar';
 
+// BULLETPROOF Image Component for Blindspot Sidebar
+const BulletproofBlindspotImage = ({ story, className }) => {
+  const [currentSrc, setCurrentSrc] = React.useState(null);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [errorCount, setErrorCount] = React.useState(0);
+
+  // Multiple guaranteed fallback sources for Blindspot
+  const getFallbackSources = () => [
+    // Try original sources first
+    story.image_url,
+    story.thumbnail_url,
+    
+    // Blindspot-specific fallbacks
+    'https://source.unsplash.com/400x600/?hidden,story,underreported',
+    'https://source.unsplash.com/400x600/?community,global,voices',
+    'https://picsum.photos/400/600?random=7', // Blindspot seed
+    'https://via.placeholder.com/400x600/f59e0b/white?text=Blindspot',
+    
+    // Base64 SVG fallback (100% guaranteed)
+    `data:image/svg+xml;base64,${btoa(`
+      <svg width="400" height="600" viewBox="0 0 400 600" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="blindspotGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#f59e0b;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#d97706;stop-opacity:0.8" />
+          </linearGradient>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+            <feMerge> 
+              <feMergeNode in="coloredBlur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+        </defs>
+        <rect width="400" height="600" fill="url(#blindspotGrad)"/>
+        <circle cx="200" cy="220" r="40" fill="white" opacity="0.3"/>
+        <circle cx="200" cy="220" r="25" fill="white" opacity="0.5"/>
+        <circle cx="200" cy="220" r="12" fill="white" opacity="0.7"/>
+        <path d="M180 240 L200 260 L240 220" stroke="white" stroke-width="3" fill="none" opacity="0.8"/>
+        <text x="200" y="320" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="28" font-weight="700" filter="url(#glow)">🔍</text>
+        <text x="200" y="380" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="22" font-weight="600">Blindspot</text>
+        <text x="200" y="410" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="14" opacity="0.9">Hidden Stories</text>
+        <text x="200" y="430" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="12" opacity="0.7">Underreported News</text>
+      </svg>
+    `)}`
+  ];
+
+  React.useEffect(() => {
+    const sources = getFallbackSources().filter(src => 
+      src && 
+      src !== 'null' && 
+      src !== 'undefined' && 
+      !src.includes('undefined') &&
+      src.trim() &&
+      src !== '#'
+    );
+    
+    if (sources.length > 0) {
+      setCurrentSrc(sources[0]);
+      setErrorCount(0);
+      setIsLoading(true);
+    }
+  }, [story.id]);
+
+  const handleLoad = () => setIsLoading(false);
+  
+  const handleError = () => {
+    const sources = getFallbackSources().filter(src => 
+      src && src !== 'null' && src !== 'undefined' && !src.includes('undefined') && src.trim() && src !== '#'
+    );
+    
+    const nextIndex = errorCount + 1;
+    if (nextIndex < sources.length) {
+      console.log(`🔍 Blindspot image error, trying fallback ${nextIndex + 1}/${sources.length}`);
+      setCurrentSrc(sources[nextIndex]);
+      setErrorCount(nextIndex);
+      setIsLoading(true);
+    } else {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="relative overflow-hidden bg-orange-50 dark:bg-orange-900/20">
+      {currentSrc && (
+        <img
+          src={currentSrc}
+          alt={story.title}
+          className={`${className} transition-all duration-300 ${isLoading ? 'opacity-50' : 'opacity-100'}`}
+          onLoad={handleLoad}
+          onError={handleError}
+          loading="lazy"
+        />
+      )}
+      
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-orange-50 dark:bg-orange-900/20">
+          <div className="w-6 h-6 border-2 border-orange-300 border-t-orange-600 rounded-full animate-spin"></div>
+        </div>
+      )}
+      
+      {/* Preview badge for fallback stories */}
+      {story.url === '#' && !isLoading && (
+        <div className="absolute top-2 left-2 bg-orange-500 text-white text-xs px-2 py-1 rounded opacity-90">
+          Preview
+        </div>
+      )}
+    </div>
+  );
+};
+
 const Blindspot = ({ stories }) => {
   const navigate = useNavigate();
 
@@ -13,13 +124,13 @@ const Blindspot = ({ stories }) => {
   const featured = stories?.slice(0, 2) || []; // Max 2 newscards for most unreported
   const headlines = stories?.slice(2, 12) || []; // Max 10 additional headlines
   
-  // Fallback content if no stories
+  // Enhanced fallback content if no stories
   const fallbackStories = [
     {
-      id: 'fallback-1',
-      title: 'Blindspot Stories Coming Soon',
-      summary: 'We are working to bring you underreported positive news from around the world.',
-      image_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=600&fit=crop',
+      id: 'fallback-blindspot-1',
+      title: 'Blindspot Stories Coming Soon - Underreported Global Voices',
+      summary: 'We are working to bring you underreported positive news from around the world that mainstream media often overlooks.',
+      image_url: null, // Will trigger our bulletproof fallback system
       url: '#',
       category: 'Blindspot',
       published_at: new Date().toISOString(),
@@ -27,14 +138,14 @@ const Blindspot = ({ stories }) => {
       positivity_score: 8
     },
     {
-      id: 'fallback-2', 
-      title: 'Hidden Heroes Around the World',
-      summary: 'Discover amazing stories that mainstream media often overlooks.',
-      image_url: 'https://images.unsplash.com/photo-1469571486292-0ba58a3f068b?w=400&h=600&fit=crop',
+      id: 'fallback-blindspot-2', 
+      title: 'Hidden Heroes and Community Champions - Stories That Matter',
+      summary: 'Discover amazing stories of resilience, innovation, and positive change that deserve more attention.',
+      image_url: null, // Will trigger our bulletproof fallback system
       url: '#',
       category: 'Blindspot',
       published_at: new Date().toISOString(),
-      source_name: 'Global Voices',
+      source_name: 'Global Voices Network',
       positivity_score: 9
     }
   ];
@@ -50,10 +161,10 @@ const Blindspot = ({ stories }) => {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
         Blindspot
-        {stories?.length === 0 && <span className="text-xs text-gray-500 ml-2">(Preview)</span>}
+        {stories?.length === 0 && <span className="text-xs text-orange-500 ml-2 opacity-75">(Preview)</span>}
       </h2>
       
-      {/* Featured Stories in Card format - FIXED: Enhanced Image Fallbacks */}
+      {/* Featured Stories in Card format - BULLETPROOF IMAGES */}
       {displayFeatured.length > 0 && (
         <div className="sidebar-featured-cards">
           {displayFeatured.map((story) => (
@@ -62,32 +173,27 @@ const Blindspot = ({ stories }) => {
               onClick={() => story.url === '#' ? null : navigate(`/article/${story.id}`)}
               className="sidebar-newscard group"
               disabled={story.url === '#'}
+              style={{
+                cursor: story.url === '#' ? 'default' : 'pointer',
+                opacity: story.url === '#' ? 0.8 : 1
+              }}
             >
-              {/* ENHANCED: Multiple fallback layers for guaranteed image loading */}
-              <img
-                src={story.image_url || story.thumbnail_url || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=600&fit=crop'}
-                alt={story.title}
+              {/* BULLETPROOF IMAGE COMPONENT */}
+              <BulletproofBlindspotImage
+                story={story}
                 className="sidebar-newscard-image group-hover:scale-105 transition-transform duration-300"
-                onError={(e) => {
-                  // First fallback - different Unsplash image
-                  if (e.target.src.includes('photo-1507003211169')) {
-                    e.target.src = 'https://images.unsplash.com/photo-1469571486292-0ba58a3f068b?w=400&h=600&fit=crop';
-                  }
-                  // Second fallback - placeholder
-                  else if (e.target.src.includes('photo-1469571486292')) {
-                    e.target.src = 'https://via.placeholder.com/400x600/f59e0b/white?text=Blindspot+News';
-                  }
-                  // Third fallback - guaranteed SVG
-                  else if (e.target.src.includes('placeholder.com')) {
-                    e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjYwMCIgdmlld0JveD0iMCAwIDQwMCA2MDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSI2MDAiIGZpbGw9IiNmNTllMGIiLz48dGV4dCB4PSIyMDAiIHk9IjI4MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0id2hpdGUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSI2MCI+8J+MjTwvdGV4dD48dGV4dCB4PSIyMDAiIHk9IjM0MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0id2hpdGUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgb3BhY2l0eT0iMC44Ij5CbGluZHNwb3Q8L3RleHQ+PC9zdmc+';
-                  }
-                }}
               />
+              
               <div className="sidebar-newscard-overlay">
                 {/* FIXED: Full title display with no truncation */}
-                <h3 className="sidebar-newscard-title blindspot-title-full">
+                <h3 className="blindspot-title-full">
                   {story.title}
                 </h3>
+                {story.url === '#' && (
+                  <p className="text-white text-xs mt-2 opacity-75">
+                    Coming soon...
+                  </p>
+                )}
               </div>
             </button>
           ))}
@@ -99,7 +205,7 @@ const Blindspot = ({ stories }) => {
         <div className="sidebar-headlines">
           {displayHeadlines.map((story, index) => (
             <React.Fragment key={story.id}>
-              {/* Source & Positivity Bar with thin white separator */}
+              {/* Source & Positivity Bar with enhanced separator */}
               <SourcePositivityBar 
                 source={story.source_name || story.source}
                 positivityScore={story.positivity_score}
@@ -113,9 +219,18 @@ const Blindspot = ({ stories }) => {
                   onClick={() => story.url === '#' ? null : navigate(`/article/${story.id}`)}
                   className="w-full text-left hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
                   disabled={story.url === '#'}
+                  style={{
+                    cursor: story.url === '#' ? 'default' : 'pointer',
+                    opacity: story.url === '#' ? 0.7 : 1
+                  }}
                 >
                   <h3 className="blindspot-headline-full">
                     {story.title}
+                    {story.url === '#' && (
+                      <span className="text-orange-500 text-xs ml-2 opacity-60">
+                        (Preview)
+                      </span>
+                    )}
                   </h3>
                 </button>
               </div>
@@ -125,20 +240,44 @@ const Blindspot = ({ stories }) => {
                 <InlineAd key={`blindspot-ad-${index}`} />
               )}
               
-              {/* Thin white separator between headlines */}
+              {/* Enhanced separator between headlines */}
               {index < displayHeadlines.length - 1 && (
-                <hr className="border-gray-200 dark:border-gray-700 my-3 opacity-20" />
+                <hr className="border-gray-200 dark:border-gray-700 my-3 opacity-30 border-t-2" />
               )}
             </React.Fragment>
           ))}
         </div>
       )}
 
+      {/* Enhanced empty state */}
+      {displayStories.length === 0 && (
+        <div className="text-center py-8">
+          <div className="w-16 h-16 mx-auto mb-4 bg-orange-100 dark:bg-orange-900/20 rounded-full flex items-center justify-center">
+            <svg className="w-8 h-8 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+          <p className="text-gray-500 dark:text-gray-400 text-sm mb-2">
+            Blindspot stories are being curated
+          </p>
+          <p className="text-gray-400 dark:text-gray-500 text-xs">
+            Check back soon for underreported positive news
+          </p>
+        </div>
+      )}
+
       {/* Debug info in development */}
       {process.env.NODE_ENV === 'development' && (
-        <div className="mt-4 p-2 bg-gray-100 dark:bg-gray-800 rounded text-xs">
-          <p>Debug: {stories?.length || 0} stories passed to Blindspot</p>
-          <p>Featured: {displayFeatured.length}, Headlines: {displayHeadlines.length}</p>
+        <div className="mt-4 p-2 bg-orange-100 dark:bg-orange-900/20 rounded text-xs border border-orange-200 dark:border-orange-800">
+          <div className="flex items-center mb-1">
+            <span className="text-orange-600 dark:text-orange-400 font-medium">Debug Info:</span>
+          </div>
+          <p className="text-gray-600 dark:text-gray-400">
+            Stories: {stories?.length || 0} | Featured: {displayFeatured.length} | Headlines: {displayHeadlines.length}
+          </p>
+          <p className="text-gray-500 dark:text-gray-500 text-xs mt-1">
+            Using {stories?.length > 0 ? 'real' : 'fallback'} content
+          </p>
         </div>
       )}
     </div>

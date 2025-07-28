@@ -4,63 +4,70 @@ import NewsCard from './NewsCard';
 import InlineAd from './InlineAd';
 import SourcePositivityBar from './SourcePositivityBar';
 
-// BULLETPROOF Image Component for Blindspot Sidebar
+// FIXED: Safe SVG generation without btoa()
+const createBlindspotSVG = () => {
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`
+    <svg width="400" height="600" viewBox="0 0 400 600" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="blindspotGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#f59e0b;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#d97706;stop-opacity:0.8" />
+        </linearGradient>
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+          <feMerge> 
+            <feMergeNode in="coloredBlur"/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
+      </defs>
+      <rect width="400" height="600" fill="url(#blindspotGrad)"/>
+      <circle cx="200" cy="220" r="40" fill="white" opacity="0.3"/>
+      <circle cx="200" cy="220" r="25" fill="white" opacity="0.5"/>
+      <circle cx="200" cy="220" r="12" fill="white" opacity="0.7"/>
+      <path d="M180 240 L200 260 L240 220" stroke="white" stroke-width="3" fill="none" opacity="0.8"/>
+      <text x="200" y="320" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="28" font-weight="700">🔍</text>
+      <text x="200" y="380" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="22" font-weight="600">Blindspot</text>
+      <text x="200" y="410" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="14" opacity="0.9">Hidden Stories</text>
+      <text x="200" y="430" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="12" opacity="0.7">Underreported News</text>
+    </svg>
+  `)}`;
+};
+
+// BULLETPROOF Image Component for Blindspot Sidebar - FIXED
 const BulletproofBlindspotImage = ({ story, className }) => {
   const [currentSrc, setCurrentSrc] = React.useState(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [errorCount, setErrorCount] = React.useState(0);
 
-  // Multiple guaranteed fallback sources for Blindspot
-  const getFallbackSources = () => [
-    // Try original sources first
-    story.image_url,
-    story.thumbnail_url,
+  // SAFE: Multiple guaranteed fallback sources for Blindspot
+  const getFallbackSources = () => {
+    // Sanitize story data to prevent invalid characters
+    const safeTitle = String(story.title || 'Blindspot').replace(/[^\w\s]/g, '');
+    const safeId = String(story.id || 7).replace(/[^\w]/g, '');
     
-    // Blindspot-specific fallbacks
-    'https://source.unsplash.com/400x600/?hidden,story,underreported',
-    'https://source.unsplash.com/400x600/?community,global,voices',
-    'https://picsum.photos/400/600?random=7', // Blindspot seed
-    'https://via.placeholder.com/400x600/f59e0b/white?text=Blindspot',
-    
-    // Base64 SVG fallback (100% guaranteed)
-    `data:image/svg+xml;base64,${btoa(`
-      <svg width="400" height="600" viewBox="0 0 400 600" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="blindspotGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style="stop-color:#f59e0b;stop-opacity:1" />
-            <stop offset="100%" style="stop-color:#d97706;stop-opacity:0.8" />
-          </linearGradient>
-          <filter id="glow">
-            <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-            <feMerge> 
-              <feMergeNode in="coloredBlur"/>
-              <feMergeNode in="SourceGraphic"/>
-            </feMerge>
-          </filter>
-        </defs>
-        <rect width="400" height="600" fill="url(#blindspotGrad)"/>
-        <circle cx="200" cy="220" r="40" fill="white" opacity="0.3"/>
-        <circle cx="200" cy="220" r="25" fill="white" opacity="0.5"/>
-        <circle cx="200" cy="220" r="12" fill="white" opacity="0.7"/>
-        <path d="M180 240 L200 260 L240 220" stroke="white" stroke-width="3" fill="none" opacity="0.8"/>
-        <text x="200" y="320" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="28" font-weight="700" filter="url(#glow)">🔍</text>
-        <text x="200" y="380" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="22" font-weight="600">Blindspot</text>
-        <text x="200" y="410" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="14" opacity="0.9">Hidden Stories</text>
-        <text x="200" y="430" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="12" opacity="0.7">Underreported News</text>
-      </svg>
-    `)}`
-  ];
+    return [
+      // Try original sources first (sanitized)
+      story.image_url && typeof story.image_url === 'string' && story.image_url.startsWith('http') 
+        ? story.image_url 
+        : null,
+      story.thumbnail_url && typeof story.thumbnail_url === 'string' && story.thumbnail_url.startsWith('http') 
+        ? story.thumbnail_url 
+        : null,
+      
+      // Blindspot-specific fallbacks
+      `https://source.unsplash.com/400x600/?hidden,story,underreported`,
+      `https://source.unsplash.com/400x600/?community,global,voices`,
+      `https://picsum.photos/400/600?random=${Math.abs(safeId.split('').reduce((a, b) => a + b.charCodeAt(0), 0)) + 7}`, // Blindspot seed
+      `https://via.placeholder.com/400x600/f59e0b/white?text=${encodeURIComponent('Blindspot')}`,
+      
+      // SAFE: SVG fallback using encodeURIComponent instead of btoa
+      createBlindspotSVG()
+    ].filter(src => src && src.trim() && src !== '#');
+  };
 
   React.useEffect(() => {
-    const sources = getFallbackSources().filter(src => 
-      src && 
-      src !== 'null' && 
-      src !== 'undefined' && 
-      !src.includes('undefined') &&
-      src.trim() &&
-      src !== '#'
-    );
-    
+    const sources = getFallbackSources();
     if (sources.length > 0) {
       setCurrentSrc(sources[0]);
       setErrorCount(0);
@@ -71,28 +78,35 @@ const BulletproofBlindspotImage = ({ story, className }) => {
   const handleLoad = () => setIsLoading(false);
   
   const handleError = () => {
-    const sources = getFallbackSources().filter(src => 
-      src && src !== 'null' && src !== 'undefined' && !src.includes('undefined') && src.trim() && src !== '#'
-    );
-    
+    const sources = getFallbackSources();
     const nextIndex = errorCount + 1;
+    
     if (nextIndex < sources.length) {
       console.log(`🔍 Blindspot image error, trying fallback ${nextIndex + 1}/${sources.length}`);
       setCurrentSrc(sources[nextIndex]);
       setErrorCount(nextIndex);
       setIsLoading(true);
     } else {
+      console.log('✅ All Blindspot fallbacks exhausted, using final SVG');
       setIsLoading(false);
     }
   };
+
+  // Sanitize className to prevent invalid CSS class names
+  const safeClassName = typeof className === 'string' 
+    ? className.replace(/[^\w\s\-_]/g, '') 
+    : '';
+
+  // Sanitize alt text
+  const safeAlt = String(story.title || 'Blindspot Story').replace(/[^\w\s\-.,!?]/g, '');
 
   return (
     <div className="relative overflow-hidden bg-orange-50 dark:bg-orange-900/20">
       {currentSrc && (
         <img
           src={currentSrc}
-          alt={story.title}
-          className={`${className} transition-all duration-300 ${isLoading ? 'opacity-50' : 'opacity-100'}`}
+          alt={safeAlt}
+          className={`${safeClassName} transition-all duration-300 ${isLoading ? 'opacity-50' : 'opacity-100'}`}
           onLoad={handleLoad}
           onError={handleError}
           loading="lazy"
@@ -178,16 +192,16 @@ const Blindspot = ({ stories }) => {
                 opacity: story.url === '#' ? 0.8 : 1
               }}
             >
-              {/* BULLETPROOF IMAGE COMPONENT */}
+              {/* FIXED: BULLETPROOF IMAGE COMPONENT */}
               <BulletproofBlindspotImage
                 story={story}
                 className="sidebar-newscard-image group-hover:scale-105 transition-transform duration-300"
               />
               
               <div className="sidebar-newscard-overlay">
-                {/* FIXED: Full title display with no truncation */}
+                {/* SAFE: Full title display with sanitized text */}
                 <h3 className="blindspot-title-full">
-                  {story.title}
+                  {String(story.title || '').replace(/[^\w\s\-.,!?'"]/g, '')}
                 </h3>
                 {story.url === '#' && (
                   <p className="text-white text-xs mt-2 opacity-75">
@@ -200,20 +214,20 @@ const Blindspot = ({ stories }) => {
         </div>
       )}
 
-      {/* Headlines Section - FIXED: No truncation, full text display */}
+      {/* Headlines Section - SAFE: No truncation, full text display */}
       {displayHeadlines.length > 0 && (
         <div className="sidebar-headlines">
           {displayHeadlines.map((story, index) => (
             <React.Fragment key={story.id}>
-              {/* Source & Positivity Bar with enhanced separator */}
+              {/* Source & Positivity Bar with safe data */}
               <SourcePositivityBar 
-                source={story.source_name || story.source}
-                positivityScore={story.positivity_score}
+                source={String(story.source_name || story.source || '').replace(/[^\w\s.-]/g, '')}
+                positivityScore={Math.max(0, Math.min(10, Number(story.positivity_score) || 0))}
                 isViral={false}
                 isFirst={index < 2}
               />
               
-              {/* FIXED: Headlines with full text, no truncation */}
+              {/* SAFE: Headlines with full text, no truncation */}
               <div className="sidebar-headline">
                 <button
                   onClick={() => story.url === '#' ? null : navigate(`/article/${story.id}`)}
@@ -225,7 +239,7 @@ const Blindspot = ({ stories }) => {
                   }}
                 >
                   <h3 className="blindspot-headline-full">
-                    {story.title}
+                    {String(story.title || '').replace(/[^\w\s\-.,!?'"]/g, '')}
                     {story.url === '#' && (
                       <span className="text-orange-500 text-xs ml-2 opacity-60">
                         (Preview)

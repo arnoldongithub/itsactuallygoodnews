@@ -4,52 +4,60 @@ import NewsCard from './NewsCard';
 import InlineAd from './InlineAd';
 import SourcePositivityBar from './SourcePositivityBar';
 
-// BULLETPROOF Image Component for Sidebar
+// FIXED: Safe SVG generation without btoa()
+const createDailySVG = () => {
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`
+    <svg width="400" height="600" viewBox="0 0 400 600" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="dailyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:0.8" />
+        </linearGradient>
+      </defs>
+      <rect width="400" height="600" fill="url(#dailyGrad)"/>
+      <circle cx="200" cy="250" r="50" fill="white" opacity="0.3"/>
+      <rect x="150" y="320" width="100" height="6" rx="3" fill="white" opacity="0.4"/>
+      <rect x="160" y="340" width="80" height="4" rx="2" fill="white" opacity="0.3"/>
+      <text x="200" y="400" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="24" font-weight="600">Daily</text>
+      <text x="200" y="430" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="24" font-weight="600">Reads</text>
+      <text x="200" y="460" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="14" opacity="0.8">Good News</text>
+    </svg>
+  `)}`;
+};
+
+// BULLETPROOF Image Component for Sidebar - FIXED
 const BulletproofSidebarImage = ({ story, className }) => {
   const [currentSrc, setCurrentSrc] = React.useState(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [errorCount, setErrorCount] = React.useState(0);
 
-  // Multiple guaranteed fallback sources
-  const getFallbackSources = () => [
-    // Try original sources first
-    story.image_url,
-    story.thumbnail_url,
+  // SAFE: Multiple guaranteed fallback sources
+  const getFallbackSources = () => {
+    // Sanitize story data to prevent invalid characters
+    const safeTitle = String(story.title || 'Daily News').replace(/[^\w\s]/g, '');
+    const safeId = String(story.id || 1).replace(/[^\w]/g, '');
     
-    // Reliable fallback services
-    'https://source.unsplash.com/400x600/?news,daily,positive',
-    'https://picsum.photos/400/600?random=1',
-    'https://via.placeholder.com/400x600/6366f1/white?text=Daily+News',
-    
-    // Base64 SVG fallback (100% guaranteed)
-    `data:image/svg+xml;base64,${btoa(`
-      <svg width="400" height="600" viewBox="0 0 400 600" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="dailyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
-            <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:0.8" />
-          </linearGradient>
-        </defs>
-        <rect width="400" height="600" fill="url(#dailyGrad)"/>
-        <circle cx="200" cy="250" r="50" fill="white" opacity="0.3"/>
-        <rect x="150" y="320" width="100" height="6" rx="3" fill="white" opacity="0.4"/>
-        <rect x="160" y="340" width="80" height="4" rx="2" fill="white" opacity="0.3"/>
-        <text x="200" y="400" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="24" font-weight="600">Daily</text>
-        <text x="200" y="430" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="24" font-weight="600">Reads</text>
-        <text x="200" y="460" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="14" opacity="0.8">Good News</text>
-      </svg>
-    `)}`
-  ];
+    return [
+      // Try original sources first (sanitized)
+      story.image_url && typeof story.image_url === 'string' && story.image_url.startsWith('http') 
+        ? story.image_url 
+        : null,
+      story.thumbnail_url && typeof story.thumbnail_url === 'string' && story.thumbnail_url.startsWith('http') 
+        ? story.thumbnail_url 
+        : null,
+      
+      // Reliable fallback services
+      `https://source.unsplash.com/400x600/?news,daily,positive`,
+      `https://picsum.photos/400/600?random=${Math.abs(safeId.split('').reduce((a, b) => a + b.charCodeAt(0), 0))}`,
+      `https://via.placeholder.com/400x600/6366f1/white?text=${encodeURIComponent('Daily News')}`,
+      
+      // SAFE: SVG fallback using encodeURIComponent instead of btoa
+      createDailySVG()
+    ].filter(src => src && src.trim());
+  };
 
   React.useEffect(() => {
-    const sources = getFallbackSources().filter(src => 
-      src && 
-      src !== 'null' && 
-      src !== 'undefined' && 
-      !src.includes('undefined') &&
-      src.trim()
-    );
-    
+    const sources = getFallbackSources();
     if (sources.length > 0) {
       setCurrentSrc(sources[0]);
       setErrorCount(0);
@@ -60,28 +68,35 @@ const BulletproofSidebarImage = ({ story, className }) => {
   const handleLoad = () => setIsLoading(false);
   
   const handleError = () => {
-    const sources = getFallbackSources().filter(src => 
-      src && src !== 'null' && src !== 'undefined' && !src.includes('undefined') && src.trim()
-    );
-    
+    const sources = getFallbackSources();
     const nextIndex = errorCount + 1;
+    
     if (nextIndex < sources.length) {
       console.log(`🔄 Daily Reads image error, trying fallback ${nextIndex + 1}/${sources.length}`);
       setCurrentSrc(sources[nextIndex]);
       setErrorCount(nextIndex);
       setIsLoading(true);
     } else {
+      console.log('✅ All fallbacks exhausted, using final SVG');
       setIsLoading(false);
     }
   };
+
+  // Sanitize className to prevent invalid CSS class names
+  const safeClassName = typeof className === 'string' 
+    ? className.replace(/[^\w\s\-_]/g, '') 
+    : '';
+
+  // Sanitize alt text
+  const safeAlt = String(story.title || 'Daily News').replace(/[^\w\s\-.,!?]/g, '');
 
   return (
     <div className="relative overflow-hidden bg-gray-100 dark:bg-gray-800">
       {currentSrc && (
         <img
           src={currentSrc}
-          alt={story.title}
-          className={`${className} transition-all duration-300 ${isLoading ? 'opacity-50' : 'opacity-100'}`}
+          alt={safeAlt}
+          className={`${safeClassName} transition-all duration-300 ${isLoading ? 'opacity-50' : 'opacity-100'}`}
           onLoad={handleLoad}
           onError={handleError}
           loading="lazy"
@@ -143,16 +158,16 @@ const DailyReads = ({ stories }) => {
               onClick={() => navigate(`/article/${story.id}`)}
               className="sidebar-newscard group"
             >
-              {/* BULLETPROOF IMAGE COMPONENT */}
+              {/* FIXED: BULLETPROOF IMAGE COMPONENT */}
               <BulletproofSidebarImage
                 story={story}
                 className="sidebar-newscard-image group-hover:scale-105 transition-transform duration-300"
               />
               
               <div className="sidebar-newscard-overlay">
-                {/* FIXED: Full title display with no truncation */}
+                {/* SAFE: Full title display with sanitized text */}
                 <h3 className="daily-reads-title-full">
-                  {story.title}
+                  {String(story.title || '').replace(/[^\w\s\-.,!?'"]/g, '')}
                 </h3>
               </div>
             </button>
@@ -160,27 +175,27 @@ const DailyReads = ({ stories }) => {
         </div>
       )}
 
-      {/* Headlines Section - FIXED: No truncation, full text display */}
+      {/* Headlines Section - SAFE: No truncation, full text display */}
       {headlines.length > 0 && (
         <div className="sidebar-headlines">
           {headlines.map((story, index) => (
             <React.Fragment key={story.id}>
-              {/* Source & Positivity Bar with enhanced separator */}
+              {/* Source & Positivity Bar with safe data */}
               <SourcePositivityBar 
-                source={story.source_name || story.source}
-                positivityScore={story.positivity_score}
+                source={String(story.source_name || story.source || '').replace(/[^\w\s.-]/g, '')}
+                positivityScore={Math.max(0, Math.min(10, Number(story.positivity_score) || 0))}
                 isViral={false}
                 isFirst={index < 2}
               />
               
-              {/* FIXED: Headlines with full text, no truncation */}
+              {/* SAFE: Headlines with full text, no truncation */}
               <div className="sidebar-headline">
                 <button
                   onClick={() => navigate(`/article/${story.id}`)}
                   className="w-full text-left hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
                 >
                   <h3 className="daily-reads-headline-full">
-                    {story.title}
+                    {String(story.title || '').replace(/[^\w\s\-.,!?'"]/g, '')}
                   </h3>
                 </button>
               </div>

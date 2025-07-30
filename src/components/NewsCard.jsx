@@ -1,6 +1,69 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { getCategoryImageSources, createCategorySVG } from '@/lib/utils';
+
+// Safe import with fallbacks for build compatibility
+let getCategoryImageSources, createCategorySVG;
+try {
+  const utils = require('@/lib/utils');
+  getCategoryImageSources = utils.getCategoryImageSources;
+  createCategorySVG = utils.createCategorySVG;
+} catch (e) {
+  console.log('Using fallback image functions');
+}
+
+// Fallback functions for build safety
+const safeCategoryImages = getCategoryImageSources || ((category, storyId) => {
+  const safeId = Math.abs(String(storyId).split('').reduce((a, b) => a + b.charCodeAt(0), 0));
+  
+  const categoryKeywords = {
+    'Health': 'health,medical,wellness',
+    'Innovation & Tech': 'technology,innovation,computer',
+    'Environment & Sustainability': 'environment,nature,sustainability',
+    'Education': 'education,learning,school',
+    'Science & Space': 'science,space,astronomy',
+    'Humanitarian & Rescue': 'humanitarian,help,community',
+    'Blindspot': 'hidden,discover,stories'
+  };
+  
+  const keywords = categoryKeywords[category] || 'news,positive,good';
+  
+  return [
+    `https://source.unsplash.com/800x600/?${keywords}&random=${safeId}`,
+    `https://picsum.photos/800/600?random=${safeId + 100}`,
+    `https://via.placeholder.com/800x600/6b7280/white?text=${encodeURIComponent(category || 'News')}`
+  ];
+});
+
+const safeCategorySVG = createCategorySVG || ((category) => {
+  const categoryInfo = {
+    'Health': { emoji: '🏥', color: '#22c55e', title: 'Health News' },
+    'Innovation & Tech': { emoji: '💻', color: '#3b82f6', title: 'Tech News' },
+    'Environment & Sustainability': { emoji: '🌱', color: '#10b981', title: 'Environment' },
+    'Education': { emoji: '📚', color: '#8b5cf6', title: 'Education' },
+    'Science & Space': { emoji: '🔬', color: '#6366f1', title: 'Science' },
+    'Humanitarian & Rescue': { emoji: '🤝', color: '#ef4444', title: 'Humanitarian' },
+    'Blindspot': { emoji: '🔍', color: '#f59e0b', title: 'Blindspot' }
+  };
+  
+  const info = categoryInfo[category] || { emoji: '📰', color: '#6b7280', title: 'Good News' };
+  
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`
+    <svg width="800" height="600" viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="categoryGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:${info.color};stop-opacity:1" />
+          <stop offset="100%" style="stop-color:${info.color};stop-opacity:0.7" />
+        </linearGradient>
+      </defs>
+      <rect width="800" height="600" fill="url(#categoryGrad)"/>
+      <circle cx="400" cy="200" r="80" fill="white" opacity="0.2"/>
+      <circle cx="400" cy="200" r="60" fill="white" opacity="0.3"/>
+      <text x="400" y="220" text-anchor="middle" font-size="60">${info.emoji}</text>
+      <text x="400" y="380" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="32" font-weight="700">${info.title}</text>
+      <text x="400" y="420" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="18" opacity="0.9">Positive Stories</text>
+    </svg>
+  `)}`;
+});
 
 // ENHANCED BulletproofImage Component with Category-Specific Images
 const BulletproofImage = ({ 
@@ -14,10 +77,10 @@ const BulletproofImage = ({
   const [isLoading, setIsLoading] = useState(true);
   const [errorCount, setErrorCount] = useState(0);
 
-  // Get category-specific fallback images
+  // Get category-specific fallback images using safe functions
   const getReliableFallbacks = (category, storyId) => {
-    const categoryImages = getCategoryImageSources(category, storyId);
-    const svgFallback = createCategorySVG(category);
+    const categoryImages = safeCategoryImages(category, storyId);
+    const svgFallback = safeCategorySVG(category);
     
     return [
       // Try original source first (if valid)

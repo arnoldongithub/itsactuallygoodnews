@@ -590,6 +590,9 @@ export const clearNewsCache = () => {
   }
 };
 
+// Clean ending for your news-api.js file
+// Replace the messy ending with this clean version:
+
 export const refreshMaterializedViews = async () => {
   try {
     const { data, error } = await supabase.rpc('refresh_homepage_views');
@@ -604,5 +607,16 @@ export const refreshMaterializedViews = async () => {
   }
 };
 
-// Export the time filter configuration for use in other components
-export { TIME_FILTERS };
+// === BACKWARD COMPATIBILITY EXPORTS ===
+// These maintain the original function names that App.jsx expects
+export const fetchTrendingNews = fetchTrendingNewsTimeFiltered;
+export const fetchDailyReads = fetchDailyReadsTimeFiltered; 
+export const fetchBlindspotStories = fetchBlindspotStoriesTimeFiltered;
+
+// Export time-filtered versions and configuration
+export { 
+  fetchTrendingNewsTimeFiltered,
+  fetchDailyReadsTimeFiltered,
+  fetchBlindspotStoriesTimeFiltered,
+  TIME_FILTERS 
+};

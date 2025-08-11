@@ -1,4 +1,4 @@
-// Enhanced news-api.js with time-based filtering and improved caching
+// Complete news-api.js with time-based filtering and no duplicate exports
 import { supabase } from './supa.js';
 import { placeholderArticles, getAllStories } from './placeholder-data.js';
 import { useState, useEffect, useCallback } from 'react';
@@ -218,63 +218,6 @@ export const fetchNews = async (category = 'All', retryCount = 0, bypassCache = 
   }
 };
 
-// === ENHANCED HOMEPAGE DATA WITH TIME FILTERING ===
-export const fetchHomepageData = async (bypassCache = false) => {
-  try {
-    console.log('🚀 Fetching homepage data with time-based filtering...');
-    
-    const startTime = performance.now();
-    const now = Date.now();
-    const viralCutoff = new Date(now - TIME_FILTERS.viral).toISOString();
-    const regularCutoff = new Date(now - TIME_FILTERS.regular).toISOString();
-    
-    // Try optimized function first, but with time filters
-    try {
-      const { data, error } = await supabase.rpc('get_homepage_data_optimized_with_time_filter', {
-        viral_cutoff: viralCutoff,
-        regular_cutoff: regularCutoff
-      });
-      
-      if (!error && data) {
-        console.log('✅ Got time-filtered data from optimized function');
-        const endTime = performance.now();
-        console.log(`⚡ Optimized fetch took: ${(endTime - startTime).toFixed(2)}ms`);
-        return {
-          trending: data.trending || [],
-          dailyReads: data.daily_reads || [],
-          blindspot: data.blindspot || []
-        };
-      }
-    } catch (optimizedError) {
-      console.warn('⚠️ Optimized function not available, using fallback');
-    }
-    
-    // Fallback to individual queries with time filtering
-    const [trending, dailyReads, blindspot] = await Promise.all([
-      fetchTrendingNewsTimeFiltered(15, bypassCache),
-      fetchDailyReadsTimeFiltered(10, bypassCache), 
-      fetchBlindspotStoriesTimeFiltered(8, bypassCache)
-    ]);
-
-    const endTime = performance.now();
-    console.log(`⚡ Total homepage fetch time: ${(endTime - startTime).toFixed(2)}ms`);
-    console.log(`📊 Time-filtered results: ${trending.length} trending, ${dailyReads.length} daily, ${blindspot.length} blindspot`);
-    
-    return { 
-      trending: trending || [], 
-      dailyReads: dailyReads || [], 
-      blindspot: blindspot || [] 
-    };
-  } catch (error) {
-    console.error('❌ Error in homepage fetch:', error);
-    return {
-      trending: [],
-      dailyReads: [],
-      blindspot: []
-    };
-  }
-};
-
 // === TIME-FILTERED INDIVIDUAL SECTION FETCHERS ===
 export const fetchTrendingNewsTimeFiltered = async (limit = 15, bypassCache = false) => {
   try {
@@ -419,6 +362,39 @@ export const fetchBlindspotStoriesTimeFiltered = async (limit = 8, bypassCache =
   }
 };
 
+// === ENHANCED HOMEPAGE DATA WITH TIME FILTERING ===
+export const fetchHomepageData = async (bypassCache = false) => {
+  try {
+    console.log('🚀 Fetching homepage data with time-based filtering...');
+    
+    const startTime = performance.now();
+    
+    // Fallback to individual queries with time filtering
+    const [trending, dailyReads, blindspot] = await Promise.all([
+      fetchTrendingNewsTimeFiltered(15, bypassCache),
+      fetchDailyReadsTimeFiltered(10, bypassCache), 
+      fetchBlindspotStoriesTimeFiltered(8, bypassCache)
+    ]);
+
+    const endTime = performance.now();
+    console.log(`⚡ Total homepage fetch time: ${(endTime - startTime).toFixed(2)}ms`);
+    console.log(`📊 Time-filtered results: ${trending.length} trending, ${dailyReads.length} daily, ${blindspot.length} blindspot`);
+    
+    return { 
+      trending: trending || [], 
+      dailyReads: dailyReads || [], 
+      blindspot: blindspot || [] 
+    };
+  } catch (error) {
+    console.error('❌ Error in homepage fetch:', error);
+    return {
+      trending: [],
+      dailyReads: [],
+      blindspot: []
+    };
+  }
+};
+
 // === ENHANCED FORCE REFRESH WITH TIME FILTERING ===
 export const forceRefreshData = async () => {
   try {
@@ -548,7 +524,7 @@ export const useCategoryNews = (category = 'All') => {
   };
 };
 
-// Utility functions
+// === UTILITY FUNCTIONS ===
 export const checkNewsHealth = async () => {
   try {
     const { data, error } = await supabase
@@ -590,9 +566,6 @@ export const clearNewsCache = () => {
   }
 };
 
-// Clean ending for your news-api.js file
-// Replace the messy ending with this clean version:
-
 export const refreshMaterializedViews = async () => {
   try {
     const { data, error } = await supabase.rpc('refresh_homepage_views');
@@ -613,10 +586,5 @@ export const fetchTrendingNews = fetchTrendingNewsTimeFiltered;
 export const fetchDailyReads = fetchDailyReadsTimeFiltered; 
 export const fetchBlindspotStories = fetchBlindspotStoriesTimeFiltered;
 
-// Export time-filtered versions and configuration
-export { 
-  fetchTrendingNewsTimeFiltered,
-  fetchDailyReadsTimeFiltered,
-  fetchBlindspotStoriesTimeFiltered,
-  TIME_FILTERS 
-};
+// Export the time filter configuration
+export { TIME_FILTERS };

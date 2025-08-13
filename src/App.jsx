@@ -34,7 +34,7 @@ const SkeletonFallback = () => (
   </div>
 );
 
-// Error Boundary Component for catching invalid character errors
+// Error Boundary Component
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
@@ -46,9 +46,6 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    if (error.message && error.message.includes('String contains an invalid character')) {
-      console.error('🚨 INVALID CHARACTER ERROR CAUGHT:', error.message);
-    }
     console.error('Error caught by boundary:', error);
   }
 
@@ -64,10 +61,7 @@ class ErrorBoundary extends React.Component {
               </h3>
             </div>
             <p className="text-sm text-red-700 dark:text-red-300 mb-4">
-              {this.state.error?.message?.includes('String contains an invalid character') 
-                ? 'There was an issue with character encoding. Please refresh the page.'
-                : 'An unexpected error occurred. Please try refreshing the page.'
-              }
+              An unexpected error occurred. Please refresh the page.
             </p>
             <div className="flex space-x-2">
               <button
@@ -114,7 +108,7 @@ const useProcessedStories = (stories) => {
   }, [stories]);
 };
 
-// OPTIMIZED Story Page with faster loading
+// OPTIMIZED Story Page
 const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -128,7 +122,6 @@ const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
       try {
         setLoading(true);
         
-        // SPEED OPTIMIZATION: Parallel fetching with reduced timeout
         const fetchPromises = Promise.allSettled([
           fetchTrendingNews(),
           fetchDailyReads(), 
@@ -136,7 +129,6 @@ const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
           fetchNews()
         ]);
         
-        // SPEED OPTIMIZATION: Minimum loading reduced to 300ms
         const [results] = await Promise.all([
           fetchPromises,
           new Promise(resolve => setTimeout(resolve, 300))
@@ -157,8 +149,6 @@ const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
         
         if (foundStory) {
           setStory(foundStory);
-          
-          // SPEED OPTIMIZATION: Limit related stories to 3 for faster rendering
           const related = uniqueStories
             .filter(item => 
               item.category === foundStory.category && 
@@ -175,7 +165,7 @@ const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
         }
         
       } catch (error) {
-        console.error('❌ Failed to load story:', error);
+        console.error('Failed to load story:', error);
         toast({
           title: 'Error',
           description: 'Failed to load story. Please try again.',
@@ -191,7 +181,6 @@ const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
     }
   }, [id, toast]);
 
-  // SPEED OPTIMIZATION: Faster skeleton loading
   if (loading) {
     return (
       <ErrorBoundary>
@@ -258,7 +247,6 @@ const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
         <div className="max-w-7xl mx-auto my-4 px-4 lg:my-8">
           <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
             
-            {/* Main Story Content - Left Side */}
             <div className="lg:w-2/3">
               <article className="story-card-borderless mb-6 lg:mb-8">
                 <div className="mb-4 lg:mb-6">
@@ -300,7 +288,6 @@ const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
                 )}
               </article>
 
-              {/* Related Stories */}
               {relatedStories.length > 0 && (
                 <div className="bg-gray-50 dark:bg-gray-800 rounded-xl shadow-lg p-4 lg:p-8 border border-gray-100 dark:border-gray-700">
                   <h2 
@@ -340,7 +327,6 @@ const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
               )}
             </div>
 
-            {/* Metadata Sidebar - Right Side */}
             <div className="lg:w-1/3">
               <div className="story-metadata-sidebar">
                 <h3 className="text-base lg:text-lg font-bold mb-3 lg:mb-4 text-gray-900 dark:text-white">
@@ -415,19 +401,15 @@ const CategoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
       try {
         setLoading(true);
         
-        // SPEED OPTIMIZATION: Reduced loading time and parallel fetching
         const minLoadingTime = new Promise(resolve => setTimeout(resolve, 300));
         
         const [regularData, viralData] = await Promise.all([
           fetchNews(category),
-          // VIRAL REDISTRIBUTION: Fetch viral stories and filter by category
           fetchTrendingNews().then(viral => 
             viral.filter(story => {
-              // Redistribute viral stories to appropriate categories based on content/keywords
               const content = `${story.title} ${story.summary || ''}`.toLowerCase();
               const storyCategory = story.original_category || story.category;
               
-              // Category matching logic
               switch(category) {
                 case 'Health':
                   return storyCategory === 'Health' || 
@@ -452,23 +434,17 @@ const CategoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
               }
             }).map(story => ({
               ...story,
-              category: category, // Reassign to current category
+              category: category,
               isViralContent: true
             }))
           ),
           minLoadingTime
         ]);
         
-        // VIRAL REDISTRIBUTION: Combine regular and viral stories
-        const combinedData = [
-          ...regularData,
-          ...viralData
-        ];
+        const combinedData = [...regularData, ...viralData];
         
-        // SPEED OPTIMIZATION: Limit to 20 stories for faster rendering
         const sortedData = combinedData
           .sort((a, b) => {
-            // Prioritize viral content and recent stories
             const aScore = (a.virality_score || 0) + (a.positivity_score || 0);
             const bScore = (b.virality_score || 0) + (b.positivity_score || 0);
             return bScore - aScore;
@@ -555,24 +531,22 @@ const CategoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
   );
 };
 
-// OPTIMIZED Homepage with faster loading
+// OPTIMIZED Homepage
 const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
   const { data, loading, error, refetch } = useHomepageData();
   const [streak, setStreak] = useState(0);
   const { toast } = useToast();
 
-  // SPEED OPTIMIZATION: Memoize processed data
   const processedData = useMemo(() => {
     if (!data) return { trending: [], dailyReads: [], blindspots: [] };
     
     return {
-      trending: data.trending?.slice(0, 15) || [], // Limit for faster rendering
+      trending: data.trending?.slice(0, 15) || [],
       dailyReads: data.dailyReads?.slice(0, 10) || [],
       blindspots: data.blindspot?.slice(0, 8) || []
     };
   }, [data]);
 
-  // SPEED OPTIMIZATION: Optimized real-time subscription
   useEffect(() => {
     let subscription;
     
@@ -582,7 +556,6 @@ const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
         .on('postgres_changes', 
           { event: 'INSERT', schema: 'public', table: 'news' },
           (payload) => {
-            // SPEED OPTIMIZATION: Debounced refetch
             setTimeout(() => {
               toast({
                 title: "📰 New Story Available!",
@@ -603,16 +576,14 @@ const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
     };
   }, [refetch, toast]);
 
-  // SPEED OPTIMIZATION: Reduced auto-refresh interval
   useEffect(() => {
     const interval = setInterval(() => {
       refetch();
-    }, 10 * 60 * 1000); // 10 minutes instead of 5
+    }, 10 * 60 * 1000);
     
     return () => clearInterval(interval);
   }, [refetch]);
 
-  // SPEED OPTIMIZATION: Optimized streak logic
   useEffect(() => {
     const today = new Date().toDateString();
     const lastVisit = localStorage.getItem('lastVisitDate');
@@ -631,7 +602,6 @@ const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
       localStorage.setItem('streak', newStreak.toString());
       setStreak(newStreak);
       
-      // SPEED OPTIMIZATION: Reduced timeout
       setTimeout(() => {
         toast({
           title: "🔥 Streak Updated!",
@@ -725,14 +695,12 @@ const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
         />
         
         <div className="main-layout">
-          {/* Daily Reads - Left Sidebar */}
           <aside className="daily-reads-sidebar">
             <div className="daily-reads-separator">
               <DailyReads stories={dailyReads} />
             </div>
           </aside>
 
-          {/* Main Trending Stories */}
           <main className="trending-main">
             <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white" style={{ color: 'hsl(var(--purple-text))' }}>
               <svg className="inline-block w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -751,3 +719,126 @@ const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
                 <Button onClick={refetch} variant="outline" size="sm" className="mt-4">
                   Refresh Stories
                 </Button>
+              </div>
+            )}
+          </main>
+
+          <aside className="blindspot-sidebar">
+            <div className="blindspot-separator">
+              <Blindspot stories={blindspots} />
+            </div>
+          </aside>
+        </div>
+        
+        <Footer />
+      </div>
+    </ErrorBoundary>
+  );
+};
+
+// Main App Component
+const App = () => {
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('darkMode');
+      if (saved !== null) return JSON.parse(saved);
+      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+    return false;
+  });
+
+  const [isDonateModalOpen, setIsDonateModalOpen] = useState(false);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.toggle('dark', isDarkMode);
+    localStorage.setItem('darkMode', JSON.stringify(isDarkMode));
+  }, [isDarkMode]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('darkMode');
+    if (saved === null) {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      const handleChange = (e) => setIsDarkMode(e.matches);
+      mediaQuery.addEventListener('change', handleChange);
+      return () => mediaQuery.removeEventListener('change', handleChange);
+    }
+  }, []);
+
+  useEffect(() => {
+    const handleGlobalError = (e) => {
+      if (e.message.includes('String contains an invalid character')) {
+        console.error('🚨 GLOBAL CHARACTER ERROR:', e.message);
+      }
+    };
+
+    window.addEventListener('error', handleGlobalError);
+    return () => window.removeEventListener('error', handleGlobalError);
+  }, []);
+
+  const HomePageMemo = useMemo(() => 
+    <HomePage 
+      setIsDonateModalOpen={setIsDonateModalOpen} 
+      isDarkMode={isDarkMode} 
+      setIsDarkMode={setIsDarkMode} 
+    />, [isDarkMode]
+  );
+
+  return (
+    <ErrorBoundary>
+      <Router>
+        <div className="bg-white dark:bg-black text-black dark:text-white transition-colors duration-300 min-h-screen">
+          <Routes>
+            <Route 
+              path="/" 
+              element={HomePageMemo}
+            />
+            <Route 
+              path="/category/:category" 
+              element={
+                <CategoryPage 
+                  setIsDonateModalOpen={setIsDonateModalOpen} 
+                  isDarkMode={isDarkMode} 
+                  setIsDarkMode={setIsDarkMode} 
+                />
+              } 
+            />
+            <Route 
+              path="/article/:id" 
+              element={
+                <StoryPage 
+                  setIsDonateModalOpen={setIsDonateModalOpen} 
+                  isDarkMode={isDarkMode} 
+                  setIsDarkMode={setIsDarkMode} 
+                />
+              } 
+            />
+          </Routes>
+
+          <AnimatePresence>
+            {isDonateModalOpen && (
+              <Dialog open={isDonateModalOpen} onOpenChange={setIsDonateModalOpen}>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Support Us</DialogTitle>
+                    <DialogDescription>Your contribution helps us grow.</DialogDescription>
+                  </DialogHeader>
+                  <DialogFooter>
+                    <DialogClose asChild>
+                      <Button variant="outline">Close</Button>
+                    </DialogClose>
+                    <Button>Donate Now</Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            )}
+          </AnimatePresence>
+
+          <Toaster />
+        </div>
+      </Router>
+    </ErrorBoundary>
+  );
+};
+
+export default App;

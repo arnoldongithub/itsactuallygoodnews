@@ -750,3 +750,4 @@ const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
                 </Suspense>
                 <Button onClick={refetch} variant="outline" size="sm" className="mt-4">
                   Refresh Stories
+                </Button>

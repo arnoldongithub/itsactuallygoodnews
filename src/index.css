@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -260,13 +260,19 @@
   }
 
   .newscard-title-borderless {
-    @apply text-white font-bold text-lg leading-tight;
+    @apply text-white leading-tight;
     font-family: 'Poppins', sans-serif;
+    font-weight: 700 !important; /* FIXED: Force bold */
+    font-size: 1.125rem !important;
     text-shadow: 0 2px 4px rgba(0,0,0,0.8);
     display: -webkit-box;
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
+  }
+
+  .newscard-title-borderless a {
+    font-weight: 700 !important; /* FIXED: Force bold for links */
   }
 
   /* ========== WIDE RECTANGLE CARDS ========== */
@@ -315,8 +321,10 @@
   }
 
   .wide-rectangle-title-borderless {
-    @apply text-xl font-bold text-gray-900 dark:text-white mb-3 leading-tight;
+    @apply text-gray-900 dark:text-white mb-3 leading-tight;
     font-family: 'Poppins', sans-serif;
+    font-weight: 700 !important; /* FIXED: Force bold */
+    font-size: 1.25rem !important;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
@@ -326,6 +334,7 @@
   .wide-rectangle-title-borderless a {
     text-decoration: none;
     color: inherit;
+    font-weight: 700 !important; /* FIXED: Force bold for links */
   }
 
   .wide-rectangle-summary-borderless {
@@ -474,9 +483,10 @@
 
   .trending-headline-title,
   .trending-headline h3 {
-    @apply font-semibold text-base leading-tight;
+    @apply leading-tight;
     font-family: 'Poppins', sans-serif;
-    font-weight: 500;
+    font-weight: 700 !important; /* FIXED: Force bold */
+    font-size: 1rem !important;
     word-break: break-word;
     overflow-wrap: break-word;
     margin: 0;
@@ -641,10 +651,10 @@
 
   .viral-newscard-title,
   .sidebar-newscard-title {
-    @apply text-white font-bold leading-tight;
-    font-size: 18px;
+    @apply text-white leading-tight;
     font-family: 'Poppins', sans-serif;
-    font-weight: 600;
+    font-weight: 700 !important; /* FIXED: Force bold */
+    font-size: 1.125rem !important;
     display: -webkit-box;
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
@@ -653,15 +663,15 @@
   }
 
   .sidebar-newscard-title {
-    font-size: 15px;
-    font-weight: 500;
+    font-size: 0.9375rem !important;
+    font-weight: 600 !important;
     padding: 20px;
   }
 
   .sidebar-title {
-    @apply text-xl font-bold mb-6;
+    @apply text-xl mb-6;
     font-family: 'Poppins', sans-serif;
-    font-weight: 700;
+    font-weight: 800 !important; /* FIXED: Extra bold for sidebar titles */
     color: hsl(var(--purple-text));
     padding-bottom: 0.75rem;
     border-bottom: 3px solid hsl(var(--orange-accent));
@@ -686,6 +696,171 @@
     display: block !important;
     visibility: visible !important;
     min-height: 400px;
+  }
+
+  /* ========== BLINDSPOT SPECIFIC STYLES ========== */
+  .blindspot-title-full,
+  .blindspot-headline-full {
+    @apply text-white leading-tight;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700 !important; /* FIXED: Force bold for blindspot titles */
+    font-size: 0.9375rem !important;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+    word-break: break-word;
+    overflow-wrap: break-word;
+    line-height: 1.3;
+    margin: 0;
+    padding: 0;
+  }
+
+  .blindspot-title-full {
+    font-size: 1rem !important;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    display: -webkit-box;
+    overflow: hidden;
+  }
+
+  .blindspot-headline-full {
+    font-size: 0.875rem !important;
+    color: hsl(var(--foreground)) !important;
+    text-shadow: none !important;
+    max-height: none !important;
+    -webkit-line-clamp: none !important;
+    overflow: visible !important;
+    display: block !important;
+  }
+
+  /* ========== STORY PAGE STYLES ========== */
+  .mobile-story-title {
+    @apply text-gray-900 dark:text-white mb-6;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 800 !important; /* FIXED: Extra bold for main story titles */
+    font-size: clamp(1.5rem, 4vw, 2.5rem) !important;
+    line-height: 1.2 !important;
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+
+  .story-card-borderless {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .story-image-borderless {
+    @apply relative overflow-hidden rounded-xl;
+    margin-bottom: 1.5rem;
+  }
+
+  .story-summary-borderless {
+    background: hsl(var(--secondary) / 0.3);
+    border-radius: 12px;
+    padding: 24px;
+    margin: 24px 0;
+    border-left: 4px solid hsl(var(--orange-accent));
+  }
+
+  .story-summary-borderless h3 {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 800 !important; /* FIXED: Bold summary headers */
+    font-size: 1.125rem !important;
+    margin-bottom: 16px;
+    color: hsl(var(--purple-text));
+  }
+
+  .summary-bullets {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .summary-bullets li {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 400;
+    font-size: 1rem;
+    line-height: 1.6;
+    color: hsl(var(--foreground));
+    position: relative;
+    padding-left: 24px;
+    margin-bottom: 12px;
+  }
+
+  .summary-bullets li::before {
+    content: "•";
+    color: hsl(var(--orange-accent));
+    font-weight: bold;
+    position: absolute;
+    left: 0;
+    font-size: 20px;
+    line-height: 1;
+  }
+
+  .related-stories-list {
+    @apply space-y-0;
+  }
+
+  .related-story-item {
+    @apply border-b border-gray-100 dark:border-gray-700 pb-4 pt-4 first:pt-0 last:border-b-0 last:pb-0;
+  }
+
+  .related-story-link {
+    @apply block transition-colors;
+  }
+
+  .related-story-title,
+  .related-story-title-mobile {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700 !important; /* FIXED: Bold related story titles */
+    font-size: 1.125rem !important;
+    line-height: 1.4;
+    color: hsl(var(--foreground));
+    word-break: break-word;
+    overflow-wrap: break-word;
+    transition: color 0.3s ease;
+    margin: 0;
+    padding: 0;
+  }
+
+  .related-story-title:hover,
+  .related-story-title-mobile:hover {
+    color: hsl(var(--purple-text));
+  }
+
+  .story-metadata-sidebar {
+    background: hsl(var(--secondary) / 0.2);
+    border-radius: 12px;
+    padding: 24px;
+    border: 1px solid hsl(var(--border));
+  }
+
+  .metadata-thin-separator {
+    height: 1px;
+    background: hsl(var(--border));
+    margin: 16px 0;
+  }
+
+  .metadata-bullets {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    space-y: 12px;
+  }
+
+  .metadata-bullets li {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 400;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: hsl(var(--foreground));
+    margin-bottom: 12px;
+  }
+
+  .metadata-bullets li strong {
+    font-weight: 600 !important;
+    color: hsl(var(--purple-text));
   }
 
   /* ========== IMAGE STYLES ========== */
@@ -868,81 +1043,11 @@
   }
 
   /* ========== UTILITY CLASSES ========== */
-  .story-summary {
-    background: hsl(var(--secondary) / 0.3);
-    border-radius: 12px;
-    padding: 24px;
-    margin: 24px 0;
-    border-left: 4px solid hsl(var(--orange-accent));
-  }
-
-  .story-summary h3 {
-    font-family: 'Poppins', sans-serif;
-    font-weight: 700;
-    font-size: 18px;
-    margin-bottom: 16px;
-    color: hsl(var(--purple-text));
-  }
-
-  .summary-bullets {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-
-  .summary-bullets li {
-    font-family: 'Poppins', sans-serif;
-    font-weight: 400;
-    font-size: 16px;
-    line-height: 1.6;
-    color: hsl(var(--foreground));
-    position: relative;
-    padding-left: 24px;
-    margin-bottom: 12px;
-  }
-
-  .summary-bullets li::before {
-    content: "•";
-    color: hsl(var(--orange-accent));
-    font-weight: bold;
-    position: absolute;
-    left: 0;
-    font-size: 20px;
-    line-height: 1;
-  }
-
-  .related-stories-list {
-    @apply space-y-0;
-  }
-
-  .related-story-item {
-    @apply border-b border-gray-100 dark:border-gray-700 pb-4 pt-4 first:pt-0 last:border-b-0 last:pb-0;
-  }
-
-  .related-story-link {
-    @apply block transition-colors;
-  }
-
-  .related-story-title {
-    font-family: 'Poppins', sans-serif;
-    font-weight: 600;
-    font-size: 18px;
-    line-height: 1.4;
-    color: hsl(var(--foreground));
-    word-break: break-word;
-    overflow-wrap: break-word;
-    transition: color 0.3s ease;
-  }
-
-  .related-story-title:hover {
-    color: hsl(var(--purple-text));
-  }
-
   .btn-primary {
     background: hsl(var(--purple-text));
     color: white;
     font-family: 'Poppins', sans-serif;
-    font-weight: 500;
+    font-weight: 600 !important;
     transition: all 0.3s ease;
     border: none;
   }
@@ -955,7 +1060,7 @@
 
   .category-button {
     font-family: 'Poppins', sans-serif;
-    font-weight: 500;
+    font-weight: 600 !important;
     transition: all 0.3s ease;
     border-radius: 24px;
   }
@@ -997,14 +1102,18 @@
     
     .sidebar-title {
       @apply text-lg;
+      font-weight: 700 !important;
     }
 
-    .related-story-title {
-      font-size: 16px;
+    .related-story-title,
+    .related-story-title-mobile {
+      font-size: 1rem !important;
+      font-weight: 700 !important;
     }
     
     .viral-newscard-title {
-      font-size: 16px;
+      font-size: 1rem !important;
+      font-weight: 600 !important;
     }
     
     .source-positivity-bar {
@@ -1012,18 +1121,24 @@
       font-size: 11px;
     }
     
-    .story-summary {
+    .story-summary-borderless {
       padding: 16px;
       margin: 16px 0;
     }
     
-    .story-summary h3 {
-      font-size: 16px;
+    .story-summary-borderless h3 {
+      font-size: 1rem !important;
+      font-weight: 700 !important;
     }
     
     .summary-bullets li {
-      font-size: 14px;
+      font-size: 0.875rem;
       padding-left: 20px;
+    }
+
+    .mobile-story-title {
+      font-size: clamp(1.25rem, 3.5vw, 2rem) !important;
+      font-weight: 800 !important;
     }
   }
 
@@ -1059,6 +1174,27 @@
       margin-bottom: 16px;
       border-top: 2px solid rgba(255, 255, 255, 0.2) !important;
     }
+
+    .trending-headline-title,
+    .trending-headline h3 {
+      font-size: 0.9375rem !important;
+      font-weight: 700 !important;
+    }
+
+    .newscard-title-borderless {
+      font-size: 1rem !important;
+      font-weight: 700 !important;
+    }
+
+    .blindspot-title-full {
+      font-size: 0.9375rem !important;
+      font-weight: 700 !important;
+    }
+
+    .blindspot-headline-full {
+      font-size: 0.8125rem !important;
+      font-weight: 700 !important;
+    }
   }
 
   @media (max-width: 480px) {
@@ -1074,6 +1210,11 @@
     
     .positivity-score {
       align-self: flex-end;
+    }
+
+    .wide-rectangle-title-borderless {
+      font-size: 1.125rem !important;
+      font-weight: 700 !important;
     }
   }
 
@@ -1204,20 +1345,33 @@
     display: none !important;
   }
 
-  /* Trending card title fixes */
-  .trending-main .viral-newscard-title,
-  .trending-main .sidebar-newscard-title {
-    font-size: 1.125rem !important;
-    line-height: 1.4 !important;
-    font-weight: 600 !important;
-    max-height: 3.36rem !important;
-    overflow: hidden !important;
-    display: -webkit-box !important;
-    -webkit-line-clamp: 3 !important;
-    -webkit-box-orient: vertical !important;
+  /* ========== FONT WEIGHT ENFORCEMENT ========== */
+  /* This section ensures all titles are properly bold regardless of CSS conflicts */
+  .newscard-title-borderless,
+  .newscard-title-borderless a,
+  .wide-rectangle-title-borderless,
+  .wide-rectangle-title-borderless a,
+  .trending-headline-title,
+  .trending-headline h3,
+  .viral-newscard-title,
+  .sidebar-newscard-title,
+  .blindspot-title-full,
+  .blindspot-headline-full,
+  .mobile-story-title,
+  .related-story-title,
+  .related-story-title-mobile,
+  .sidebar-title {
+    font-weight: 700 !important;
+    font-family: 'Poppins', sans-serif !important;
   }
 
-  /* Ensure sidebar cards have proper category backgrounds */
+  /* Extra emphasis for main story titles */
+  .mobile-story-title,
+  .sidebar-title {
+    font-weight: 800 !important;
+  }
+
+  /* Ensure category backgrounds work properly */
   .sidebar-newscard[data-category="Health"] {
     background: linear-gradient(135deg, #dcfce7, #bbf7d0) !important;
   }

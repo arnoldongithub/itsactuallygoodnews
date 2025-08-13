@@ -206,10 +206,10 @@ const NewsCard = ({ article, isBookmarked, onBookmarkToggle }) => {
   // Check if this is a category page
   const isCategoryPage = location.pathname.includes('/category');
   
-  // Sanitize text content to prevent invalid characters
-  const safeTitle = String(title || '').replace(/[^\w\s\-.,!?'"]/g, '');
+  // Sanitize text content to prevent invalid characters and fix spacing
+  const safeTitle = String(title || '').replace(/[^\w\s\-.,!?'"]/g, '').replace(/\s+/g, ' ').trim();
   const safeCategory = String(category || '').replace(/[^\w\s&]/g, '');
-  const safeSummary = String(summary || '').replace(/[^\w\s\-.,!?'"]/g, '');
+  const safeSummary = String(summary || '').replace(/[^\w\s\-.,!?'"]/g, '').replace(/\s+/g, ' ').trim();
   const safeSourceName = String(source_name || '').replace(/[^\w\s.-]/g, '');
   
   // Handle ads
@@ -228,7 +228,7 @@ const NewsCard = ({ article, isBookmarked, onBookmarkToggle }) => {
             {isCategoryPage ? (
               <>
                 <div className="wide-rectangle-category-borderless">Sponsored</div>
-                <h3 className="wide-rectangle-title-borderless">
+                <h3 className="wide-rectangle-title-borderless font-bold">
                   This ad supports the platform
                 </h3>
                 <p className="wide-rectangle-summary-borderless">
@@ -238,7 +238,7 @@ const NewsCard = ({ article, isBookmarked, onBookmarkToggle }) => {
             ) : (
               <>
                 <div className="newscard-category-borderless">Sponsored</div>
-                <h3 className="newscard-title-borderless">
+                <h3 className="newscard-title-borderless font-bold">
                   This ad supports the platform
                 </h3>
               </>
@@ -271,11 +271,12 @@ const NewsCard = ({ article, isBookmarked, onBookmarkToggle }) => {
             </div>
           )}
           
-          {/* Title */}
-          <h3 className="wide-rectangle-title-borderless">
+          {/* Title - FIXED: Ensure bold styling */}
+          <h3 className="wide-rectangle-title-borderless font-bold">
             <a 
               href={`/article/${id}`} 
-              className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+              className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-bold"
+              style={{ fontWeight: '700' }}
             >
               {safeTitle}
             </a>
@@ -336,8 +337,12 @@ const NewsCard = ({ article, isBookmarked, onBookmarkToggle }) => {
             {safeCategory}
           </div>
         )}
-        <h3 className="newscard-title-borderless">
-          <a href={`/article/${id}`} className="hover:text-blue-300 transition-colors">
+        <h3 className="newscard-title-borderless font-bold">
+          <a 
+            href={`/article/${id}`} 
+            className="hover:text-blue-300 transition-colors font-bold"
+            style={{ fontWeight: '700' }}
+          >
             {safeTitle}
           </a>
         </h3>

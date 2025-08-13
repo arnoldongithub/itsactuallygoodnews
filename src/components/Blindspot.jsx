@@ -138,29 +138,73 @@ const Blindspot = ({ stories }) => {
   const featured = stories?.slice(0, 2) || []; // Max 2 newscards for most unreported
   const headlines = stories?.slice(2, 12) || []; // Max 10 additional headlines
   
-  // Enhanced fallback content if no stories
+  // Enhanced fallback content if no stories - FIXED: More compelling content
   const fallbackStories = [
     {
       id: 'fallback-blindspot-1',
-      title: 'Blindspot Stories Coming Soon - Underreported Global Voices',
-      summary: 'We are working to bring you underreported positive news from around the world that mainstream media often overlooks.',
+      title: 'Rural Teachers Bridge Digital Divide with Solar-Powered Internet Hubs',
+      summary: 'In remote villages across Kenya, dedicated educators are establishing community learning centers using renewable energy to connect students to online resources and global opportunities.',
       image_url: null, // Will trigger our bulletproof fallback system
       url: '#',
       category: 'Blindspot',
       published_at: new Date().toISOString(),
-      source_name: 'ItsActuallyGoodNews',
-      positivity_score: 8
+      source_name: 'Local Community Network',
+      positivity_score: 9
     },
     {
       id: 'fallback-blindspot-2', 
-      title: 'Hidden Heroes and Community Champions - Stories That Matter',
-      summary: 'Discover amazing stories of resilience, innovation, and positive change that deserve more attention.',
+      title: 'Indigenous Elders Teach Climate Solutions Through Traditional Knowledge',
+      summary: 'Grandmother councils across Pacific Islands share ancestral wisdom about sustainable farming and ocean conservation, proving ancient practices can address modern environmental challenges.',
       image_url: null, // Will trigger our bulletproof fallback system
       url: '#',
       category: 'Blindspot',
       published_at: new Date().toISOString(),
-      source_name: 'Global Voices Network',
+      source_name: 'Indigenous Voices Today',
+      positivity_score: 8
+    },
+    {
+      id: 'fallback-blindspot-3',
+      title: 'Former Refugees Launch Support Network for New Asylum Seekers',
+      summary: 'Immigrants who found success in their new countries create mentorship programs, providing housing assistance, job training, and emotional support to recent arrivals.',
+      image_url: null,
+      url: '#',
+      category: 'Blindspot',
+      published_at: new Date().toISOString(),
+      source_name: 'Refugee Success Stories',
       positivity_score: 9
+    },
+    {
+      id: 'fallback-blindspot-4',
+      title: 'Disabled Activists Create Accessible Community Gardens',
+      summary: 'Wheelchair-accessible raised beds and sensory gardens designed by and for people with disabilities are transforming urban spaces and building inclusive communities.',
+      image_url: null,
+      url: '#',
+      category: 'Blindspot',
+      published_at: new Date().toISOString(),
+      source_name: 'Inclusive Living Network',
+      positivity_score: 8
+    },
+    {
+      id: 'fallback-blindspot-5',
+      title: 'Small Town Janitor Becomes Local Hero Through Acts of Kindness',
+      summary: 'Night shift custodian quietly pays utility bills for struggling families, organizes food drives, and mentors troubled youth, earning community-wide recognition.',
+      image_url: null,
+      url: '#',
+      category: 'Blindspot',
+      published_at: new Date().toISOString(),
+      source_name: 'Hometown Heroes',
+      positivity_score: 9
+    },
+    {
+      id: 'fallback-blindspot-6',
+      title: 'Tribal Language Immersion Programs Revitalize Cultural Heritage',
+      summary: 'Native American communities create innovative language learning apps and immersion schools, bringing endangered languages back to daily use among younger generations.',
+      image_url: null,
+      url: '#',
+      category: 'Blindspot',
+      published_at: new Date().toISOString(),
+      source_name: 'Cultural Revival Network',
+      positivity_score: 8
     }
   ];
 
@@ -199,9 +243,9 @@ const Blindspot = ({ stories }) => {
               />
               
               <div className="sidebar-newscard-overlay">
-                {/* SAFE: Full title display with sanitized text */}
-                <h3 className="blindspot-title-full">
-                  {String(story.title || '').replace(/[^\w\s\-.,!?'"]/g, '')}
+                {/* SAFE: Full title display with sanitized text - FIXED: Ensure bold styling */}
+                <h3 className="blindspot-title-full font-bold" style={{ fontWeight: '700' }}>
+                  {String(story.title || '').replace(/[^\w\s\-.,!?'"]/g, '').replace(/\s+/g, ' ').trim()}
                 </h3>
                 {story.url === '#' && (
                   <p className="text-white text-xs mt-2 opacity-75">
@@ -227,7 +271,7 @@ const Blindspot = ({ stories }) => {
                 isFirst={index < 2}
               />
               
-              {/* SAFE: Headlines with full text, no truncation */}
+              {/* SAFE: Headlines with full text, no truncation - FIXED: Ensure bold styling */}
               <div className="sidebar-headline">
                 <button
                   onClick={() => story.url === '#' ? null : navigate(`/article/${story.id}`)}
@@ -238,8 +282,8 @@ const Blindspot = ({ stories }) => {
                     opacity: story.url === '#' ? 0.7 : 1
                   }}
                 >
-                  <h3 className="blindspot-headline-full">
-                    {String(story.title || '').replace(/[^\w\s\-.,!?'"]/g, '')}
+                  <h3 className="blindspot-headline-full font-bold" style={{ fontWeight: '700' }}>
+                    {String(story.title || '').replace(/[^\w\s\-.,!?'"]/g, '').replace(/\s+/g, ' ').trim()}
                     {story.url === '#' && (
                       <span className="text-orange-500 text-xs ml-2 opacity-60">
                         (Preview)

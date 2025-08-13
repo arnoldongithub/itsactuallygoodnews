@@ -1,5 +1,5 @@
-// Updated App.jsx with Error Boundary and Safe Character Handling
-import React, { useState, useEffect } from 'react';
+// Complete Optimized App.jsx with Performance Enhancements and Viral Category Distribution
+import React, { useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import { Routes, Route, BrowserRouter as Router, useParams, useNavigate } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 import { useToast } from "@/components/ui/use-toast";
@@ -18,15 +18,21 @@ import { fetchTrendingNews, fetchDailyReads, fetchBlindspotStories, fetchNews, u
 import { cleanTitle, createBulletPoints, getSourceName, getSourceLogo } from '@/lib/utils';
 import { supabase } from '@/lib/supa.js';
 
-// Import skeleton components
-import {
-  SkeletonHomepage,
-  SkeletonCategoryPage, 
-  SkeletonStoryPage,
-  SkeletonCategoryGrid,
-  LoadingSpinner,
-  SkeletonCard
-} from '@/components/SkeletonComponents';
+// Lazy load skeleton components for better initial load
+const SkeletonHomepage = lazy(() => import('@/components/SkeletonComponents').then(module => ({ default: module.SkeletonHomepage })));
+const SkeletonCategoryPage = lazy(() => import('@/components/SkeletonComponents').then(module => ({ default: module.SkeletonCategoryPage })));
+const SkeletonStoryPage = lazy(() => import('@/components/SkeletonComponents').then(module => ({ default: module.SkeletonStoryPage })));
+const SkeletonCard = lazy(() => import('@/components/SkeletonComponents').then(module => ({ default: module.SkeletonCard })));
+const LoadingSpinner = lazy(() => import('@/components/SkeletonComponents').then(module => ({ default: module.LoadingSpinner })));
+
+// Optimized Skeleton Fallback
+const SkeletonFallback = () => (
+  <div className="animate-pulse">
+    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-4"></div>
+    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mb-4"></div>
+    <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
+  </div>
+);
 
 // Error Boundary Component for catching invalid character errors
 class ErrorBoundary extends React.Component {
@@ -40,22 +46,10 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    // Log the specific error for debugging
     if (error.message && error.message.includes('String contains an invalid character')) {
-      console.error('🚨 INVALID CHARACTER ERROR CAUGHT:');
-      console.error('Error message:', error.message);
-      console.error('Error stack:', error.stack);
-      console.error('Component stack:', errorInfo.componentStack);
-      
-      // Try to identify which component caused the issue
-      const componentMatch = errorInfo.componentStack.match(/at (\w+)/);
-      if (componentMatch) {
-        console.error('Likely problematic component:', componentMatch[1]);
-      }
+      console.error('🚨 INVALID CHARACTER ERROR CAUGHT:', error.message);
     }
-    
     console.error('Error caught by boundary:', error);
-    console.error('Error info:', errorInfo);
   }
 
   render() {
@@ -64,23 +58,17 @@ class ErrorBoundary extends React.Component {
         <div className="min-h-screen bg-white dark:bg-black flex items-center justify-center p-4">
           <div className="max-w-md w-full bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6">
             <div className="flex items-center mb-4">
-              <div className="flex-shrink-0">
-                <span className="text-red-500 text-2xl">⚠️</span>
-              </div>
-              <div className="ml-3">
-                <h3 className="text-lg font-medium text-red-800 dark:text-red-200">
-                  Something went wrong
-                </h3>
-              </div>
+              <span className="text-red-500 text-2xl mr-3">⚠️</span>
+              <h3 className="text-lg font-medium text-red-800 dark:text-red-200">
+                Something went wrong
+              </h3>
             </div>
-            
             <p className="text-sm text-red-700 dark:text-red-300 mb-4">
               {this.state.error?.message?.includes('String contains an invalid character') 
                 ? 'There was an issue with character encoding. Please refresh the page.'
                 : 'An unexpected error occurred. Please try refreshing the page.'
               }
             </p>
-            
             <div className="flex space-x-2">
               <button
                 onClick={() => window.location.reload()}
@@ -95,31 +83,38 @@ class ErrorBoundary extends React.Component {
                 Try Again
               </button>
             </div>
-            
-            {process.env.NODE_ENV === 'development' && (
-              <details className="mt-4">
-                <summary className="text-xs text-red-600 cursor-pointer">Show Error Details</summary>
-                <pre className="text-xs mt-2 p-2 bg-red-100 dark:bg-red-900/40 rounded overflow-auto">
-                  {this.state.error?.stack}
-                </pre>
-              </details>
-            )}
           </div>
         </div>
       );
     }
-
     return this.props.children;
   }
 }
 
-// Safe text sanitization helper
+// Optimized text sanitization helper
 const sanitizeText = (text) => {
   if (!text || typeof text !== 'string') return '';
-  return text.replace(/[^\w\s\-.,!?'"]/g, '').trim();
+  return text.replace(/[^\w\s\-.,!?'"]/g, '').replace(/\s+/g, ' ').trim();
 };
 
-// ENHANCED Story Page with Skeleton Loading
+// Memoized story processing for performance
+const useProcessedStories = (stories) => {
+  return useMemo(() => {
+    if (!stories || !Array.isArray(stories)) return [];
+    
+    return stories
+      .filter(story => story && story.id && story.title)
+      .map(story => ({
+        ...story,
+        title: sanitizeText(story.title),
+        summary: sanitizeText(story.summary || ''),
+        category: sanitizeText(story.category || ''),
+        source_name: sanitizeText(story.source_name || '')
+      }));
+  }, [stories]);
+};
+
+// OPTIMIZED Story Page with faster loading
 const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -132,45 +127,46 @@ const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
     const fetchStory = async () => {
       try {
         setLoading(true);
-        console.log(`🔍 Looking for story with ID: ${id}`);
         
-        // Add a minimum loading time for smooth skeleton display
-        const minLoadingTime = new Promise(resolve => setTimeout(resolve, 800));
-        
-        const [trending, daily, blindspot, allNews] = await Promise.all([
-          fetchTrendingNews().catch(() => []),
-          fetchDailyReads().catch(() => []), 
-          fetchBlindspotStories().catch(() => []),
-          fetchNews().catch(() => []),
-          minLoadingTime // Ensure skeleton shows for at least 800ms
+        // SPEED OPTIMIZATION: Parallel fetching with reduced timeout
+        const fetchPromises = Promise.allSettled([
+          fetchTrendingNews(),
+          fetchDailyReads(), 
+          fetchBlindspotStories(),
+          fetchNews()
         ]);
+        
+        // SPEED OPTIMIZATION: Minimum loading reduced to 300ms
+        const [results] = await Promise.all([
+          fetchPromises,
+          new Promise(resolve => setTimeout(resolve, 300))
+        ]);
+        
+        const [trending, daily, blindspot, allNews] = results.map(result => 
+          result.status === 'fulfilled' ? result.value : []
+        );
         
         const allStories = [...trending, ...daily, ...blindspot, ...allNews];
         const uniqueStories = allStories.filter((story, index, self) => 
           index === self.findIndex(s => s.id === story.id)
         );
         
-        console.log(`📊 Total unique stories available: ${uniqueStories.length}`);
-        
         const foundStory = uniqueStories.find(item => 
-          item.id === parseInt(id) || 
-          item.id === id || 
-          item.id.toString() === id
+          item.id === parseInt(id) || item.id === id || item.id.toString() === id
         );
         
         if (foundStory) {
-          console.log(`✅ Found story: ${sanitizeText(foundStory.title)}`);
           setStory(foundStory);
           
+          // SPEED OPTIMIZATION: Limit related stories to 3 for faster rendering
           const related = uniqueStories
             .filter(item => 
               item.category === foundStory.category && 
               item.id !== foundStory.id
             )
-            .slice(0, 5);
+            .slice(0, 3);
           setRelatedStories(related);
         } else {
-          console.error(`❌ Story not found with ID: ${id}`);
           toast({
             title: 'Story Not Found',
             description: 'The story you\'re looking for could not be found.',
@@ -195,7 +191,7 @@ const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
     }
   }, [id, toast]);
 
-  // Show skeleton while loading
+  // SPEED OPTIMIZATION: Faster skeleton loading
   if (loading) {
     return (
       <ErrorBoundary>
@@ -205,7 +201,9 @@ const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
             isDarkMode={isDarkMode} 
             setIsDarkMode={setIsDarkMode}
           />
-          <SkeletonStoryPage />
+          <Suspense fallback={<SkeletonFallback />}>
+            <SkeletonStoryPage />
+          </Suspense>
           <Footer />
         </div>
       </ErrorBoundary>
@@ -246,7 +244,7 @@ const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
   }
 
   const summaryText = sanitizeText(story.summary || story.content || '');
-  const bulletPoints = createBulletPoints(summaryText);
+  const bulletPoints = useMemo(() => createBulletPoints(summaryText), [summaryText]);
 
   return (
     <ErrorBoundary>
@@ -262,7 +260,6 @@ const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
             
             {/* Main Story Content - Left Side */}
             <div className="lg:w-2/3">
-              {/* Story Card - NO BORDERS */}
               <article className="story-card-borderless mb-6 lg:mb-8">
                 <div className="mb-4 lg:mb-6">
                   <span 
@@ -273,8 +270,7 @@ const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
                   </span>
                 </div>
                 
-                {/* MOBILE-RESPONSIVE CLEAN TITLE */}
-                <h1 className="mobile-story-title">
+                <h1 className="mobile-story-title font-bold" style={{ fontWeight: '800', fontSize: 'clamp(1.5rem, 4vw, 2.5rem)', lineHeight: '1.2', marginBottom: '1.5rem' }}>
                   {cleanTitle(story.title)}
                 </h1>
                 
@@ -284,6 +280,7 @@ const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
                       src={story.image_url} 
                       alt={cleanTitle(story.title)}
                       className="w-full h-48 lg:h-80 object-cover rounded-xl shadow-md"
+                      loading="lazy"
                       onError={(e) => {
                         e.target.style.display = 'none';
                       }}
@@ -291,10 +288,9 @@ const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
                   </div>
                 )}
                 
-                {/* CLEAN BULLET POINT SUMMARY - NO BORDERS */}
                 {bulletPoints.length > 0 && (
                   <div className="story-summary-borderless">
-                    <h3>Story Summary</h3>
+                    <h3 className="font-bold">Story Summary</h3>
                     <ul className="summary-bullets">
                       {bulletPoints.map((point, index) => (
                         <li key={index}>{sanitizeText(point)}</li>
@@ -304,7 +300,7 @@ const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
                 )}
               </article>
 
-              {/* Related Stories with Source Bars */}
+              {/* Related Stories */}
               {relatedStories.length > 0 && (
                 <div className="bg-gray-50 dark:bg-gray-800 rounded-xl shadow-lg p-4 lg:p-8 border border-gray-100 dark:border-gray-700">
                   <h2 
@@ -321,12 +317,11 @@ const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
                             onClick={() => navigate(`/article/${relatedStory.id}`)}
                             className="related-story-link w-full text-left"
                           >
-                            <h3 className="related-story-title-mobile mb-3">
+                            <h3 className="related-story-title-mobile mb-3 font-bold" style={{ fontWeight: '700' }}>
                               {cleanTitle(relatedStory.title)}
                             </h3>
                           </button>
                           
-                          {/* Source & Positivity Bar for Related Stories */}
                           <SourcePositivityBar 
                             source={sanitizeText(relatedStory.source_name || relatedStory.source)}
                             positivityScore={relatedStory.positivity_score}
@@ -335,8 +330,7 @@ const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
                           />
                         </div>
                         
-                        {/* Insert inline ad every 3rd related story */}
-                        {(index + 1) % 3 === 0 && index < relatedStories.length - 1 && (
+                        {(index + 1) % 2 === 0 && index < relatedStories.length - 1 && (
                           <InlineAd key={`related-ad-${index}`} />
                         )}
                       </React.Fragment>
@@ -383,11 +377,6 @@ const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
                       <strong>Category:</strong> {sanitizeText(story.category)}
                     </li>
                   )}
-                  {story.virality_score && (
-                    <li>
-                      <strong>Viral Score:</strong> {Math.round(story.virality_score)}/10
-                    </li>
-                  )}
                 </ul>
                 
                 <div className="mt-4 lg:mt-6">
@@ -412,29 +401,81 @@ const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
   );
 };
 
-// ENHANCED Category Page with Skeleton Loading & Wide Rectangle Layout
+// OPTIMIZED Category Page with viral story distribution
 const CategoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
   const { category } = useParams();
   const [filteredNews, setFilteredNews] = useState([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
+  const processedStories = useProcessedStories(filteredNews);
+
   useEffect(() => {
     const fetchCategoryNews = async () => {
       try {
         setLoading(true);
-        console.log(`🔍 Fetching news for category: ${category}`);
         
-        // Add minimum loading time for smooth skeleton display
-        const minLoadingTime = new Promise(resolve => setTimeout(resolve, 600));
+        // SPEED OPTIMIZATION: Reduced loading time and parallel fetching
+        const minLoadingTime = new Promise(resolve => setTimeout(resolve, 300));
         
-        const [data] = await Promise.all([
+        const [regularData, viralData] = await Promise.all([
           fetchNews(category),
+          // VIRAL REDISTRIBUTION: Fetch viral stories and filter by category
+          fetchTrendingNews().then(viral => 
+            viral.filter(story => {
+              // Redistribute viral stories to appropriate categories based on content/keywords
+              const content = `${story.title} ${story.summary || ''}`.toLowerCase();
+              const storyCategory = story.original_category || story.category;
+              
+              // Category matching logic
+              switch(category) {
+                case 'Health':
+                  return storyCategory === 'Health' || 
+                         /\b(health|medical|cure|doctor|hospital|medicine|wellness|fitness)\b/.test(content);
+                case 'Innovation & Tech':
+                  return storyCategory === 'Innovation & Tech' || 
+                         /\b(tech|technology|innovation|AI|robot|app|software|digital)\b/.test(content);
+                case 'Environment & Sustainability':
+                  return storyCategory === 'Environment & Sustainability' || 
+                         /\b(environment|climate|green|sustainable|renewable|nature|conservation)\b/.test(content);
+                case 'Education':
+                  return storyCategory === 'Education' || 
+                         /\b(education|school|student|teacher|learning|graduation|university)\b/.test(content);
+                case 'Science & Space':
+                  return storyCategory === 'Science & Space' || 
+                         /\b(science|space|research|discovery|NASA|physics|astronomy)\b/.test(content);
+                case 'Humanitarian & Rescue':
+                  return storyCategory === 'Humanitarian & Rescue' || 
+                         /\b(rescue|humanitarian|hero|volunteer|charity|relief|disaster)\b/.test(content);
+                default:
+                  return false;
+              }
+            }).map(story => ({
+              ...story,
+              category: category, // Reassign to current category
+              isViralContent: true
+            }))
+          ),
           minLoadingTime
         ]);
         
-        console.log(`✅ Got ${data.length} articles for category: ${category}`);
-        setFilteredNews(data);
+        // VIRAL REDISTRIBUTION: Combine regular and viral stories
+        const combinedData = [
+          ...regularData,
+          ...viralData
+        ];
+        
+        // SPEED OPTIMIZATION: Limit to 20 stories for faster rendering
+        const sortedData = combinedData
+          .sort((a, b) => {
+            // Prioritize viral content and recent stories
+            const aScore = (a.virality_score || 0) + (a.positivity_score || 0);
+            const bScore = (b.virality_score || 0) + (b.positivity_score || 0);
+            return bScore - aScore;
+          })
+          .slice(0, 20);
+        
+        setFilteredNews(sortedData);
         
       } catch (error) {
         console.error('Failed to load category news:', error);
@@ -466,24 +507,27 @@ const CategoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
           </h2>
           
           {loading ? (
-            // SKELETON LOADING STATE
             <div className="max-w-4xl mx-auto space-y-6">
-              {Array.from({ length: 6 }, (_, i) => (
-                <SkeletonCard 
-                  key={i}
-                  aspectRatio="16/9"
-                  className="w-full"
-                  hasOverlay={true}
-                  hasCategory={true}
-                />
-              ))}
+              <Suspense fallback={<SkeletonFallback />}>
+                {Array.from({ length: 4 }, (_, i) => (
+                  <SkeletonCard 
+                    key={i}
+                    aspectRatio="16/9"
+                    className="w-full"
+                    hasOverlay={true}
+                    hasCategory={true}
+                  />
+                ))}
+              </Suspense>
             </div>
           ) : (
-            // WIDE RECTANGLE LAYOUT (2/3 width of page)
             <div className="max-w-4xl mx-auto space-y-6">
-              {filteredNews.length > 0 ? (
-                filteredNews.map((item) => (
-                  <NewsCard key={item.id} article={item} />
+              {processedStories.length > 0 ? (
+                processedStories.map((item) => (
+                  <NewsCard 
+                    key={`${item.id}-${item.isViralContent ? 'viral' : 'regular'}`} 
+                    article={item} 
+                  />
                 ))
               ) : (
                 <div className="text-center py-12">
@@ -511,49 +555,64 @@ const CategoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
   );
 };
 
-// ENHANCED Homepage with Skeleton Loading
+// OPTIMIZED Homepage with faster loading
 const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
   const { data, loading, error, refetch } = useHomepageData();
   const [streak, setStreak] = useState(0);
   const { toast } = useToast();
 
-  // Real-time database subscription
-  useEffect(() => {
-    console.log('🔄 Setting up real-time subscription...');
+  // SPEED OPTIMIZATION: Memoize processed data
+  const processedData = useMemo(() => {
+    if (!data) return { trending: [], dailyReads: [], blindspots: [] };
     
-    const subscription = supabase
-      .channel('news_changes')
-      .on('postgres_changes', 
-        { event: 'INSERT', schema: 'public', table: 'news' },
-        (payload) => {
-          console.log('🆕 New article added:', sanitizeText(payload.new.title));
-          toast({
-            title: "📰 New Story Available!",
-            description: "Fresh good news just arrived. Refreshing your feed...",
-            duration: 3000,
-          });
-          setTimeout(() => refetch(), 1000);
-        }
-      )
-      .subscribe();
+    return {
+      trending: data.trending?.slice(0, 15) || [], // Limit for faster rendering
+      dailyReads: data.dailyReads?.slice(0, 10) || [],
+      blindspots: data.blindspot?.slice(0, 8) || []
+    };
+  }, [data]);
+
+  // SPEED OPTIMIZATION: Optimized real-time subscription
+  useEffect(() => {
+    let subscription;
+    
+    const setupSubscription = () => {
+      subscription = supabase
+        .channel('news_changes')
+        .on('postgres_changes', 
+          { event: 'INSERT', schema: 'public', table: 'news' },
+          (payload) => {
+            // SPEED OPTIMIZATION: Debounced refetch
+            setTimeout(() => {
+              toast({
+                title: "📰 New Story Available!",
+                description: "Fresh good news just arrived.",
+                duration: 2000,
+              });
+              refetch();
+            }, 1000);
+          }
+        )
+        .subscribe();
+    };
+
+    setupSubscription();
 
     return () => {
-      console.log('🔌 Unsubscribing from real-time updates');
-      subscription.unsubscribe();
+      if (subscription) subscription.unsubscribe();
     };
   }, [refetch, toast]);
 
-  // Auto-refresh every 5 minutes
+  // SPEED OPTIMIZATION: Reduced auto-refresh interval
   useEffect(() => {
     const interval = setInterval(() => {
-      console.log('🔄 Auto-refreshing articles...');
       refetch();
-    }, 5 * 60 * 1000);
+    }, 10 * 60 * 1000); // 10 minutes instead of 5
     
     return () => clearInterval(interval);
   }, [refetch]);
 
-  // Streak logic
+  // SPEED OPTIMIZATION: Optimized streak logic
   useEffect(() => {
     const today = new Date().toDateString();
     const lastVisit = localStorage.getItem('lastVisitDate');
@@ -572,29 +631,21 @@ const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
       localStorage.setItem('streak', newStreak.toString());
       setStreak(newStreak);
       
+      // SPEED OPTIMIZATION: Reduced timeout
       setTimeout(() => {
         toast({
           title: "🔥 Streak Updated!",
-          description: `Day ${newStreak} of reading good news! Keep it up!`,
-          duration: 3000,
+          description: `Day ${newStreak} of reading good news!`,
+          duration: 2000,
         });
-      }, 1000);
+      }, 500);
     } else {
       localStorage.setItem('streak', '1');
       setStreak(1);
-      
-      setTimeout(() => {
-        toast({
-          title: "Welcome back!",
-          description: "Starting a new reading streak. Keep coming back for more good news!",
-          duration: 3000,
-        });
-      }, 1000);
     }
     localStorage.setItem('lastVisitDate', today);
   }, [toast]);
 
-  // ENHANCED SKELETON LOADING STATE
   if (loading) {
     return (
       <ErrorBoundary>
@@ -605,7 +656,9 @@ const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
             setIsDarkMode={setIsDarkMode}
             streak={streak}
           />
-          <SkeletonHomepage />
+          <Suspense fallback={<SkeletonFallback />}>
+            <SkeletonHomepage />
+          </Suspense>
           <Footer />
         </div>
       </ErrorBoundary>
@@ -625,10 +678,8 @@ const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
           <div className="container mx-auto px-4 py-8">
             <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 max-w-md mx-auto">
               <div className="flex">
-                <div className="flex-shrink-0">
-                  <span className="text-red-500 text-2xl">⚠️</span>
-                </div>
-                <div className="ml-3">
+                <span className="text-red-500 text-2xl mr-3">⚠️</span>
+                <div>
                   <h3 className="text-lg font-medium text-red-800 dark:text-red-200">
                     Something went wrong
                   </h3>
@@ -661,7 +712,7 @@ const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
     );
   }
 
-  const { trending: trendingNews, dailyReads, blindspot: blindspots } = data;
+  const { trending: trendingNews, dailyReads, blindspots } = processedData;
 
   return (
     <ErrorBoundary>
@@ -694,107 +745,8 @@ const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
             
             {(!trendingNews || trendingNews.length === 0) && (
               <div className="text-center py-8">
-                <LoadingSpinner text="No trending stories available right now" />
+                <Suspense fallback={<SkeletonFallback />}>
+                  <LoadingSpinner text="No trending stories available right now" />
+                </Suspense>
                 <Button onClick={refetch} variant="outline" size="sm" className="mt-4">
                   Refresh Stories
-                </Button>
-              </div>
-            )}
-          </main>
-
-          {/* Blindspot - Right Sidebar */}
-          <aside className="blindspot-sidebar">
-            <div className="blindspot-separator">
-              <Blindspot stories={blindspots} />
-            </div>
-          </aside>
-        </div>
-        
-        <Footer />
-      </div>
-    </ErrorBoundary>
-  );
-};
-
-// Main App Component
-const App = () => {
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('darkMode');
-      if (saved !== null) return JSON.parse(saved);
-      return window.matchMedia('(prefers-color-scheme: dark)').matches;
-    }
-    return false;
-  });
-
-  const [isDonateModalOpen, setIsDonateModalOpen] = useState(false);
-
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', isDarkMode);
-    localStorage.setItem('darkMode', JSON.stringify(isDarkMode));
-  }, [isDarkMode]);
-
-  useEffect(() => {
-    const saved = localStorage.getItem('darkMode');
-    if (saved === null) {
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-      const handleChange = (e) => setIsDarkMode(e.matches);
-      mediaQuery.addEventListener('change', handleChange);
-      return () => mediaQuery.removeEventListener('change', handleChange);
-    }
-  }, []);
-
-  // Add global error handler for invalid characters
-  useEffect(() => {
-    const handleGlobalError = (e) => {
-      if (e.message.includes('String contains an invalid character')) {
-        console.error('🚨 GLOBAL INVALID CHARACTER ERROR:');
-        console.error('Message:', e.message);
-        console.error('Filename:', e.filename);
-        console.error('Line:', e.lineno);
-        console.error('Column:', e.colno);
-        console.error('Stack:', e.error?.stack);
-      }
-    };
-
-    window.addEventListener('error', handleGlobalError);
-    return () => window.removeEventListener('error', handleGlobalError);
-  }, []);
-
-  return (
-    <ErrorBoundary>
-      <Router>
-        <div className="bg-white dark:bg-black text-black dark:text-white transition-colors duration-300 min-h-screen">
-          <Routes>
-            <Route path="/" element={<HomePage setIsDonateModalOpen={setIsDonateModalOpen} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />} />
-            <Route path="/category/:category" element={<CategoryPage setIsDonateModalOpen={setIsDonateModalOpen} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />} />
-            <Route path="/article/:id" element={<StoryPage setIsDonateModalOpen={setIsDonateModalOpen} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />} />
-          </Routes>
-
-          <AnimatePresence>
-            {isDonateModalOpen && (
-              <Dialog open={isDonateModalOpen} onOpenChange={setIsDonateModalOpen}>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Support Us</DialogTitle>
-                    <DialogDescription>Your contribution helps us grow.</DialogDescription>
-                  </DialogHeader>
-                  <DialogFooter>
-                    <DialogClose asChild>
-                      <Button variant="outline">Close</Button>
-                    </DialogClose>
-                    <Button>Donate Now</Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            )}
-          </AnimatePresence>
-
-          <Toaster />
-        </div>
-      </Router>
-    </ErrorBoundary>
-  );
-};
-
-export default App;

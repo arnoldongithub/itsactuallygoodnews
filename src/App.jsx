@@ -1,5 +1,5 @@
-// Complete Optimized App.jsx with Performance Enhancements and Viral Category Distribution
-import React, { useState, useEffect, useMemo, lazy, Suspense } from 'react';
+// Complete Optimized App.jsx with Performance Enhancements and Critical Navigation Fixes
+import React, { useState, useEffect, useMemo, lazy, Suspense, useCallback } from 'react';
 import { Routes, Route, BrowserRouter as Router, useParams, useNavigate } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 import { useToast } from "@/components/ui/use-toast";
@@ -18,27 +18,27 @@ import { fetchTrendingNews, fetchDailyReads, fetchBlindspotStories, fetchNews, u
 import { cleanTitle, createBulletPoints, getSourceName, getSourceLogo } from '@/lib/utils';
 import { supabase } from '@/lib/supa.js';
 
-// Lazy load skeleton components for better initial load
+// Lazy load skeleton components for better initial load performance
 const SkeletonHomepage = lazy(() => import('@/components/SkeletonComponents').then(module => ({ default: module.SkeletonHomepage })));
 const SkeletonCategoryPage = lazy(() => import('@/components/SkeletonComponents').then(module => ({ default: module.SkeletonCategoryPage })));
 const SkeletonStoryPage = lazy(() => import('@/components/SkeletonComponents').then(module => ({ default: module.SkeletonStoryPage })));
 const SkeletonCard = lazy(() => import('@/components/SkeletonComponents').then(module => ({ default: module.SkeletonCard })));
 const LoadingSpinner = lazy(() => import('@/components/SkeletonComponents').then(module => ({ default: module.LoadingSpinner })));
 
-// Optimized Skeleton Fallback
+// Optimized Skeleton Fallback with faster animation
 const SkeletonFallback = () => (
-  <div className="animate-pulse">
+  <div className="skeleton animate-pulse">
     <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-4"></div>
     <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mb-4"></div>
     <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
   </div>
 );
 
-// Error Boundary Component
-class ErrorBoundary extends React.Component {
+// Enhanced Error Boundary with better navigation error handling
+class EnhancedErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false, error: null, errorInfo: null };
   }
 
   static getDerivedStateFromError(error) {
@@ -46,7 +46,25 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    console.error('Error caught by boundary:', error);
+    console.error('Navigation Error Details:', {
+      error: error.message,
+      stack: error.stack,
+      componentStack: errorInfo.componentStack,
+      timestamp: new Date().toISOString()
+    });
+    
+    this.setState({
+      error,
+      errorInfo
+    });
+
+    // Log error for monitoring (in production, send to error tracking service)
+    if (typeof window !== 'undefined' && window.gtag) {
+      window.gtag('event', 'exception', {
+        description: error.message,
+        fatal: false
+      });
+    }
   }
 
   render() {
@@ -61,20 +79,23 @@ class ErrorBoundary extends React.Component {
               </h3>
             </div>
             <p className="text-sm text-red-700 dark:text-red-300 mb-4">
-              An unexpected error occurred. Please refresh the page.
+              Navigation error occurred. Please try refreshing the page.
             </p>
             <div className="flex space-x-2">
               <button
-                onClick={() => window.location.reload()}
+                onClick={() => {
+                  this.setState({ hasError: false, error: null, errorInfo: null });
+                  window.location.href = '/'; // FORCE navigation to home
+                }}
                 className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm font-medium"
               >
-                Refresh Page
+                Go Home
               </button>
               <button
-                onClick={() => this.setState({ hasError: false, error: null })}
+                onClick={() => window.location.reload()}
                 className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded text-sm font-medium"
               >
-                Try Again
+                Refresh Page
               </button>
             </div>
           </div>
@@ -84,6 +105,76 @@ class ErrorBoundary extends React.Component {
     return this.props.children;
   }
 }
+
+// Enhanced Navigation Hook with error prevention
+const useNavigationHandler = () => {
+  const navigate = useNavigate();
+  
+  const safeNavigate = useCallback((path, options = {}) => {
+    try {
+      // Validate path before navigation
+      if (!path || typeof path !== 'string') {
+        console.error('Invalid navigation path:', path);
+        return;
+      }
+      
+      // Add loading state to prevent double clicks
+      if (window.navigating) {
+        console.log('Navigation already in progress');
+        return;
+      }
+      
+      window.navigating = true;
+      
+      // Clear any existing timers
+      if (window.navigationTimeout) {
+        clearTimeout(window.navigationTimeout);
+      }
+      
+      // Set timeout to clear navigation flag
+      window.navigationTimeout = setTimeout(() => {
+        window.navigating = false;
+      }, 1000);
+      
+      navigate(path, options);
+      
+    } catch (error) {
+      console.error('Navigation error:', error);
+      window.navigating = false;
+      // Fallback to window.location for critical errors
+      window.location.href = path;
+    }
+  }, [navigate]);
+  
+  return safeNavigate;
+};
+
+// Loading State Manager to reduce delays
+const useLoadingOptimization = () => {
+  const [isNavigating, setIsNavigating] = useState(false);
+  
+  useEffect(() => {
+    const handleNavigationStart = () => {
+      setIsNavigating(true);
+    };
+    
+    const handleNavigationEnd = () => {
+      // Delay clearing to show smooth transition
+      setTimeout(() => setIsNavigating(false), 100);
+    };
+    
+    // Listen for navigation events
+    window.addEventListener('beforeunload', handleNavigationStart);
+    window.addEventListener('load', handleNavigationEnd);
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleNavigationStart);
+      window.removeEventListener('load', handleNavigationEnd);
+    };
+  }, []);
+  
+  return isNavigating;
+};
 
 // Optimized text sanitization helper
 const sanitizeText = (text) => {
@@ -108,10 +199,45 @@ const useProcessedStories = (stories) => {
   }, [stories]);
 };
 
-// OPTIMIZED Story Page
+// Safe click handlers for navigation
+const handleSafeClick = (e, id, safeNavigate) => {
+  e.preventDefault();
+  e.stopPropagation();
+  
+  if (!id) {
+    console.error('No article ID provided');
+    return;
+  }
+  
+  try {
+    safeNavigate(`/article/${id}`);
+  } catch (error) {
+    console.error('Navigation failed:', error);
+    window.location.href = `/article/${id}`;
+  }
+};
+
+const handleCategoryClick = (e, category, safeNavigate) => {
+  e.preventDefault();
+  e.stopPropagation();
+  
+  if (!category) {
+    console.error('No category provided');
+    return;
+  }
+  
+  try {
+    safeNavigate(`/category/${encodeURIComponent(category)}`);
+  } catch (error) {
+    console.error('Category navigation failed:', error);
+    window.location.href = `/category/${encodeURIComponent(category)}`;
+  }
+};
+
+// OPTIMIZED Story Page with safe navigation
 const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
   const { id } = useParams();
-  const navigate = useNavigate();
+  const safeNavigate = useNavigationHandler();
   const [story, setStory] = useState(null);
   const [relatedStories, setRelatedStories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -131,7 +257,7 @@ const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
         
         const [results] = await Promise.all([
           fetchPromises,
-          new Promise(resolve => setTimeout(resolve, 300))
+          new Promise(resolve => setTimeout(resolve, 200)) // Reduced delay
         ]);
         
         const [trending, daily, blindspot, allNews] = results.map(result => 
@@ -181,9 +307,13 @@ const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
     }
   }, [id, toast]);
 
+  const handleRelatedStoryClick = useCallback((e, relatedStoryId) => {
+    handleSafeClick(e, relatedStoryId, safeNavigate);
+  }, [safeNavigate]);
+
   if (loading) {
     return (
-      <ErrorBoundary>
+      <EnhancedErrorBoundary>
         <div className="min-h-screen bg-white dark:bg-black">
           <Header 
             setIsDonateModalOpen={setIsDonateModalOpen} 
@@ -195,13 +325,13 @@ const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
           </Suspense>
           <Footer />
         </div>
-      </ErrorBoundary>
+      </EnhancedErrorBoundary>
     );
   }
 
   if (!story) {
     return (
-      <ErrorBoundary>
+      <EnhancedErrorBoundary>
         <div className="min-h-screen bg-white dark:bg-black">
           <Header 
             setIsDonateModalOpen={setIsDonateModalOpen} 
@@ -215,7 +345,7 @@ const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
             </p>
             <div className="space-x-4">
               <Button 
-                onClick={() => navigate('/')} 
+                onClick={() => safeNavigate('/')} 
                 className="btn-primary"
                 style={{ backgroundColor: 'hsl(var(--purple-text))' }}
               >
@@ -228,7 +358,7 @@ const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
           </div>
           <Footer />
         </div>
-      </ErrorBoundary>
+      </EnhancedErrorBoundary>
     );
   }
 
@@ -236,7 +366,7 @@ const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
   const bulletPoints = useMemo(() => createBulletPoints(summaryText), [summaryText]);
 
   return (
-    <ErrorBoundary>
+    <EnhancedErrorBoundary>
       <div className="min-h-screen bg-white dark:bg-black">
         <Header 
           setIsDonateModalOpen={setIsDonateModalOpen} 
@@ -301,8 +431,8 @@ const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
                       <React.Fragment key={relatedStory.id}>
                         <div className="related-story-item">
                           <button
-                            onClick={() => navigate(`/article/${relatedStory.id}`)}
-                            className="related-story-link w-full text-left"
+                            onClick={(e) => handleRelatedStoryClick(e, relatedStory.id)}
+                            className="related-story-link w-full text-left clickable"
                           >
                             <h3 className="related-story-title-mobile mb-3 font-bold" style={{ fontWeight: '700' }}>
                               {cleanTitle(relatedStory.title)}
@@ -383,11 +513,11 @@ const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
         
         <Footer />
       </div>
-    </ErrorBoundary>
+    </EnhancedErrorBoundary>
   );
 };
 
-// OPTIMIZED Category Page with viral story distribution
+// OPTIMIZED Category Page with viral story distribution and safe navigation
 const CategoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
   const { category } = useParams();
   const [filteredNews, setFilteredNews] = useState([]);
@@ -401,7 +531,7 @@ const CategoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
       try {
         setLoading(true);
         
-        const minLoadingTime = new Promise(resolve => setTimeout(resolve, 300));
+        const minLoadingTime = new Promise(resolve => setTimeout(resolve, 200)); // Reduced delay
         
         const [regularData, viralData] = await Promise.all([
           fetchNews(category),
@@ -469,7 +599,7 @@ const CategoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
   }, [category, toast]);
 
   return (
-    <ErrorBoundary>
+    <EnhancedErrorBoundary>
       <div className="min-h-screen bg-white dark:bg-black">
         <Header 
           setIsDonateModalOpen={setIsDonateModalOpen} 
@@ -527,11 +657,11 @@ const CategoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
         </div>
         <Footer />
       </div>
-    </ErrorBoundary>
+    </EnhancedErrorBoundary>
   );
 };
 
-// OPTIMIZED Homepage
+// OPTIMIZED Homepage with safe navigation
 const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
   const { data, loading, error, refetch } = useHomepageData();
   const [streak, setStreak] = useState(0);
@@ -618,7 +748,7 @@ const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
 
   if (loading) {
     return (
-      <ErrorBoundary>
+      <EnhancedErrorBoundary>
         <div className="min-h-screen bg-white dark:bg-black">
           <Header 
             setIsDonateModalOpen={setIsDonateModalOpen} 
@@ -631,13 +761,13 @@ const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
           </Suspense>
           <Footer />
         </div>
-      </ErrorBoundary>
+      </EnhancedErrorBoundary>
     );
   }
 
   if (error) {
     return (
-      <ErrorBoundary>
+      <EnhancedErrorBoundary>
         <div className="min-h-screen bg-white dark:bg-black">
           <Header 
             setIsDonateModalOpen={setIsDonateModalOpen} 
@@ -678,14 +808,14 @@ const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
           </div>
           <Footer />
         </div>
-      </ErrorBoundary>
+      </EnhancedErrorBoundary>
     );
   }
 
   const { trending: trendingNews, dailyReads, blindspots } = processedData;
 
   return (
-    <ErrorBoundary>
+    <EnhancedErrorBoundary>
       <div className="min-h-screen bg-white dark:bg-black">
         <Header 
           setIsDonateModalOpen={setIsDonateModalOpen} 
@@ -732,11 +862,11 @@ const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
         
         <Footer />
       </div>
-    </ErrorBoundary>
+    </EnhancedErrorBoundary>
   );
 };
 
-// Main App Component
+// Main App Component with Enhanced Navigation and Performance
 const App = () => {
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -748,71 +878,117 @@ const App = () => {
   });
 
   const [isDonateModalOpen, setIsDonateModalOpen] = useState(false);
+  const isNavigating = useLoadingOptimization();
 
+  // FASTER theme switching
   useEffect(() => {
     const root = document.documentElement;
-    root.classList.toggle('dark', isDarkMode);
+    if (isDarkMode) {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
     localStorage.setItem('darkMode', JSON.stringify(isDarkMode));
   }, [isDarkMode]);
 
+  // Preload critical routes for faster navigation
   useEffect(() => {
-    const saved = localStorage.getItem('darkMode');
-    if (saved === null) {
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-      const handleChange = (e) => setIsDarkMode(e.matches);
-      mediaQuery.addEventListener('change', handleChange);
-      return () => mediaQuery.removeEventListener('change', handleChange);
-    }
+    // Preload main routes to reduce navigation delay
+    const preloadRoutes = async () => {
+      try {
+        // Prefetch data for common routes
+        if ('requestIdleCallback' in window) {
+          requestIdleCallback(() => {
+            // Preload trending news for faster homepage
+            fetchTrendingNews().catch(() => {});
+          });
+        }
+      } catch (error) {
+        console.log('Preload failed:', error);
+      }
+    };
+    
+    preloadRoutes();
   }, []);
 
+  // Global navigation error handler
   useEffect(() => {
-    const handleGlobalError = (e) => {
-      if (e.message.includes('String contains an invalid character')) {
-        console.error('🚨 GLOBAL CHARACTER ERROR:', e.message);
+    const handleUnhandledRejection = (event) => {
+      console.error('Unhandled promise rejection:', event.reason);
+      // Prevent default browser error handling
+      event.preventDefault();
+    };
+
+    const handleError = (error) => {
+      console.error('Global error:', error.error);
+      // Prevent navigation errors from breaking the app
+      if (error.error && error.error.message && error.error.message.includes('String contains an invalid character')) {
+        console.error('🚨 GLOBAL CHARACTER ERROR:', error.error.message);
       }
     };
 
-    window.addEventListener('error', handleGlobalError);
-    return () => window.removeEventListener('error', handleGlobalError);
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+    window.addEventListener('error', handleError);
+
+    return () => {
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+      window.removeEventListener('error', handleError);
+    };
   }, []);
 
-  const HomePageMemo = useMemo(() => 
-    <HomePage 
-      setIsDonateModalOpen={setIsDonateModalOpen} 
-      isDarkMode={isDarkMode} 
-      setIsDarkMode={setIsDarkMode} 
-    />, [isDarkMode]
-  );
+  // Memoized routes for better performance
+  const routes = useMemo(() => [
+    {
+      path: "/",
+      element: (
+        <HomePage 
+          setIsDonateModalOpen={setIsDonateModalOpen} 
+          isDarkMode={isDarkMode} 
+          setIsDarkMode={setIsDarkMode} 
+        />
+      )
+    },
+    {
+      path: "/category/:category",
+      element: (
+        <CategoryPage 
+          setIsDonateModalOpen={setIsDonateModalOpen} 
+          isDarkMode={isDarkMode} 
+          setIsDarkMode={setIsDarkMode} 
+        />
+      )
+    },
+    {
+      path: "/article/:id",
+      element: (
+        <StoryPage 
+          setIsDonateModalOpen={setIsDonateModalOpen} 
+          isDarkMode={isDarkMode} 
+          setIsDarkMode={setIsDarkMode} 
+        />
+      )
+    }
+  ], [isDarkMode, setIsDonateModalOpen]);
 
   return (
-    <ErrorBoundary>
+    <EnhancedErrorBoundary>
       <Router>
         <div className="bg-white dark:bg-black text-black dark:text-white transition-colors duration-300 min-h-screen">
+          {/* Loading overlay for navigation */}
+          {isNavigating && (
+            <div className="fixed inset-0 bg-white dark:bg-black bg-opacity-50 z-50 flex items-center justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+            </div>
+          )}
+          
           <Routes>
-            <Route 
-              path="/" 
-              element={HomePageMemo}
-            />
-            <Route 
-              path="/category/:category" 
-              element={
-                <CategoryPage 
-                  setIsDonateModalOpen={setIsDonateModalOpen} 
-                  isDarkMode={isDarkMode} 
-                  setIsDarkMode={setIsDarkMode} 
-                />
-              } 
-            />
-            <Route 
-              path="/article/:id" 
-              element={
-                <StoryPage 
-                  setIsDonateModalOpen={setIsDonateModalOpen} 
-                  isDarkMode={isDarkMode} 
-                  setIsDarkMode={setIsDarkMode} 
-                />
-              } 
-            />
+            {routes.map((route) => (
+              <Route 
+                key={route.path} 
+                path={route.path} 
+                element={route.element} 
+              />
+            ))}
           </Routes>
 
           <AnimatePresence>
@@ -837,7 +1013,7 @@ const App = () => {
           <Toaster />
         </div>
       </Router>
-    </ErrorBoundary>
+    </EnhancedErrorBoundary>
   );
 };
 

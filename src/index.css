@@ -81,10 +81,10 @@
   /* ========== KEYFRAME ANIMATIONS ========== */
   @keyframes skeleton-shimmer {
     0% {
-      background-position: -200px 0;
+      background-position: -100px 0;
     }
     100% {
-      background-position: calc(200px + 100%) 0;
+      background-position: calc(100px + 100%) 0;
     }
   }
 
@@ -109,18 +109,29 @@
     }
   }
 
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+
   /* ========== BASE LAYOUT STYLES ========== */
   .bg-header {
     background-color: hsl(var(--mint-green));
     color: hsl(var(--header-foreground));
   }
 
+  /* ========== CRITICAL LAYOUT ALIGNMENT FIXES ========== */
   .main-layout {
     @apply flex flex-col gap-8 my-8;
     max-width: 100%;
     overflow-x: hidden;
     padding: 0 1rem;
     background: hsl(var(--background));
+    align-items: flex-start;
   }
 
   @media (max-width: 1023px) {
@@ -128,6 +139,7 @@
       @apply flex-col px-4 gap-6;
       background: hsl(var(--background));
       padding-top: 0;
+      align-items: stretch;
     }
     
     .trending-main {
@@ -157,8 +169,9 @@
       margin: 0 auto;
       gap: 2rem;
       background: hsl(var(--background));
-      align-items: flex-start;
-      padding-top: 2rem;
+      align-items: flex-start !important;
+      padding-top: 0 !important;
+      vertical-align: top;
     }
     
     .daily-reads-sidebar,
@@ -167,8 +180,10 @@
       @apply min-w-0;
       margin-top: 0 !important;
       padding-top: 0 !important;
-      vertical-align: top;
-      align-self: flex-start;
+      vertical-align: top !important;
+      align-self: flex-start !important;
+      position: relative;
+      top: 0 !important;
     }
     
     .sidebar-title,
@@ -176,8 +191,11 @@
       margin-top: 0 !important;
       padding-top: 0 !important;
       min-height: 2.5rem;
+      height: 2.5rem !important;
       display: flex;
       align-items: center;
+      line-height: 1 !important;
+      margin-bottom: 1.5rem !important;
     }
     
     .daily-reads-sidebar {
@@ -189,6 +207,8 @@
     .trending-main {
       @apply order-2;
       width: 60% !important;
+      margin-top: 0 !important;
+      padding-top: 0 !important;
     }
     
     .blindspot-sidebar {
@@ -232,10 +252,12 @@
     margin-bottom: 8px;
     border-bottom: 2px solid rgba(255, 255, 255, 0.15) !important;
     background: linear-gradient(to bottom, transparent 0%, rgba(255, 255, 255, 0.02) 100%);
+    pointer-events: auto !important;
+    min-height: 120px !important;
   }
 
   .newscard-borderless:hover {
-    transform: translateY(-4px);
+    transform: translateY(-4px) translateZ(0);
     box-shadow: 0 12px 28px rgba(0,0,0,0.15);
     border-bottom: 2px solid rgba(255, 255, 255, 0.25) !important;
   }
@@ -262,7 +284,7 @@
   .newscard-title-borderless {
     @apply text-white leading-tight;
     font-family: 'Poppins', sans-serif;
-    font-weight: 700 !important; /* FIXED: Force bold */
+    font-weight: 700 !important;
     font-size: 1.125rem !important;
     text-shadow: 0 2px 4px rgba(0,0,0,0.8);
     display: -webkit-box;
@@ -272,7 +294,14 @@
   }
 
   .newscard-title-borderless a {
-    font-weight: 700 !important; /* FIXED: Force bold for links */
+    font-weight: 700 !important;
+    text-decoration: none !important;
+    color: inherit !important;
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    position: relative !important;
+    z-index: 1 !important;
   }
 
   /* ========== WIDE RECTANGLE CARDS ========== */
@@ -287,10 +316,11 @@
     cursor: pointer;
     border-bottom: 2px solid rgba(255, 255, 255, 0.15) !important;
     background: linear-gradient(to bottom, transparent 0%, rgba(255, 255, 255, 0.02) 100%);
+    pointer-events: auto !important;
   }
 
   .wide-rectangle-card-borderless:hover {
-    transform: translateY(-2px);
+    transform: translateY(-2px) translateZ(0);
     box-shadow: 0 8px 25px rgba(0,0,0,0.15);
     border-bottom: 2px solid rgba(255, 255, 255, 0.25) !important;
   }
@@ -323,7 +353,7 @@
   .wide-rectangle-title-borderless {
     @apply text-gray-900 dark:text-white mb-3 leading-tight;
     font-family: 'Poppins', sans-serif;
-    font-weight: 700 !important; /* FIXED: Force bold */
+    font-weight: 700 !important;
     font-size: 1.25rem !important;
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -334,7 +364,12 @@
   .wide-rectangle-title-borderless a {
     text-decoration: none;
     color: inherit;
-    font-weight: 700 !important; /* FIXED: Force bold for links */
+    font-weight: 700 !important;
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    position: relative !important;
+    z-index: 1 !important;
   }
 
   .wide-rectangle-summary-borderless {
@@ -389,10 +424,13 @@
     margin-bottom: 8px;
     border-bottom: 2px solid rgba(255, 255, 255, 0.15) !important;
     background: linear-gradient(to bottom, transparent 0%, rgba(255, 255, 255, 0.02) 100%);
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    min-height: 120px !important;
   }
 
   .viral-newscard-borderless:hover {
-    transform: translateY(-4px);
+    transform: translateY(-4px) translateZ(0);
     box-shadow: 0 20px 40px rgba(0,0,0,0.15);
     border-bottom: 2px solid rgba(255, 255, 255, 0.25) !important;
   }
@@ -431,6 +469,18 @@
     border: none !important;
     box-shadow: none !important;
     width: 100% !important;
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+  }
+
+  .trending-main h2 {
+    height: 2.5rem !important;
+    line-height: 1 !important;
+    margin-bottom: 1.5rem !important;
+    display: flex !important;
+    align-items: center !important;
+    margin-top: 0 !important;
+    padding-top: 0 !important;
   }
 
   .trending-main > div,
@@ -441,6 +491,7 @@
     padding: 0 !important;
     margin: 0 !important;
     width: 100% !important;
+    margin-top: 0 !important;
   }
 
   .viral-stories-container {
@@ -485,7 +536,7 @@
   .trending-headline h3 {
     @apply leading-tight;
     font-family: 'Poppins', sans-serif;
-    font-weight: 700 !important; /* FIXED: Force bold */
+    font-weight: 700 !important;
     font-size: 1rem !important;
     word-break: break-word;
     overflow-wrap: break-word;
@@ -497,6 +548,16 @@
     display: block !important;
   }
 
+  .trending-headline a {
+    font-weight: 700 !important;
+    text-decoration: none !important;
+    color: inherit !important;
+    display: block !important;
+    width: 100% !important;
+    position: relative !important;
+    z-index: 1 !important;
+  }
+
   /* ========== SIDEBAR STYLES ========== */
   .sidebar-section {
     @apply space-y-6 w-full;
@@ -505,6 +566,9 @@
     padding-right: 0.5rem;
     margin-top: 0 !important;
     padding-top: 0 !important;
+    position: relative;
+    top: 0;
+    contain: layout style;
   }
 
   .source-positivity-bar {
@@ -578,6 +642,8 @@
     margin-bottom: 1.5rem;
     transition: all 0.3s ease;
     min-height: 240px !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
   }
 
   .viral-newscard {
@@ -587,6 +653,8 @@
     position: relative;
     overflow: hidden;
     transition: all 0.3s ease;
+    pointer-events: auto !important;
+    cursor: pointer !important;
   }
 
   @media (max-width: 1023px) {
@@ -637,7 +705,7 @@
 
   .viral-newscard:hover,
   .sidebar-newscard:hover {
-    transform: translateY(-4px);
+    transform: translateY(-4px) translateZ(0);
     box-shadow: 0 20px 40px rgba(0,0,0,0.15);
   }
 
@@ -653,7 +721,7 @@
   .sidebar-newscard-title {
     @apply text-white leading-tight;
     font-family: 'Poppins', sans-serif;
-    font-weight: 700 !important; /* FIXED: Force bold */
+    font-weight: 700 !important;
     font-size: 1.125rem !important;
     display: -webkit-box;
     -webkit-line-clamp: 3;
@@ -671,18 +739,23 @@
   .sidebar-title {
     @apply text-xl mb-6;
     font-family: 'Poppins', sans-serif;
-    font-weight: 800 !important; /* FIXED: Extra bold for sidebar titles */
+    font-weight: 800 !important;
     color: hsl(var(--purple-text));
     padding-bottom: 0.75rem;
     border-bottom: 3px solid hsl(var(--orange-accent));
     display: flex;
     align-items: center;
     margin-top: 0 !important;
+    height: 2.5rem !important;
+    line-height: 1 !important;
+    margin-bottom: 1.5rem !important;
   }
 
   .sidebar-featured-cards {
     @apply space-y-6 mb-6;
     display: block !important;
+    margin-top: 0 !important;
+    padding-top: 0 !important;
   }
 
   .blindspot-sidebar {
@@ -703,7 +776,7 @@
   .blindspot-headline-full {
     @apply text-white leading-tight;
     font-family: 'Poppins', sans-serif;
-    font-weight: 700 !important; /* FIXED: Force bold for blindspot titles */
+    font-weight: 700 !important;
     font-size: 0.9375rem !important;
     text-shadow: 0 2px 4px rgba(0,0,0,0.8);
     word-break: break-word;
@@ -735,7 +808,7 @@
   .mobile-story-title {
     @apply text-gray-900 dark:text-white mb-6;
     font-family: 'Poppins', sans-serif;
-    font-weight: 800 !important; /* FIXED: Extra bold for main story titles */
+    font-weight: 800 !important;
     font-size: clamp(1.5rem, 4vw, 2.5rem) !important;
     line-height: 1.2 !important;
     word-break: break-word;
@@ -765,7 +838,7 @@
 
   .story-summary-borderless h3 {
     font-family: 'Poppins', sans-serif;
-    font-weight: 800 !important; /* FIXED: Bold summary headers */
+    font-weight: 800 !important;
     font-size: 1.125rem !important;
     margin-bottom: 16px;
     color: hsl(var(--purple-text));
@@ -813,7 +886,7 @@
   .related-story-title,
   .related-story-title-mobile {
     font-family: 'Poppins', sans-serif;
-    font-weight: 700 !important; /* FIXED: Bold related story titles */
+    font-weight: 700 !important;
     font-size: 1.125rem !important;
     line-height: 1.4;
     color: hsl(var(--foreground));
@@ -1003,8 +1076,8 @@
       hsl(var(--muted) / 0.5) 37%, 
       hsl(var(--muted)) 63%
     );
-    background-size: 400% 100%;
-    animation: skeleton-shimmer 1.5s ease-in-out infinite;
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1s ease-in-out infinite;
     border-radius: 4px;
     position: relative;
     overflow: hidden;
@@ -1022,7 +1095,7 @@
       rgba(255, 255, 255, 0.2), 
       transparent
     );
-    animation: skeleton-wave 1.5s ease-in-out infinite;
+    animation: skeleton-wave 1s ease-in-out infinite;
     transform: translateX(-100%);
   }
 
@@ -1040,6 +1113,58 @@
       rgba(255, 255, 255, 0.05), 
       transparent
     );
+  }
+
+  /* ========== PERFORMANCE OPTIMIZATIONS ========== */
+  .animate-pulse {
+    animation: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  /* ========== CONTENT POSITIONING FIXES ========== */
+  .daily-reads-separator,
+  .blindspot-separator {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+  }
+
+  .daily-reads-separator > *:first-child,
+  .blindspot-separator > *:first-child {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+  }
+
+  .sidebar-featured-cards,
+  .viral-stories-grid,
+  .trending-headlines {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+  }
+
+  /* ========== NAVIGATION ERROR PREVENTION ========== */
+  .newscard-borderless,
+  .wide-rectangle-card-borderless,
+  .sidebar-newscard,
+  .viral-newscard {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    position: relative !important;
+    min-height: 120px !important;
+  }
+
+  .newscard-title-borderless a,
+  .wide-rectangle-title-borderless a,
+  .sidebar-newscard-title a,
+  .viral-newscard-title a,
+  .trending-headline a,
+  .blindspot-title-full,
+  .blindspot-headline-full {
+    text-decoration: none !important;
+    color: inherit !important;
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    position: relative !important;
+    z-index: 1 !important;
   }
 
   /* ========== UTILITY CLASSES ========== */
@@ -1303,7 +1428,7 @@
     overflow-wrap: break-word !important;
   }
 
-  /* Force hardware acceleration for better performance */
+  /* ========== GPU ACCELERATION ========== */
   .sidebar-newscard img,
   .newscard-borderless img,
   .wide-rectangle-card-borderless img,
@@ -1312,21 +1437,21 @@
     will-change: transform;
   }
 
-  /* Ensure proper stacking context */
   .sidebar-newscard,
   .newscard-borderless,
   .wide-rectangle-card-borderless,
   .viral-newscard-borderless {
     isolation: isolate;
+    transform: translateZ(0);
+    will-change: transform;
   }
 
-  /* Final safety net for image visibility */
+  /* ========== FINAL IMAGE SAFETY ========== */
   img {
     max-width: 100% !important;
     height: auto !important;
   }
 
-  /* Ensure all our components work properly */
   .sidebar-newscard *,
   .newscard-borderless *,
   .wide-rectangle-card-borderless *,
@@ -1334,7 +1459,7 @@
     box-sizing: border-box;
   }
 
-  /* Remove viral tags completely */
+  /* ========== REMOVE VIRAL TAGS COMPLETELY ========== */
   .viral-newscard-badge,
   .viral-tag,
   .badge-viral,
@@ -1346,7 +1471,6 @@
   }
 
   /* ========== FONT WEIGHT ENFORCEMENT ========== */
-  /* This section ensures all titles are properly bold regardless of CSS conflicts */
   .newscard-title-borderless,
   .newscard-title-borderless a,
   .wide-rectangle-title-borderless,
@@ -1365,13 +1489,39 @@
     font-family: 'Poppins', sans-serif !important;
   }
 
-  /* Extra emphasis for main story titles */
   .mobile-story-title,
   .sidebar-title {
     font-weight: 800 !important;
   }
 
-  /* Ensure category backgrounds work properly */
+  /* ========== FINAL ALIGNMENT ENFORCEMENT ========== */
+  @media (min-width: 1024px) {
+    .main-layout {
+      display: flex !important;
+      flex-direction: row !important;
+      align-items: flex-start !important;
+      justify-content: flex-start !important;
+      gap: 2rem !important;
+    }
+    
+    .main-layout > * {
+      margin-top: 0 !important;
+      padding-top: 0 !important;
+      vertical-align: top !important;
+      align-self: flex-start !important;
+    }
+    
+    .main-layout > *:first-child,
+    .main-layout > *:nth-child(2),
+    .main-layout > *:nth-child(3) {
+      position: relative !important;
+      top: 0 !important;
+      margin-top: 0 !important;
+      padding-top: 0 !important;
+    }
+  }
+
+  /* ========== CATEGORY BACKGROUNDS ========== */
   .sidebar-newscard[data-category="Health"] {
     background: linear-gradient(135deg, #dcfce7, #bbf7d0) !important;
   }
@@ -1400,7 +1550,6 @@
     background: linear-gradient(135deg, #fef3c7, #fde68a) !important;
   }
 
-  /* Dark mode category backgrounds */
   .dark .sidebar-newscard[data-category="Health"] {
     background: linear-gradient(135deg, #052e16, #064e3b) !important;
   }

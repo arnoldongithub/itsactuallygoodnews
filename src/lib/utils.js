@@ -1,9 +1,97 @@
-// Enhanced utils.js - Complete Text Cleaning
+// Complete Corrected utils.js - Enhanced Text Cleaning + Better Summarization + Image Functions
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
 export function cn(...inputs) {
-  return twMerge(clsx(inputs));
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`
+    <svg width="800" height="600" viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="categoryGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:${info.color};stop-opacity:0.8" />
+          <stop offset="100%" style="stop-color:${info.color};stop-opacity:0.4" />
+        </linearGradient>
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+          <feMerge>
+            <feMergeNode in="coloredBlur"/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
+      </defs>
+      
+      <!-- Background -->
+      <rect width="800" height="600" fill="${info.bgColor}"/>
+      
+      <!-- Gradient overlay -->
+      <rect width="800" height="600" fill="url(#categoryGrad)"/>
+      
+      <!-- Decorative elements -->
+      <circle cx="150" cy="150" r="30" fill="white" opacity="0.1"/>
+      <circle cx="650" cy="100" r="40" fill="white" opacity="0.15"/>
+      <circle cx="700" cy="450" r="25" fill="white" opacity="0.1"/>
+      <circle cx="100" cy="500" r="35" fill="white" opacity="0.12"/>
+      
+      <!-- Main circle for emoji -->
+      <circle cx="400" cy="250" r="120" fill="white" opacity="0.25"/>
+      <circle cx="400" cy="250" r="90" fill="white" opacity="0.35"/>
+      <circle cx="400" cy="250" r="70" fill="white" opacity="0.45"/>
+      
+      <!-- Emoji -->
+      <text x="400" y="280" text-anchor="middle" font-size="80" filter="url(#glow)">${info.emoji}</text>
+      
+      <!-- Title -->
+      <text x="400" y="420" text-anchor="middle" fill="white" font-family="system-ui, -apple-system, sans-serif" font-size="36" font-weight="700" filter="url(#glow)">${info.title}</text>
+      
+      <!-- Subtitle -->
+      <text x="400" y="460" text-anchor="middle" fill="white" font-family="system-ui, -apple-system, sans-serif" font-size="18" opacity="0.9">Positive Stories</text>
+      
+      <!-- Bottom accent line -->
+      <rect x="250" y="520" width="300" height="4" fill="white" opacity="0.6" rx="2"/>
+    </svg>
+  `)}`;
+};
+
+/**
+ * Enhanced image source validation
+ * @param {string} src - Image source URL
+ * @returns {boolean} - Whether the source is valid
+ */
+export const isValidImageSource = (src) => {
+  if (!src || typeof src !== 'string') return false;
+  
+  const cleanSrc = src.trim();
+  return cleanSrc &&
+         cleanSrc !== 'null' && 
+         cleanSrc !== 'undefined' && 
+         !cleanSrc.includes('undefined') &&
+         (cleanSrc.startsWith('http') || cleanSrc.startsWith('data:')) &&
+         !cleanSrc.includes('placeholder.com/0x0'); // Avoid broken placeholder URLs
+};
+
+/**
+ * Get the best available image source with smart fallbacks
+ * @param {Object} article - Article object with image URLs
+ * @returns {string|null} - Best available image source
+ */
+export const getBestImageSource = (article) => {
+  if (!article) return null;
+  
+  const sources = [
+    article.image_url,
+    article.thumbnail_url,
+    article.featured_image,
+    article.image
+  ];
+  
+  // Find the first valid source
+  for (const src of sources) {
+    if (isValidImageSource(src)) {
+      return src;
+    }
+  }
+  
+  return null;
+}; twMerge(clsx(inputs));
 }
 
 /**
@@ -252,34 +340,58 @@ export const cleanContent = (content) => {
 };
 
 /**
- * Create enhanced bullet points with better context
- * @param {string} text - Text to convert to bullet points
+ * Enhanced bullet points that extract specific facts from summaries
+ * @param {string} text - Summary text to convert to bullet points
  * @param {number} maxPoints - Maximum number of bullet points
  * @returns {string[]} - Array of contextual bullet points
  */
 export const createBulletPoints = (text, maxPoints = 5) => {
-  if (!text) return [];
+  if (!text || typeof text !== 'string') return [];
   
-  // Clean the text first
+  // Clean the text first using your existing cleanSummary function
   const cleanedText = cleanSummary(text);
   
-  // If cleaned text is too short or generic, create contextual points
-  if (cleanedText.length < 50 || 
-      cleanedText.includes('important updates') ||
-      cleanedText.includes('positive developments')) {
+  if (cleanedText.length < 50) {
     return [
       'This story highlights recent positive developments in the field',
-      'New progress has been made that benefits communities',
+      'New progress has been made that benefits communities', 
       'The developments show promising signs for the future',
       'Key stakeholders are working together for positive change'
     ].slice(0, maxPoints);
   }
   
-  // Split by sentences and clean up
+  // ENHANCED: Extract specific facts and key information
+  const extractedPoints = [];
+  
+  // Strategy 1: Look for sentences with key impact words
+  const impactSentences = extractImpactfulSentences(cleanedText);
+  extractedPoints.push(...impactSentences);
+  
+  // Strategy 2: Extract numerical facts and statistics
+  const numericalFacts = extractNumericalFacts(cleanedText);
+  extractedPoints.push(...numericalFacts);
+  
+  // Strategy 3: Extract location and organization information
+  const contextualInfo = extractContextualInfo(cleanedText);
+  extractedPoints.push(...contextualInfo);
+  
+  // Strategy 4: Extract achievement and breakthrough information
+  const achievements = extractAchievements(cleanedText);
+  extractedPoints.push(...achievements);
+  
+  // Remove duplicates and generic content
+  const uniquePoints = deduplicatePoints(extractedPoints);
+  
+  // If we have good extracted points, use them
+  if (uniquePoints.length >= 3) {
+    return uniquePoints.slice(0, maxPoints);
+  }
+  
+  // Fallback: Split by sentences and enhance them
   const sentences = cleanedText
     .split(/[.!?]+/)
     .map(s => s.trim())
-    .filter(s => s.length > 15) // Longer minimum for better context
+    .filter(s => s.length > 20) // Longer minimum for better context
     .slice(0, maxPoints);
   
   if (sentences.length === 0) {
@@ -287,10 +399,147 @@ export const createBulletPoints = (text, maxPoints = 5) => {
   }
   
   return sentences.map(sentence => {
-    let cleanSentence = sentence.charAt(0).toUpperCase() + sentence.slice(1);
-    // Ensure sentence ends with a period if it doesn't already
-    return cleanSentence.match(/[.!?]$/) ? cleanSentence : cleanSentence + '.';
+    let enhancedSentence = enhanceSentence(sentence);
+    // Ensure proper capitalization
+    enhancedSentence = enhancedSentence.charAt(0).toUpperCase() + enhancedSentence.slice(1);
+    // Ensure sentence ends properly
+    return enhancedSentence.match(/[.!?]$/) ? enhancedSentence : enhancedSentence + '.';
   });
+};
+
+// Helper function to extract impactful sentences
+const extractImpactfulSentences = (text) => {
+  const points = [];
+  const impactWords = [
+    'improved', 'increased', 'reduced', 'enhanced', 'better', 'successful',
+    'breakthrough', 'innovative', 'revolutionary', 'significant', 'major',
+    'helps', 'benefits', 'supports', 'enables', 'allows', 'provides'
+  ];
+  
+  const sentences = text.split(/[.!?]+/);
+  
+  sentences.forEach(sentence => {
+    const lowerSentence = sentence.toLowerCase();
+    const hasImpact = impactWords.some(word => lowerSentence.includes(word));
+    
+    if (hasImpact && sentence.length > 25 && sentence.length < 120) {
+      points.push(sentence.trim());
+    }
+  });
+  
+  return points.slice(0, 2); // Max 2 impact sentences
+};
+
+// Helper function to extract numerical facts
+const extractNumericalFacts = (text) => {
+  const points = [];
+  const numberPatterns = [
+    /(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:percent|%)/gi,
+    /(\d+(?:,\d+)*)\s+(?:people|patients|students|families|individuals)/gi,
+    /(?:over|more than|up to|nearly|approximately)\s+(\d+(?:,\d+)*)/gi,
+    /(\d+(?:,\d+)*)\s+(?:million|billion|thousand)/gi
+  ];
+  
+  numberPatterns.forEach(pattern => {
+    const matches = [...text.matchAll(pattern)];
+    matches.slice(0, 2).forEach(match => {
+      const context = getContextAroundMatch(text, match.index, 60);
+      if (context && context.length > 20) {
+        points.push(`Key statistic: ${context.trim()}`);
+      }
+    });
+  });
+  
+  return points.slice(0, 2);
+};
+
+// Helper function to extract location and organization info
+const extractContextualInfo = (text) => {
+  const points = [];
+  
+  // Location patterns
+  const locationPattern = /(?:in|at|from|across)\s+([A-Z][a-zA-Z\s]+(?:University|College|Hospital|Center|Institute|City|County|State))/g;
+  const locationMatches = [...text.matchAll(locationPattern)];
+  
+  if (locationMatches.length > 0) {
+    const location = locationMatches[0][1];
+    points.push(`Initiative based at ${location}`);
+  }
+  
+  // Organization patterns
+  const orgPattern = /(?:by|with|through)\s+([A-Z][a-zA-Z\s&]+(?:Foundation|Organization|Company|Association|Institute))/g;
+  const orgMatches = [...text.matchAll(orgPattern)];
+  
+  if (orgMatches.length > 0) {
+    const org = orgMatches[0][1];
+    points.push(`Partnership involves ${org}`);
+  }
+  
+  return points.slice(0, 1);
+};
+
+// Helper function to extract achievements
+const extractAchievements = (text) => {
+  const points = [];
+  const achievementWords = [
+    'achieved', 'completed', 'launched', 'introduced', 'developed', 'created',
+    'established', 'built', 'implemented', 'discovered', 'invented'
+  ];
+  
+  const sentences = text.split(/[.!?]+/);
+  
+  sentences.forEach(sentence => {
+    const lowerSentence = sentence.toLowerCase();
+    const hasAchievement = achievementWords.some(word => lowerSentence.includes(word));
+    
+    if (hasAchievement && sentence.length > 30 && sentence.length < 100) {
+      const enhanced = sentence.trim().replace(/^[a-z]/, letter => letter.toUpperCase());
+      points.push(`Achievement: ${enhanced}`);
+    }
+  });
+  
+  return points.slice(0, 2);
+};
+
+// Helper function to get context around a regex match
+const getContextAroundMatch = (text, matchIndex, contextLength) => {
+  const start = Math.max(0, matchIndex - contextLength);
+  const end = Math.min(text.length, matchIndex + contextLength);
+  return text.substring(start, end);
+};
+
+// Helper function to enhance sentences
+const enhanceSentence = (sentence) => {
+  // Remove generic beginnings
+  sentence = sentence.replace(/^(?:this|the|it|that)\s+/i, '');
+  
+  // Add context if sentence is too vague
+  const genericPhrases = ['story', 'article', 'development', 'news'];
+  const isGeneric = genericPhrases.some(phrase => sentence.toLowerCase().includes(phrase));
+  
+  if (isGeneric && sentence.length < 50) {
+    return `Key development: ${sentence}`;
+  }
+  
+  return sentence;
+};
+
+// Helper function to remove duplicate points
+const deduplicatePoints = (points) => {
+  const unique = [];
+  const seen = new Set();
+  
+  points.forEach(point => {
+    // Create a normalized version for comparison
+    const normalized = point.toLowerCase().replace(/[^\w\s]/g, '').replace(/\s+/g, ' ');
+    
+    if (!seen.has(normalized) && point.length >= 20 && point.length <= 150) {
+      seen.add(normalized);
+      unique.push(point);
+    }
+  });
+  
+  return unique;
 };
 
 /**
@@ -511,7 +760,7 @@ export const debounce = (func, wait) => {
 };
 
 /**
- * NEW: Strip all HTML and return plain text (for database cleanup)
+ * Strip all HTML and return plain text (for database cleanup)
  * @param {string} text - Text with potential HTML
  * @returns {string} - Plain text only
  */
@@ -526,7 +775,7 @@ export const stripAllHtml = (text) => {
 };
 
 /**
- * NEW: Clean database text directly (for bulk operations)
+ * Clean database text directly (for bulk operations)
  * @param {string} text - Raw database text
  * @returns {string} - Cleaned text
  */
@@ -547,7 +796,7 @@ export const cleanDatabaseText = (text) => {
 };
 
 /**
- * NEW: Check if text contains HTML tags
+ * Check if text contains HTML tags
  * @param {string} text - Text to check
  * @returns {boolean} - True if contains HTML
  */
@@ -555,3 +804,60 @@ export const containsHtml = (text) => {
   if (!text) return false;
   return /<[^>]*>/.test(text) || /&[a-zA-Z0-9#]+;/.test(text);
 };
+
+/**
+ * Generate category-specific image sources for fallbacks
+ * @param {string} category - News category
+ * @param {string|number} storyId - Story ID for uniqueness
+ * @returns {string[]} - Array of fallback image URLs
+ */
+export const getCategoryImageSources = (category, storyId) => {
+  const safeId = Math.abs(String(storyId).split('').reduce((a, b) => a + b.charCodeAt(0), 0));
+  
+  const categoryKeywords = {
+    'Health': 'health,medical,wellness,doctor,hospital',
+    'Innovation & Tech': 'technology,innovation,computer,digital,future',
+    'Environment & Sustainability': 'environment,nature,sustainability,green,renewable',
+    'Education': 'education,learning,school,student,knowledge',
+    'Science & Space': 'science,space,astronomy,research,laboratory', 
+    'Humanitarian & Rescue': 'humanitarian,help,community,volunteers,aid',
+    'Blindspot': 'hidden,discover,stories,investigation,truth',
+    'Viral': 'trending,popular,social,community,celebration'
+  };
+  
+  const keywords = categoryKeywords[category] || 'news,positive,good';
+  
+  return [
+    `https://source.unsplash.com/800x600/?${keywords}&random=${safeId}`,
+    `https://source.unsplash.com/800x600/?${keywords}&sig=${safeId + 50}`,
+    `https://picsum.photos/800/600?random=${safeId + 100}`,
+    `https://picsum.photos/800/600?random=${safeId + 200}`,
+    `https://via.placeholder.com/800x600/6366f1/white?text=${encodeURIComponent(category || 'News')}`
+  ];
+};
+
+/**
+ * Create category-specific SVG fallback images
+ * @param {string} category - News category
+ * @returns {string} - Data URL for SVG image
+ */
+export const createCategorySVG = (category) => {
+  const categoryInfo = {
+    'Health': { emoji: '🏥', color: '#22c55e', bgColor: '#dcfce7', title: 'Health News' },
+    'Innovation & Tech': { emoji: '💻', color: '#3b82f6', bgColor: '#dbeafe', title: 'Tech News' },
+    'Environment & Sustainability': { emoji: '🌱', color: '#10b981', bgColor: '#d1fae5', title: 'Environment' },
+    'Education': { emoji: '📚', color: '#8b5cf6', bgColor: '#ede9fe', title: 'Education' },
+    'Science & Space': { emoji: '🔬', color: '#6366f1', bgColor: '#e0e7ff', title: 'Science' },
+    'Humanitarian & Rescue': { emoji: '🤝', color: '#ef4444', bgColor: '#fee2e2', title: 'Humanitarian' },
+    'Blindspot': { emoji: '🔍', color: '#f59e0b', bgColor: '#fef3c7', title: 'Blindspot' },
+    'Viral': { emoji: '🔥', color: '#f97316', bgColor: '#fed7aa', title: 'Viral News' }
+  };
+  
+  const info = categoryInfo[category] || { 
+    emoji: '📰', 
+    color: '#6b7280', 
+    bgColor: '#f3f4f6', 
+    title: 'Good News' 
+  };
+  
+  return

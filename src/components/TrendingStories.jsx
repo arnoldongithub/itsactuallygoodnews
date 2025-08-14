@@ -1,5 +1,5 @@
-// Complete TrendingStories.jsx - Final Corrected Version
-import React from 'react';
+// Complete TrendingStories.jsx - Fixed with Safe Navigation
+import React, { useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { cleanTitle, cleanSummary } from '@/lib/utils';
 import InlineAd from './InlineAd';
@@ -7,7 +7,28 @@ import SourcePositivityBar from './SourcePositivityBar';
 
 const TrendingStories = ({ stories }) => {
   const { category } = useParams();
-  const navigate = useNavigate();
+  const navigate = useNavigate(); // ✅ ADD NAVIGATION HOOK
+  
+  // ✅ SAFE NAVIGATION HANDLER
+  const handleStoryClick = useCallback((e, story) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!story || !story.id) {
+      console.error('❌ Invalid story data for navigation:', story);
+      return;
+    }
+    
+    console.log('🚀 Trending story navigation:', story.id, story.title?.substring(0, 50));
+    
+    try {
+      navigate(`/article/${story.id}`);
+    } catch (error) {
+      console.error('❌ React Router navigation failed:', error);
+      // Fallback to direct navigation
+      window.location.href = `/article/${story.id}`;
+    }
+  }, [navigate]);
   
   if (!stories || stories.length === 0) {
     return (
@@ -51,8 +72,8 @@ const TrendingStories = ({ stories }) => {
             {viralStories.map((story) => (
               <button
                 key={story.id}
-                onClick={() => navigate(`/article/${story.id}`)}
-                className="viral-newscard-borderless group"
+                onClick={(e) => handleStoryClick(e, story)} // ✅ FIXED: Safe navigation
+                className="viral-newscard-borderless group cursor-pointer"
               >
                 <img
                   src={story.image_url || story.thumbnail_url || 'https://source.unsplash.com/800x600/?news,positive'}
@@ -95,8 +116,8 @@ const TrendingStories = ({ stories }) => {
                 
                 <div className="trending-headline">
                   <button
-                    onClick={() => navigate(`/article/${story.id}`)}
-                    className="w-full text-left hover:text-purple-600 dark:hover:text-purple-400 transition-colors duration-200"
+                    onClick={(e) => handleStoryClick(e, story)} // ✅ FIXED: Safe navigation
+                    className="w-full text-left hover:text-purple-600 dark:hover:text-purple-400 transition-colors duration-200 cursor-pointer"
                   >
                     <h3 className="font-semibold text-base md:text-lg leading-tight text-gray-800 dark:text-white">
                       {cleanTitle(story.title)}

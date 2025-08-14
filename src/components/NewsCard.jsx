@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 // Safe import with fallbacks for build compatibility
 let getCategoryImageSources, createCategorySVG;
@@ -169,6 +169,7 @@ const BulletproofImage = ({
 
 const NewsCard = ({ article, isBookmarked, onBookmarkToggle }) => {
   const location = useLocation();
+  const navigate = useNavigate(); // ✅ ADD THIS HOOK
   
   if (!article) return null;
   
@@ -185,6 +186,27 @@ const NewsCard = ({ article, isBookmarked, onBookmarkToggle }) => {
     source_name,
     positivity_score
   } = article;
+
+  // ✅ SAFE NAVIGATION HANDLER
+  const handleStoryClick = useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!id) {
+      console.error('❌ No article ID provided for navigation');
+      return;
+    }
+    
+    console.log('🚀 Navigating to story:', id, title?.substring(0, 50));
+    
+    try {
+      navigate(`/article/${id}`);
+    } catch (error) {
+      console.error('❌ React Router navigation failed:', error);
+      // Fallback to direct navigation
+      window.location.href = `/article/${id}`;
+    }
+  }, [id, navigate, title]);
 
   // Enhanced fallback logic with sanitization
   const getImageSrc = () => {
@@ -253,7 +275,10 @@ const NewsCard = ({ article, isBookmarked, onBookmarkToggle }) => {
   if (isCategoryPage) {
     return (
       <article className="wide-rectangle-card-borderless group">
-        <div className="wide-rectangle-image-container-borderless">
+        <div 
+          className="wide-rectangle-image-container-borderless cursor-pointer"
+          onClick={handleStoryClick} // ✅ FIXED: Use click handler instead of href
+        >
           <BulletproofImage
             src={finalImageSrc}
             alt={safeTitle}
@@ -271,15 +296,15 @@ const NewsCard = ({ article, isBookmarked, onBookmarkToggle }) => {
             </div>
           )}
           
-          {/* Title - FIXED: Ensure bold styling */}
+          {/* Title - FIXED: Use button instead of anchor */}
           <h3 className="wide-rectangle-title-borderless font-bold">
-            <a 
-              href={`/article/${id}`} 
-              className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-bold"
+            <button 
+              onClick={handleStoryClick} // ✅ FIXED: Safe navigation
+              className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-bold text-left w-full"
               style={{ fontWeight: '700' }}
             >
               {safeTitle}
-            </a>
+            </button>
           </h3>
           
           {/* Summary */}
@@ -305,25 +330,28 @@ const NewsCard = ({ article, isBookmarked, onBookmarkToggle }) => {
           </div>
         </div>
         
-        {/* Read more arrow */}
+        {/* Read more arrow - FIXED: Use button instead of anchor */}
         <div className="wide-rectangle-arrow-borderless">
-          <a 
-            href={`/article/${id}`}
+          <button 
+            onClick={handleStoryClick} // ✅ FIXED: Safe navigation
             className="inline-flex items-center text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors"
           >
             <span className="mr-2">Read More</span>
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
             </svg>
-          </a>
+          </button>
         </div>
       </article>
     );
   }
   
-  // Default newscard for other pages (homepage, etc.) - borderless
+  // Default newscard for other pages (homepage, etc.) - FIXED: Use click handler
   return (
-    <div className="newscard-borderless">
+    <div 
+      className="newscard-borderless cursor-pointer" 
+      onClick={handleStoryClick} // ✅ FIXED: Safe navigation
+    >
       <BulletproofImage
         src={finalImageSrc}
         alt={safeTitle}
@@ -338,13 +366,12 @@ const NewsCard = ({ article, isBookmarked, onBookmarkToggle }) => {
           </div>
         )}
         <h3 className="newscard-title-borderless font-bold">
-          <a 
-            href={`/article/${id}`} 
+          <span // ✅ FIXED: Use span instead of anchor
             className="hover:text-blue-300 transition-colors font-bold"
             style={{ fontWeight: '700' }}
           >
             {safeTitle}
-          </a>
+          </span>
         </h3>
       </div>
     </div>

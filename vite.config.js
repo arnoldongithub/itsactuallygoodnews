@@ -8,11 +8,7 @@ export default defineConfig({
   plugins: [
     react({
       // Optimize React refresh for faster dev builds
-      fastRefresh: true,
-      jsxImportSource: '@emotion/react',
-      babel: {
-        plugins: isDev ? [] : ['babel-plugin-transform-remove-console']
-      }
+      fastRefresh: true
     })
   ],
   

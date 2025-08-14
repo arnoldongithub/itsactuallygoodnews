@@ -1,5 +1,5 @@
-// Complete Fixed App.jsx - Infinite Re-render Issue Resolved
-import React, { useState, useEffect, useMemo, lazy, Suspense, useCallback } from 'react';
+// Complete Fixed App.jsx - All Infinite Re-render Issues Resolved
+import React, { useState, useEffect, lazy, Suspense, useCallback } from 'react';
 import { Routes, Route, BrowserRouter as Router, useParams, useNavigate } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 import { useToast } from "@/components/ui/use-toast";
@@ -182,21 +182,19 @@ const sanitizeText = (text) => {
   return text.replace(/[^\w\s\-.,!?'"]/g, '').replace(/\s+/g, ' ').trim();
 };
 
-// Memoized story processing for performance
+// ✅ FIXED: Removed useMemo to prevent infinite re-renders
 const useProcessedStories = (stories) => {
-  return useMemo(() => {
-    if (!stories || !Array.isArray(stories)) return [];
-    
-    return stories
-      .filter(story => story && story.id && story.title)
-      .map(story => ({
-        ...story,
-        title: sanitizeText(story.title),
-        summary: sanitizeText(story.summary || ''),
-        category: sanitizeText(story.category || ''),
-        source_name: sanitizeText(story.source_name || '')
-      }));
-  }, [stories]);
+  if (!stories || !Array.isArray(stories)) return [];
+  
+  return stories
+    .filter(story => story && story.id && story.title)
+    .map(story => ({
+      ...story,
+      title: sanitizeText(story.title),
+      summary: sanitizeText(story.summary || ''),
+      category: sanitizeText(story.category || ''),
+      source_name: sanitizeText(story.source_name || '')
+    }));
 };
 
 // Safe click handlers for navigation
@@ -363,7 +361,8 @@ const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
   }
 
   const summaryText = sanitizeText(story.summary || story.content || '');
-  const bulletPoints = useMemo(() => createBulletPoints(summaryText), [summaryText]);
+  // ✅ FIXED: Removed useMemo to prevent infinite re-renders
+  const bulletPoints = createBulletPoints(summaryText);
 
   return (
     <EnhancedErrorBoundary>
@@ -667,7 +666,8 @@ const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
   const [streak, setStreak] = useState(0);
   const { toast } = useToast();
 
-  const processedData = useMemo(() => {
+  // ✅ FIXED: Removed useMemo to prevent infinite re-renders
+  const processedData = (() => {
     if (!data) return { trending: [], dailyReads: [], blindspots: [] };
     
     return {
@@ -675,7 +675,7 @@ const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
       dailyReads: data.dailyReads?.slice(0, 10) || [],
       blindspots: data.blindspot?.slice(0, 8) || []
     };
-  }, [data]);
+  })();
 
   useEffect(() => {
     let subscription;
@@ -866,7 +866,7 @@ const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
   );
 };
 
-// ✅ FIXED: Main App Component - Removed infinite re-render issue
+// ✅ FIXED: Main App Component - All infinite re-render issues resolved
 const App = () => {
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -931,7 +931,7 @@ const App = () => {
     };
   }, []);
 
-  // ✅ FIXED: Removed useMemo for routes to prevent infinite re-renders
+  // ✅ FIXED: No useMemo for routes - prevents infinite re-renders
   return (
     <EnhancedErrorBoundary>
       <Router>

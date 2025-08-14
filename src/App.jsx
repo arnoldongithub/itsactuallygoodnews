@@ -1,4 +1,4 @@
-// Complete Optimized App.jsx with Performance Enhancements and Critical Navigation Fixes
+// Complete Fixed App.jsx - Infinite Re-render Issue Resolved
 import React, { useState, useEffect, useMemo, lazy, Suspense, useCallback } from 'react';
 import { Routes, Route, BrowserRouter as Router, useParams, useNavigate } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
@@ -866,7 +866,7 @@ const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
   );
 };
 
-// Main App Component with Enhanced Navigation and Performance
+// ✅ FIXED: Main App Component - Removed infinite re-render issue
 const App = () => {
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -893,13 +893,10 @@ const App = () => {
 
   // Preload critical routes for faster navigation
   useEffect(() => {
-    // Preload main routes to reduce navigation delay
     const preloadRoutes = async () => {
       try {
-        // Prefetch data for common routes
         if ('requestIdleCallback' in window) {
           requestIdleCallback(() => {
-            // Preload trending news for faster homepage
             fetchTrendingNews().catch(() => {});
           });
         }
@@ -915,13 +912,11 @@ const App = () => {
   useEffect(() => {
     const handleUnhandledRejection = (event) => {
       console.error('Unhandled promise rejection:', event.reason);
-      // Prevent default browser error handling
       event.preventDefault();
     };
 
     const handleError = (error) => {
       console.error('Global error:', error.error);
-      // Prevent navigation errors from breaking the app
       if (error.error && error.error.message && error.error.message.includes('String contains an invalid character')) {
         console.error('🚨 GLOBAL CHARACTER ERROR:', error.error.message);
       }
@@ -936,40 +931,7 @@ const App = () => {
     };
   }, []);
 
-  // Memoized routes for better performance
-  const routes = useMemo(() => [
-    {
-      path: "/",
-      element: (
-        <HomePage 
-          setIsDonateModalOpen={setIsDonateModalOpen} 
-          isDarkMode={isDarkMode} 
-          setIsDarkMode={setIsDarkMode} 
-        />
-      )
-    },
-    {
-      path: "/category/:category",
-      element: (
-        <CategoryPage 
-          setIsDonateModalOpen={setIsDonateModalOpen} 
-          isDarkMode={isDarkMode} 
-          setIsDarkMode={setIsDarkMode} 
-        />
-      )
-    },
-    {
-      path: "/article/:id",
-      element: (
-        <StoryPage 
-          setIsDonateModalOpen={setIsDonateModalOpen} 
-          isDarkMode={isDarkMode} 
-          setIsDarkMode={setIsDarkMode} 
-        />
-      )
-    }
-  ], [isDarkMode, setIsDonateModalOpen]);
-
+  // ✅ FIXED: Removed useMemo for routes to prevent infinite re-renders
   return (
     <EnhancedErrorBoundary>
       <Router>
@@ -982,13 +944,36 @@ const App = () => {
           )}
           
           <Routes>
-            {routes.map((route) => (
-              <Route 
-                key={route.path} 
-                path={route.path} 
-                element={route.element} 
-              />
-            ))}
+            <Route 
+              path="/" 
+              element={
+                <HomePage 
+                  setIsDonateModalOpen={setIsDonateModalOpen} 
+                  isDarkMode={isDarkMode} 
+                  setIsDarkMode={setIsDarkMode} 
+                />
+              } 
+            />
+            <Route 
+              path="/category/:category" 
+              element={
+                <CategoryPage 
+                  setIsDonateModalOpen={setIsDonateModalOpen} 
+                  isDarkMode={isDarkMode} 
+                  setIsDarkMode={setIsDarkMode} 
+                />
+              } 
+            />
+            <Route 
+              path="/article/:id" 
+              element={
+                <StoryPage 
+                  setIsDonateModalOpen={setIsDonateModalOpen} 
+                  isDarkMode={isDarkMode} 
+                  setIsDarkMode={setIsDarkMode} 
+                />
+              } 
+            />
           </Routes>
 
           <AnimatePresence>

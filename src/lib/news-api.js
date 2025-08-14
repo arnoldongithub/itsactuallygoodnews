@@ -1,119 +1,71 @@
-// Complete news-api.js with time-based filtering and no duplicate exports
+// Optimized news-api.js - Reduced API calls and simplified logic
 import { supabase } from './supa.js';
-import { placeholderArticles, getAllStories } from './placeholder-data.js';
+import { placeholderArticles } from './placeholder-data.js';
 import { useState, useEffect, useCallback } from 'react';
 import { cleanTitle, cleanSummary, cleanContent } from './utils.js';
 
+const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
+const CACHE_KEY = 'newsCache';
 const LAST_FETCHED_KEY = 'newsLastFetched';
-const NEWS_CACHE_KEY = 'newsCache';
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
-// === TIME-BASED FILTERING CONFIGURATION ===
-const TIME_FILTERS = {
-  viral: 24 * 60 * 60 * 1000, // 24 hours for viral content
-  regular: 36 * 60 * 60 * 1000 // 36 hours for regular categories
-};
-
-// Category mappings
-const CATEGORY_MAPPINGS = {
-  'all': ['Health', 'Innovation & Tech', 'Environment & Sustainability', 'Education', 'Science & Space', 'Humanitarian & Rescue', 'Blindspot', 'Viral'],
-  'health': ['Health'],
-  'innovation & tech': ['Innovation & Tech'],
-  'environment & sustainability': ['Environment & Sustainability'], 
-  'education': ['Education'],
-  'science & space': ['Science & Space'],
-  'humanitarian & rescue': ['Humanitarian & Rescue'],
-  'blindspot': ['Blindspot'],
-  'viral': ['Viral']
-};
-
-// === TIME-BASED FILTERING FUNCTION ===
-const applyTimeBasedFilter = (articles) => {
-  const now = new Date();
+// Simplified time filtering - only recent articles (last 48 hours)
+const isRecentArticle = (article) => {
+  if (!article.created_at && !article.published_at) return true;
   
-  return articles.filter(article => {
-    if (!article.created_at && !article.published_at) {
-      return true; // Keep articles without timestamps
-    }
-    
-    const articleDate = new Date(article.created_at || article.published_at);
-    const articleAge = now.getTime() - articleDate.getTime();
-    
-    // Apply different time filters based on category
-    if (article.category === 'Viral') {
-      const isWithinViralWindow = articleAge <= TIME_FILTERS.viral;
-      if (!isWithinViralWindow) {
-        console.log(`🔥 Filtering out old viral article: ${article.title?.slice(0, 50)}... (${Math.round(articleAge / (1000 * 60 * 60))}h old)`);
-      }
-      return isWithinViralWindow;
-    } else {
-      const isWithinRegularWindow = articleAge <= TIME_FILTERS.regular;
-      if (!isWithinRegularWindow) {
-        console.log(`📰 Filtering out old regular article: ${article.title?.slice(0, 50)}... (${Math.round(articleAge / (1000 * 60 * 60))}h old)`);
-      }
-      return isWithinRegularWindow;
-    }
-  });
+  const articleDate = new Date(article.created_at || article.published_at);
+  const hoursSincePublished = (Date.now() - articleDate.getTime()) / (1000 * 60 * 60);
+  
+  return hoursSincePublished <= 48; // 48 hours max
 };
 
-// Force clear all caches
-export const forceClearAllCaches = () => {
-  if (typeof window !== 'undefined') {
-    Object.keys(localStorage).forEach(key => {
-      if (key.startsWith(NEWS_CACHE_KEY) || key.startsWith(LAST_FETCHED_KEY)) {
-        localStorage.removeItem(key);
-      }
-    });
-    console.log('🧹 All news caches cleared (including time-filtered caches)');
-  }
-};
-
-// === ENHANCED MAIN NEWS FETCHER WITH TIME FILTERING ===
-export const fetchNews = async (category = 'All', retryCount = 0, bypassCache = false) => {
-  const now = Date.now();
-  const isBrowser = typeof window !== 'undefined';
-  const maxRetries = 3;
-
-  console.log(`🔍 Fetching news for category: "${category}" with time filtering`);
-
-  // Normalize category
-  let decodedCategory = category;
+// Cache utilities
+const getCache = (key) => {
+  if (typeof window === 'undefined') return null;
   try {
-    decodedCategory = decodeURIComponent(category);
+    const cached = localStorage.getItem(key);
+    const lastFetched = localStorage.getItem(LAST_FETCHED_KEY);
+    
+    if (cached && lastFetched) {
+      const age = Date.now() - parseInt(lastFetched);
+      if (age < CACHE_DURATION) {
+        return JSON.parse(cached);
+      }
+    }
   } catch (e) {
-    console.warn('Failed to decode category:', e);
+    console.warn('Cache read error:', e);
   }
+  return null;
+};
+
+const setCache = (key, data) => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(key, JSON.stringify(data));
+    localStorage.setItem(LAST_FETCHED_KEY, Date.now().toString());
+  } catch (e) {
+    console.warn('Cache write error:', e);
+  }
+};
+
+// MAIN OPTIMIZED DATA FETCHER - Single API call for all data
+export const fetchAllNewsData = async (bypassCache = false) => {
+  const cacheKey = `${CACHE_KEY}_all`;
   
-  const normalizedCategory = decodedCategory.toLowerCase().trim();
-
-  // Check cache
-  let lastFetched, cachedNews;
-  if (isBrowser && !bypassCache) {
-    lastFetched = localStorage.getItem(LAST_FETCHED_KEY + '_' + normalizedCategory);
-    cachedNews = localStorage.getItem(NEWS_CACHE_KEY + '_' + normalizedCategory);
-  }
-
-  if (!bypassCache && isBrowser && lastFetched && cachedNews && now - parseInt(lastFetched, 10) < CACHE_DURATION) {
-    try {
-      const parsedCache = JSON.parse(cachedNews);
-      if (parsedCache.length > 0) {
-        console.log(`📚 Using cached data for ${category}: ${parsedCache.length} articles`);
-        // Apply time filtering to cached data too
-        const timeFilteredCache = applyTimeBasedFilter(parsedCache);
-        console.log(`⏰ After time filtering: ${timeFilteredCache.length} articles`);
-        return timeFilteredCache;
-      }
-    } catch (e) {
-      console.warn('⚠️ Failed to parse local cache:', e);
+  // Check cache first
+  if (!bypassCache) {
+    const cached = getCache(cacheKey);
+    if (cached) {
+      console.log('📚 Using cached data:', cached.total, 'articles');
+      return cached;
     }
   }
 
   try {
-    // === ENHANCED QUERY WITH TIME-BASED PRE-FILTERING ===
-    const viralCutoff = new Date(now - TIME_FILTERS.viral).toISOString();
-    const regularCutoff = new Date(now - TIME_FILTERS.regular).toISOString();
-    
-    let query = supabase
+    console.log('🔍 Fetching all news data...');
+    const startTime = performance.now();
+
+    // Single optimized query for ALL data
+    const { data, error } = await supabase
       .from('news')
       .select(`
         id, title, url, summary, content, published_at, created_at,
@@ -122,310 +74,147 @@ export const fetchNews = async (category = 'All', retryCount = 0, bypassCache = 
       `)
       .eq('is_ad', false)
       .eq('sentiment', 'positive')
-      .gte('positivity_score', 6);
-
-    // Apply category filter if not 'all'
-    if (normalizedCategory && normalizedCategory !== 'all') {
-      const exactMatches = {
-        'health': 'Health',
-        'innovation & tech': 'Innovation & Tech',
-        'environment & sustainability': 'Environment & Sustainability',
-        'education': 'Education',
-        'science & space': 'Science & Space',
-        'humanitarian & rescue': 'Humanitarian & Rescue',
-        'blindspot': 'Blindspot',
-        'viral': 'Viral'
-      };
-      
-      const exactCategory = exactMatches[normalizedCategory];
-      
-      if (exactCategory) {
-        console.log(`🎯 Using exact category match: "${exactCategory}"`);
-        query = query.eq('category', exactCategory);
-        
-        // Apply time-based filtering at database level for better performance
-        if (exactCategory === 'Viral') {
-          query = query.gte('created_at', viralCutoff);
-          console.log(`🔥 Applying 24-hour filter for viral content (since ${viralCutoff})`);
-        } else {
-          query = query.gte('created_at', regularCutoff);
-          console.log(`📰 Applying 36-hour filter for regular content (since ${regularCutoff})`);
-        }
-      } else {
-        query = query.ilike('category', `%${decodedCategory}%`);
-        query = query.gte('created_at', regularCutoff); // Default to regular filter
-      }
-    } else {
-      // For 'all' categories, use a compound filter
-      console.log(`📰 Fetching ALL categories with time-based filtering`);
-      query = query.or(`and(category.eq.Viral,created_at.gte.${viralCutoff}),and(category.neq.Viral,created_at.gte.${regularCutoff})`);
-    }
-
-    // Order by relevance and recency
-    query = query
+      .gte('positivity_score', 6)
+      .gte('created_at', new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString()) // 48 hours
       .order('positivity_score', { ascending: false })
       .order('published_at', { ascending: false })
-      .limit(50);
+      .limit(100); // Reasonable limit
 
-    const { data, error } = await query;
+    if (error) throw error;
 
-    if (error) throw new Error(`Supabase error: ${error.message}`);
-
-    if (data && data.length > 0) {
-      console.log(`✅ Fetched ${data.length} articles for category: ${category}`);
-      
-      // Apply additional client-side time filtering as backup
-      const timeFilteredData = applyTimeBasedFilter(data);
-      console.log(`⏰ After client-side time filtering: ${timeFilteredData.length} articles`);
-      
-      // Clean and process data
-      const processedData = timeFilteredData.map(item => ({
+    const processedData = (data || [])
+      .filter(isRecentArticle)
+      .map(item => ({
         ...item,
         title: cleanTitle(item.title),
         summary: cleanSummary(item.summary),
         content: cleanContent(item.content),
-        virality_score: item.virality_score || (item.positivity_score > 9 ? 8 : 0),
-        // Add age indicator for debugging
-        age_hours: Math.round((now - new Date(item.created_at || item.published_at).getTime()) / (1000 * 60 * 60))
+        virality_score: item.virality_score || (item.positivity_score > 9 ? 8 : 0)
       }));
 
-      // Cache the processed data
-      if (!bypassCache && isBrowser) {
-        try {
-          localStorage.setItem(NEWS_CACHE_KEY + '_' + normalizedCategory, JSON.stringify(processedData));
-          localStorage.setItem(LAST_FETCHED_KEY + '_' + normalizedCategory, now.toString());
-          console.log(`💾 Cached ${processedData.length} time-filtered articles for ${category}`);
-        } catch (e) {
-          console.warn('⚠️ Failed to cache news:', e);
-        }
-      }
-      
-      return processedData;
-    }
+    // Categorize data efficiently
+    const result = {
+      all: processedData,
+      trending: processedData
+        .filter(story => story.virality_score >= 7 || story.positivity_score >= 9)
+        .slice(0, 15),
+      dailyReads: getCategoryStories(processedData, [
+        'Health', 'Innovation & Tech', 'Environment & Sustainability', 
+        'Education', 'Science & Space', 'Humanitarian & Rescue'
+      ], 1), // 1 per category
+      blindspot: processedData
+        .filter(story => 
+          story.category === 'Blindspot' || 
+          story.category === 'Humanitarian & Rescue'
+        )
+        .slice(0, 8),
+      categories: groupByCategory(processedData),
+      total: processedData.length
+    };
 
-    console.warn(`⚠️ No recent news data for category: ${category}`);
-    return [];
-    
-  } catch (error) {
-    console.error(`❌ Error fetching news (attempt ${retryCount + 1}):`, error);
-    
-    if (retryCount < maxRetries) {
-      await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
-      return fetchNews(category, retryCount + 1, bypassCache);
-    }
-    
-    return [];
-  }
-};
-
-// === TIME-FILTERED INDIVIDUAL SECTION FETCHERS ===
-export const fetchTrendingNewsTimeFiltered = async (limit = 15, bypassCache = false) => {
-  try {
-    console.log('🔥 Fetching time-filtered trending stories...');
-    
-    const now = Date.now();
-    const viralCutoff = new Date(now - TIME_FILTERS.viral).toISOString();
-    const regularCutoff = new Date(now - TIME_FILTERS.regular).toISOString();
-    
-    // Query with time-based filtering
-    const { data, error } = await supabase
-      .from('news')
-      .select(`
-        id, title, url, summary, content, image_url, thumbnail_url,
-        category, published_at, created_at, positivity_score, virality_score, author, source_name
-      `)
-      .eq('is_ad', false)
-      .eq('sentiment', 'positive')
-      .gte('positivity_score', 6)
-      .or(`and(category.eq.Viral,created_at.gte.${viralCutoff}),and(category.neq.Viral,created_at.gte.${regularCutoff})`)
-      .order('virality_score', { ascending: false })
-      .order('positivity_score', { ascending: false })
-      .order('published_at', { ascending: false })
-      .limit(limit);
-
-    if (error) throw error;
-    
-    const timeFilteredData = applyTimeBasedFilter(data || []);
-    console.log(`🔥 Time-filtered trending stories: ${timeFilteredData.length}`);
-    
-    return timeFilteredData.map(item => ({
-      ...item,
-      title: cleanTitle(item.title),
-      summary: cleanSummary(item.summary),
-      content: cleanContent(item.content)
-    }));
-
-  } catch (error) {
-    console.error('❌ fetchTrendingNewsTimeFiltered error:', error);
-    return [];
-  }
-};
-
-export const fetchDailyReadsTimeFiltered = async (limit = 10, bypassCache = false) => {
-  try {
-    console.log('📰 Fetching time-filtered daily reads...');
-    
-    const now = Date.now();
-    const regularCutoff = new Date(now - TIME_FILTERS.regular).toISOString();
-    
-    const categories = ['Health', 'Innovation & Tech', 'Environment & Sustainability', 'Education', 'Science & Space', 'Humanitarian & Rescue'];
-    const dailyReads = [];
-    
-    for (const category of categories) {
-      const { data } = await supabase
-        .from('news')
-        .select(`
-          id, title, url, summary, content, image_url, thumbnail_url,
-          category, published_at, created_at, positivity_score, author, source_name
-        `)
-        .eq('category', category)
-        .eq('is_ad', false)
-        .eq('sentiment', 'positive')
-        .gte('positivity_score', 6)
-        .gte('created_at', regularCutoff) // 36-hour filter
-        .order('positivity_score', { ascending: false })
-        .order('published_at', { ascending: false })
-        .limit(1);
-      
-      if (data && data.length > 0) {
-        dailyReads.push({
-          ...data[0],
-          title: cleanTitle(data[0].title),
-          summary: cleanSummary(data[0].summary),
-          content: cleanContent(data[0].content)
-        });
-      }
-    }
-    
-    console.log(`📰 Time-filtered daily reads: ${dailyReads.length} stories`);
-    return dailyReads;
-
-  } catch (error) {
-    console.error('❌ fetchDailyReadsTimeFiltered error:', error);
-    return [];
-  }
-};
-
-export const fetchBlindspotStoriesTimeFiltered = async (limit = 8, bypassCache = false) => {
-  try {
-    console.log('🔍 Fetching time-filtered blindspot stories...');
-    
-    const now = Date.now();
-    const regularCutoff = new Date(now - TIME_FILTERS.regular).toISOString();
-    
-    let { data, error } = await supabase
-      .from('news')
-      .select(`
-        id, title, url, summary, content, image_url, thumbnail_url,
-        category, published_at, created_at, positivity_score, author, source_name
-      `)
-      .or('category.eq.Blindspot,is_blindspot.eq.true')
-      .eq('is_ad', false)
-      .eq('sentiment', 'positive')
-      .gte('created_at', regularCutoff) // 36-hour filter
-      .order('positivity_score', { ascending: false })
-      .order('published_at', { ascending: false })
-      .limit(limit);
-
-    if (error || !data || data.length === 0) {
-      console.warn('⚠️ No time-filtered Blindspot data, using Humanitarian as fallback');
-      
-      ({ data } = await supabase
-        .from('news')
-        .select(`
-          id, title, url, summary, content, image_url, thumbnail_url,
-          category, published_at, created_at, positivity_score, author, source_name
-        `)
-        .eq('category', 'Humanitarian & Rescue')
-        .eq('is_ad', false)
-        .eq('sentiment', 'positive')
-        .gte('positivity_score', 6)
-        .gte('created_at', regularCutoff) // 36-hour filter
-        .order('positivity_score', { ascending: false })
-        .limit(limit)
-      );
-    }
-
-    const timeFilteredData = applyTimeBasedFilter(data || []);
-    console.log(`🔍 Time-filtered blindspot stories: ${timeFilteredData.length}`);
-    
-    return timeFilteredData.map(item => ({
-      ...item,
-      title: cleanTitle(item.title),
-      summary: cleanSummary(item.summary),
-      content: cleanContent(item.content)
-    }));
-
-  } catch (error) {
-    console.error('❌ fetchBlindspotStoriesTimeFiltered error:', error);
-    return [];
-  }
-};
-
-// === ENHANCED HOMEPAGE DATA WITH TIME FILTERING ===
-export const fetchHomepageData = async (bypassCache = false) => {
-  try {
-    console.log('🚀 Fetching homepage data with time-based filtering...');
-    
-    const startTime = performance.now();
-    
-    // Fallback to individual queries with time filtering
-    const [trending, dailyReads, blindspot] = await Promise.all([
-      fetchTrendingNewsTimeFiltered(15, bypassCache),
-      fetchDailyReadsTimeFiltered(10, bypassCache), 
-      fetchBlindspotStoriesTimeFiltered(8, bypassCache)
-    ]);
+    // Cache the result
+    setCache(cacheKey, result);
 
     const endTime = performance.now();
-    console.log(`⚡ Total homepage fetch time: ${(endTime - startTime).toFixed(2)}ms`);
-    console.log(`📊 Time-filtered results: ${trending.length} trending, ${dailyReads.length} daily, ${blindspot.length} blindspot`);
-    
-    return { 
-      trending: trending || [], 
-      dailyReads: dailyReads || [], 
-      blindspot: blindspot || [] 
-    };
-  } catch (error) {
-    console.error('❌ Error in homepage fetch:', error);
-    return {
-      trending: [],
-      dailyReads: [],
-      blindspot: []
-    };
-  }
-};
+    console.log(`✅ Fetched and processed ${result.total} articles in ${(endTime - startTime).toFixed(2)}ms`);
 
-// === ENHANCED FORCE REFRESH WITH TIME FILTERING ===
-export const forceRefreshData = async () => {
-  try {
-    console.log('🔄 Force refreshing all data with time-based filtering...');
+    return result;
+
+  } catch (error) {
+    console.error('❌ Error fetching news:', error);
     
-    forceClearAllCaches();
-    
-    // Refresh materialized views if available
-    try {
-      await refreshMaterializedViews();
-      console.log('✅ Materialized views refreshed');
-    } catch (mvError) {
-      console.warn('⚠️ Could not refresh materialized views:', mvError);
+    // Return cached data as fallback
+    const fallback = getCache(cacheKey);
+    if (fallback) {
+      console.log('🔄 Using stale cache as fallback');
+      return fallback;
     }
     
-    const freshData = await fetchHomepageData(true);
-    
-    console.log('✅ Fresh time-filtered data fetched:', {
-      trending: freshData.trending?.length || 0,
-      dailyReads: freshData.dailyReads?.length || 0,
-      blindspot: freshData.blindspot?.length || 0
-    });
-    
-    return freshData;
-  } catch (error) {
-    console.error('❌ Failed to force refresh:', error);
-    throw error;
+    // Final fallback
+    return {
+      all: [],
+      trending: [],
+      dailyReads: [],
+      blindspot: [],
+      categories: {},
+      total: 0
+    };
   }
 };
 
-// === ENHANCED REACT HOOKS WITH TIME FILTERING ===
+// Helper function to get one story per category
+const getCategoryStories = (stories, categories, perCategory = 1) => {
+  const result = [];
+  
+  categories.forEach(category => {
+    const categoryStories = stories
+      .filter(story => story.category === category)
+      .slice(0, perCategory);
+    result.push(...categoryStories);
+  });
+  
+  return result;
+};
+
+// Helper function to group stories by category
+const groupByCategory = (stories) => {
+  return stories.reduce((acc, story) => {
+    const category = story.category || 'Other';
+    if (!acc[category]) acc[category] = [];
+    acc[category].push(story);
+    return acc;
+  }, {});
+};
+
+// SIMPLIFIED INDIVIDUAL FETCHERS (using cached data)
+export const fetchTrendingNews = async (limit = 15) => {
+  const allData = await fetchAllNewsData();
+  return allData.trending.slice(0, limit);
+};
+
+export const fetchDailyReads = async (limit = 10) => {
+  const allData = await fetchAllNewsData();
+  return allData.dailyReads.slice(0, limit);
+};
+
+export const fetchBlindspotStories = async (limit = 8) => {
+  const allData = await fetchAllNewsData();
+  return allData.blindspot.slice(0, limit);
+};
+
+export const fetchNews = async (category = 'All', retryCount = 0, bypassCache = false) => {
+  const allData = await fetchAllNewsData(bypassCache);
+  
+  if (!category || category.toLowerCase() === 'all') {
+    return allData.all;
+  }
+  
+  const normalizedCategory = category.toLowerCase().trim();
+  const categoryMap = {
+    'health': 'Health',
+    'innovation & tech': 'Innovation & Tech',
+    'environment & sustainability': 'Environment & Sustainability',
+    'education': 'Education',
+    'science & space': 'Science & Space',
+    'humanitarian & rescue': 'Humanitarian & Rescue',
+    'blindspot': 'Blindspot',
+    'viral': 'Viral'
+  };
+  
+  const exactCategory = categoryMap[normalizedCategory];
+  
+  if (exactCategory && allData.categories[exactCategory]) {
+    return allData.categories[exactCategory];
+  }
+  
+  // Fuzzy search if exact match not found
+  return allData.all.filter(story => 
+    story.category?.toLowerCase().includes(normalizedCategory) ||
+    story.title?.toLowerCase().includes(normalizedCategory)
+  );
+};
+
+// SIMPLIFIED HOMEPAGE DATA HOOK
 export const useHomepageData = () => {
   const [data, setData] = useState({
     trending: [],
@@ -440,26 +229,16 @@ export const useHomepageData = () => {
       setLoading(true);
       setError(null);
       
-      console.log('🏠 Fetching time-filtered homepage data...');
-      const startTime = performance.now();
+      const allData = await fetchAllNewsData(bypassCache);
       
-      const result = bypassCache ? 
-        await forceRefreshData() : 
-        await fetchHomepageData();
-      
-      const endTime = performance.now();
-      console.log(`⚡ Total time-filtered homepage fetch: ${(endTime - startTime).toFixed(2)}ms`);
-      
-      console.log('📊 Time-filtered homepage result:', {
-        trending: result.trending?.length || 0,
-        dailyReads: result.dailyReads?.length || 0, 
-        blindspot: result.blindspot?.length || 0
+      setData({
+        trending: allData.trending,
+        dailyReads: allData.dailyReads,
+        blindspot: allData.blindspot
       });
       
-      setData(result);
-      
     } catch (err) {
-      console.error('❌ Homepage data fetch error:', err);
+      console.error('❌ Homepage data error:', err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -469,8 +248,8 @@ export const useHomepageData = () => {
   useEffect(() => {
     fetchData();
     
-    // Auto-refresh more frequently to handle time-based filtering
-    const interval = setInterval(() => fetchData(false), 8 * 60 * 1000); // Every 8 minutes
+    // Refresh every 15 minutes (less frequent)
+    const interval = setInterval(() => fetchData(false), 15 * 60 * 1000);
     return () => clearInterval(interval);
   }, [fetchData]);
 
@@ -483,6 +262,7 @@ export const useHomepageData = () => {
   };
 };
 
+// SIMPLIFIED CATEGORY HOOK
 export const useCategoryNews = (category = 'All') => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -493,14 +273,11 @@ export const useCategoryNews = (category = 'All') => {
       setLoading(true);
       setError(null);
       
-      console.log(`🎯 Fetching time-filtered category news: ${category}`);
       const result = await fetchNews(category, 0, bypassCache);
-      
-      console.log(`📊 Time-filtered category ${category} result: ${result.length} articles`);
       setData(result);
       
     } catch (err) {
-      console.error(`❌ Category ${category} fetch error:`, err);
+      console.error(`❌ Category ${category} error:`, err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -510,8 +287,8 @@ export const useCategoryNews = (category = 'All') => {
   useEffect(() => {
     fetchData();
     
-    // Auto-refresh more frequently for time-sensitive content
-    const interval = setInterval(() => fetchData(false), 10 * 60 * 1000); // Every 10 minutes
+    // Refresh every 20 minutes for category pages
+    const interval = setInterval(() => fetchData(false), 20 * 60 * 1000);
     return () => clearInterval(interval);
   }, [fetchData]);
 
@@ -524,26 +301,34 @@ export const useCategoryNews = (category = 'All') => {
   };
 };
 
-// === UTILITY FUNCTIONS ===
+// UTILITY FUNCTIONS
+export const clearNewsCache = () => {
+  if (typeof window !== 'undefined') {
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith(CACHE_KEY) || key.startsWith(LAST_FETCHED_KEY)) {
+        localStorage.removeItem(key);
+      }
+    });
+    console.log('🧹 News cache cleared');
+  }
+};
+
+export const forceRefreshData = async () => {
+  clearNewsCache();
+  return await fetchAllNewsData(true);
+};
+
 export const checkNewsHealth = async () => {
   try {
     const { data, error } = await supabase
       .from('news')
-      .select('id, created_at, category')
-      .limit(10);
-
-    const now = Date.now();
-    const recentCount = data?.filter(article => {
-      const articleAge = now - new Date(article.created_at).getTime();
-      return articleAge <= TIME_FILTERS.regular;
-    }).length || 0;
+      .select('id, created_at')
+      .limit(5);
 
     return {
       status: error ? 'error' : 'healthy',
       error: error?.message || null,
       total_articles: data?.length || 0,
-      recent_articles: recentCount,
-      time_filtering_active: true,
       timestamp: new Date().toISOString()
     };
   } catch (err) {
@@ -555,36 +340,17 @@ export const checkNewsHealth = async () => {
   }
 };
 
-export const clearNewsCache = () => {
-  if (typeof window !== 'undefined') {
-    Object.keys(localStorage).forEach(key => {
-      if (key.startsWith(NEWS_CACHE_KEY) || key.startsWith(LAST_FETCHED_KEY)) {
-        localStorage.removeItem(key);
-      }
-    });
-    console.log('🧹 All time-filtered category caches cleared');
-  }
+// BACKWARD COMPATIBILITY
+export const fetchHomepageData = async (bypassCache = false) => {
+  const allData = await fetchAllNewsData(bypassCache);
+  return {
+    trending: allData.trending,
+    dailyReads: allData.dailyReads,
+    blindspot: allData.blindspot
+  };
 };
 
-export const refreshMaterializedViews = async () => {
-  try {
-    const { data, error } = await supabase.rpc('refresh_homepage_views');
-    
-    if (error) throw error;
-    
-    console.log('🔄 Materialized views refreshed:', data);
-    return { success: true, message: data };
-  } catch (error) {
-    console.error('❌ Failed to refresh materialized views:', error);
-    return { success: false, error: error.message };
-  }
-};
-
-// === BACKWARD COMPATIBILITY EXPORTS ===
-// These maintain the original function names that App.jsx expects
-export const fetchTrendingNews = fetchTrendingNewsTimeFiltered;
-export const fetchDailyReads = fetchDailyReadsTimeFiltered; 
-export const fetchBlindspotStories = fetchBlindspotStoriesTimeFiltered;
-
-// Export the time filter configuration
-export { TIME_FILTERS };
+// Remove unused exports and functions
+export const fetchTrendingNewsTimeFiltered = fetchTrendingNews;
+export const fetchDailyReadsTimeFiltered = fetchDailyReads;
+export const fetchBlindspotStoriesTimeFiltered = fetchBlindspotStories;

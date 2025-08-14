@@ -1,97 +1,9 @@
-// Complete Corrected utils.js - Enhanced Text Cleaning + Better Summarization + Image Functions
+// Fixed utils.js - Syntax Error Corrected
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
 export function cn(...inputs) {
-  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`
-    <svg width="800" height="600" viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="categoryGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" style="stop-color:${info.color};stop-opacity:0.8" />
-          <stop offset="100%" style="stop-color:${info.color};stop-opacity:0.4" />
-        </linearGradient>
-        <filter id="glow">
-          <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-          <feMerge>
-            <feMergeNode in="coloredBlur"/>
-            <feMergeNode in="SourceGraphic"/>
-          </feMerge>
-        </filter>
-      </defs>
-      
-      <!-- Background -->
-      <rect width="800" height="600" fill="${info.bgColor}"/>
-      
-      <!-- Gradient overlay -->
-      <rect width="800" height="600" fill="url(#categoryGrad)"/>
-      
-      <!-- Decorative elements -->
-      <circle cx="150" cy="150" r="30" fill="white" opacity="0.1"/>
-      <circle cx="650" cy="100" r="40" fill="white" opacity="0.15"/>
-      <circle cx="700" cy="450" r="25" fill="white" opacity="0.1"/>
-      <circle cx="100" cy="500" r="35" fill="white" opacity="0.12"/>
-      
-      <!-- Main circle for emoji -->
-      <circle cx="400" cy="250" r="120" fill="white" opacity="0.25"/>
-      <circle cx="400" cy="250" r="90" fill="white" opacity="0.35"/>
-      <circle cx="400" cy="250" r="70" fill="white" opacity="0.45"/>
-      
-      <!-- Emoji -->
-      <text x="400" y="280" text-anchor="middle" font-size="80" filter="url(#glow)">${info.emoji}</text>
-      
-      <!-- Title -->
-      <text x="400" y="420" text-anchor="middle" fill="white" font-family="system-ui, -apple-system, sans-serif" font-size="36" font-weight="700" filter="url(#glow)">${info.title}</text>
-      
-      <!-- Subtitle -->
-      <text x="400" y="460" text-anchor="middle" fill="white" font-family="system-ui, -apple-system, sans-serif" font-size="18" opacity="0.9">Positive Stories</text>
-      
-      <!-- Bottom accent line -->
-      <rect x="250" y="520" width="300" height="4" fill="white" opacity="0.6" rx="2"/>
-    </svg>
-  `)}`;
-};
-
-/**
- * Enhanced image source validation
- * @param {string} src - Image source URL
- * @returns {boolean} - Whether the source is valid
- */
-export const isValidImageSource = (src) => {
-  if (!src || typeof src !== 'string') return false;
-  
-  const cleanSrc = src.trim();
-  return cleanSrc &&
-         cleanSrc !== 'null' && 
-         cleanSrc !== 'undefined' && 
-         !cleanSrc.includes('undefined') &&
-         (cleanSrc.startsWith('http') || cleanSrc.startsWith('data:')) &&
-         !cleanSrc.includes('placeholder.com/0x0'); // Avoid broken placeholder URLs
-};
-
-/**
- * Get the best available image source with smart fallbacks
- * @param {Object} article - Article object with image URLs
- * @returns {string|null} - Best available image source
- */
-export const getBestImageSource = (article) => {
-  if (!article) return null;
-  
-  const sources = [
-    article.image_url,
-    article.thumbnail_url,
-    article.featured_image,
-    article.image
-  ];
-  
-  // Find the first valid source
-  for (const src of sources) {
-    if (isValidImageSource(src)) {
-      return src;
-    }
-  }
-  
-  return null;
-}; twMerge(clsx(inputs));
+  return twMerge(clsx(inputs));
 }
 
 /**
@@ -860,4 +772,92 @@ export const createCategorySVG = (category) => {
     title: 'Good News' 
   };
   
-  return
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`
+    <svg width="800" height="600" viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="categoryGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:${info.color};stop-opacity:0.8" />
+          <stop offset="100%" style="stop-color:${info.color};stop-opacity:0.4" />
+        </linearGradient>
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+          <feMerge>
+            <feMergeNode in="coloredBlur"/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
+      </defs>
+      
+      <!-- Background -->
+      <rect width="800" height="600" fill="${info.bgColor}"/>
+      
+      <!-- Gradient overlay -->
+      <rect width="800" height="600" fill="url(#categoryGrad)"/>
+      
+      <!-- Decorative elements -->
+      <circle cx="150" cy="150" r="30" fill="white" opacity="0.1"/>
+      <circle cx="650" cy="100" r="40" fill="white" opacity="0.15"/>
+      <circle cx="700" cy="450" r="25" fill="white" opacity="0.1"/>
+      <circle cx="100" cy="500" r="35" fill="white" opacity="0.12"/>
+      
+      <!-- Main circle for emoji -->
+      <circle cx="400" cy="250" r="120" fill="white" opacity="0.25"/>
+      <circle cx="400" cy="250" r="90" fill="white" opacity="0.35"/>
+      <circle cx="400" cy="250" r="70" fill="white" opacity="0.45"/>
+      
+      <!-- Emoji -->
+      <text x="400" y="280" text-anchor="middle" font-size="80" filter="url(#glow)">${info.emoji}</text>
+      
+      <!-- Title -->
+      <text x="400" y="420" text-anchor="middle" fill="white" font-family="system-ui, -apple-system, sans-serif" font-size="36" font-weight="700" filter="url(#glow)">${info.title}</text>
+      
+      <!-- Subtitle -->
+      <text x="400" y="460" text-anchor="middle" fill="white" font-family="system-ui, -apple-system, sans-serif" font-size="18" opacity="0.9">Positive Stories</text>
+      
+      <!-- Bottom accent line -->
+      <rect x="250" y="520" width="300" height="4" fill="white" opacity="0.6" rx="2"/>
+    </svg>
+  `)}`;
+};
+
+/**
+ * Enhanced image source validation
+ * @param {string} src - Image source URL
+ * @returns {boolean} - Whether the source is valid
+ */
+export const isValidImageSource = (src) => {
+  if (!src || typeof src !== 'string') return false;
+  
+  const cleanSrc = src.trim();
+  return cleanSrc &&
+         cleanSrc !== 'null' && 
+         cleanSrc !== 'undefined' && 
+         !cleanSrc.includes('undefined') &&
+         (cleanSrc.startsWith('http') || cleanSrc.startsWith('data:')) &&
+         !cleanSrc.includes('placeholder.com/0x0'); // Avoid broken placeholder URLs
+};
+
+/**
+ * Get the best available image source with smart fallbacks
+ * @param {Object} article - Article object with image URLs
+ * @returns {string|null} - Best available image source
+ */
+export const getBestImageSource = (article) => {
+  if (!article) return null;
+  
+  const sources = [
+    article.image_url,
+    article.thumbnail_url,
+    article.featured_image,
+    article.image
+  ];
+  
+  // Find the first valid source
+  for (const src of sources) {
+    if (isValidImageSource(src)) {
+      return src;
+    }
+  }
+  
+  return null;
+};

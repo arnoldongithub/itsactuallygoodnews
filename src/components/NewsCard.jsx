@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import SourceBadge from '@/components/SourceBadge';
 
 // Safe import with fallbacks for build compatibility
 let getCategoryImageSources, createCategorySVG;
@@ -14,19 +15,15 @@ try {
 // Fallback functions for build safety
 const safeCategoryImages = getCategoryImageSources || ((category, storyId) => {
   const safeId = Math.abs(String(storyId).split('').reduce((a, b) => a + b.charCodeAt(0), 0));
-  
   const categoryKeywords = {
-    'Health': 'health,medical,wellness',
-    'Innovation & Tech': 'technology,innovation,computer',
-    'Environment & Sustainability': 'environment,nature,sustainability',
-    'Education': 'education,learning,school',
-    'Science & Space': 'science,space,astronomy',
-    'Humanitarian & Rescue': 'humanitarian,help,community',
+    'Movement Tracker + Accountability': 'protest,democracy,policy',
+    'Capitalism & Inequality Watch': 'economy,inequality,workers',
+    'Justice Lens': 'justice,rights,courts',
+    'Hope in Struggle': 'community,solidarity,grassroots',
+    'AI Watch': 'technology,ai,robot',
     'Blindspot': 'hidden,discover,stories'
   };
-  
-  const keywords = categoryKeywords[category] || 'news,positive,good';
-  
+  const keywords = categoryKeywords[category] || 'news,progress';
   return [
     `https://source.unsplash.com/800x600/?${keywords}&random=${safeId}`,
     `https://picsum.photos/800/600?random=${safeId + 100}`,
@@ -36,17 +33,14 @@ const safeCategoryImages = getCategoryImageSources || ((category, storyId) => {
 
 const safeCategorySVG = createCategorySVG || ((category) => {
   const categoryInfo = {
-    'Health': { emoji: '🏥', color: '#22c55e', title: 'Health News' },
-    'Innovation & Tech': { emoji: '💻', color: '#3b82f6', title: 'Tech News' },
-    'Environment & Sustainability': { emoji: '🌱', color: '#10b981', title: 'Environment' },
-    'Education': { emoji: '📚', color: '#8b5cf6', title: 'Education' },
-    'Science & Space': { emoji: '🔬', color: '#6366f1', title: 'Science' },
-    'Humanitarian & Rescue': { emoji: '🤝', color: '#ef4444', title: 'Humanitarian' },
+    'Movement Tracker + Accountability': { emoji: '📣', color: '#0ea5e9', title: 'Movement Tracker' },
+    'Capitalism & Inequality Watch': { emoji: '📉', color: '#ef4444', title: 'Inequality Watch' },
+    'Justice Lens': { emoji: '⚖️', color: '#22c55e', title: 'Justice Lens' },
+    'Hope in Struggle': { emoji: '🌟', color: '#a855f7', title: 'Hope in Struggle' },
+    'AI Watch': { emoji: '🤖', color: '#f59e0b', title: 'AI Watch' },
     'Blindspot': { emoji: '🔍', color: '#f59e0b', title: 'Blindspot' }
   };
-  
-  const info = categoryInfo[category] || { emoji: '📰', color: '#6b7280', title: 'Good News' };
-  
+  const info = categoryInfo[category] || { emoji: '📰', color: '#6b7280', title: 'News' };
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`
     <svg width="800" height="600" viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
       <defs>
@@ -60,12 +54,12 @@ const safeCategorySVG = createCategorySVG || ((category) => {
       <circle cx="400" cy="200" r="60" fill="white" opacity="0.3"/>
       <text x="400" y="220" text-anchor="middle" font-size="60">${info.emoji}</text>
       <text x="400" y="380" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="32" font-weight="700">${info.title}</text>
-      <text x="400" y="420" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="18" opacity="0.9">Positive Stories</text>
+      <text x="400" y="420" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="18" opacity="0.9">Stories that matter</text>
     </svg>
   `)}`;
 });
 
-// ENHANCED BulletproofImage Component with Category-Specific Images
+// ENHANCED BulletproofImage Component (yours, preserved)
 const BulletproofImage = ({ 
   src, 
   alt, 
@@ -77,59 +71,38 @@ const BulletproofImage = ({
   const [isLoading, setIsLoading] = useState(true);
   const [errorCount, setErrorCount] = useState(0);
 
-  // Get category-specific fallback images using safe functions
   const getReliableFallbacks = (category, storyId) => {
     const categoryImages = safeCategoryImages(category, storyId);
     const svgFallback = safeCategorySVG(category);
-    
     return [
-      // Try original source first (if valid)
       src && typeof src === 'string' && src.startsWith('http') ? src : null,
-      
-      // Category-specific images
       ...categoryImages,
-      
-      // Final SVG fallback (guaranteed to work)
       svgFallback
-    ].filter(source => source);
+    ].filter(Boolean);
   };
 
-  // Initialize image source
   useEffect(() => {
     setErrorCount(0);
     setIsLoading(true);
-    
     const fallbacks = getReliableFallbacks(category, storyId);
-    if (fallbacks.length > 0) {
-      setCurrentSrc(fallbacks[0]);
-    }
+    if (fallbacks.length > 0) setCurrentSrc(fallbacks[0]);
   }, [src, category, storyId]);
 
-  const handleImageLoad = () => {
-    setIsLoading(false);
-  };
+  const handleImageLoad = () => setIsLoading(false);
 
   const handleImageError = () => {
     const fallbacks = getReliableFallbacks(category, storyId);
     const nextIndex = errorCount + 1;
-    
     if (nextIndex < fallbacks.length) {
-      console.log(`🔄 Image error, trying category fallback ${nextIndex + 1}/${fallbacks.length} for ${category}`);
       setCurrentSrc(fallbacks[nextIndex]);
       setErrorCount(nextIndex);
       setIsLoading(true);
     } else {
-      console.log(`✅ Using final SVG fallback for ${category}`);
       setIsLoading(false);
     }
   };
 
-  // Sanitize className to prevent invalid CSS class names
-  const safeClassName = typeof className === 'string' 
-    ? className.replace(/[^\w\s\-_]/g, '') 
-    : '';
-
-  // Sanitize alt text
+  const safeClassName = typeof className === 'string' ? className.replace(/[^\w\s\-_]/g, '') : '';
   const safeAlt = String(alt || `${category} news story`).replace(/[^\w\s\-.,!?]/g, '');
 
   return (
@@ -144,8 +117,6 @@ const BulletproofImage = ({
           loading="lazy"
         />
       )}
-      
-      {/* Enhanced loading spinner with category color */}
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="relative">
@@ -156,8 +127,6 @@ const BulletproofImage = ({
           </div>
         </div>
       )}
-      
-      {/* Category indicator for debugging */}
       {process.env.NODE_ENV === 'development' && errorCount > 0 && (
         <div className="absolute top-2 right-2 bg-blue-500 text-white text-xs px-2 py-1 rounded opacity-75">
           {category} #{errorCount + 1}
@@ -169,10 +138,10 @@ const BulletproofImage = ({
 
 const NewsCard = ({ article, isBookmarked, onBookmarkToggle }) => {
   const location = useLocation();
-  const navigate = useNavigate(); // ✅ ADD THIS HOOK
-  
+  const navigate = useNavigate();
+
   if (!article) return null;
-  
+
   const {
     id,
     category,
@@ -184,57 +153,42 @@ const NewsCard = ({ article, isBookmarked, onBookmarkToggle }) => {
     ad_link_url,
     summary,
     source_name,
-    positivity_score
+    positivity_score // kept but not rendered visibly anymore
   } = article;
 
-  // ✅ SAFE NAVIGATION HANDLER
   const handleStoryClick = useCallback((e) => {
     e.preventDefault();
     e.stopPropagation();
-    
-    if (!id) {
-      console.error('❌ No article ID provided for navigation');
-      return;
-    }
-    
-    console.log('🚀 Navigating to story:', id, title?.substring(0, 50));
-    
+    if (!id) return;
     try {
       navigate(`/article/${id}`);
-    } catch (error) {
-      console.error('❌ React Router navigation failed:', error);
-      // Fallback to direct navigation
+    } catch {
       window.location.href = `/article/${id}`;
     }
-  }, [id, navigate, title]);
+  }, [id, navigate]);
 
-  // Enhanced fallback logic with sanitization
   const getImageSrc = () => {
     const sources = [image_url, thumbnail_url].filter(src => {
       if (!src || typeof src !== 'string') return false;
       const cleanSrc = src.trim();
       return cleanSrc &&
-             cleanSrc !== 'null' && 
-             cleanSrc !== 'undefined' && 
+             cleanSrc !== 'null' &&
+             cleanSrc !== 'undefined' &&
              !cleanSrc.includes('undefined') &&
              (cleanSrc.startsWith('http') || cleanSrc.startsWith('data:'));
     });
-    
     return sources[0] || null;
   };
-
   const finalImageSrc = getImageSrc();
-  
-  // Check if this is a category page
+
   const isCategoryPage = location.pathname.includes('/category');
-  
-  // Sanitize text content to prevent invalid characters and fix spacing
+
   const safeTitle = String(title || '').replace(/[^\w\s\-.,!?'"]/g, '').replace(/\s+/g, ' ').trim();
-  const safeCategory = String(category || '').replace(/[^\w\s&]/g, '');
+  const safeCategory = String(category || '').replace(/[^\w\s&+]/g, '');
   const safeSummary = String(summary || '').replace(/[^\w\s\-.,!?'"]/g, '').replace(/\s+/g, ' ').trim();
   const safeSourceName = String(source_name || '').replace(/[^\w\s.-]/g, '');
-  
-  // Handle ads
+
+  // Ads (unchanged layout)
   if (is_ad) {
     return (
       <a href={ad_link_url || "#"} target="_blank" rel="noopener noreferrer" className="block">
@@ -250,19 +204,15 @@ const NewsCard = ({ article, isBookmarked, onBookmarkToggle }) => {
             {isCategoryPage ? (
               <>
                 <div className="wide-rectangle-category-borderless">Sponsored</div>
-                <h3 className="wide-rectangle-title-borderless font-bold">
-                  This ad supports the platform
-                </h3>
+                <h3 className="wide-rectangle-title-borderless font-bold">This ad supports the platform</h3>
                 <p className="wide-rectangle-summary-borderless">
-                  Thank you for supporting quality journalism and positive news.
+                  Thank you for supporting quality journalism and important stories.
                 </p>
               </>
             ) : (
               <>
                 <div className="newscard-category-borderless">Sponsored</div>
-                <h3 className="newscard-title-borderless font-bold">
-                  This ad supports the platform
-                </h3>
+                <h3 className="newscard-title-borderless font-bold">This ad supports the platform</h3>
               </>
             )}
           </div>
@@ -270,14 +220,14 @@ const NewsCard = ({ article, isBookmarked, onBookmarkToggle }) => {
       </a>
     );
   }
-  
-  // WIDE RECTANGLE LAYOUT for category pages (100% width, borderless)
+
+  // Category page layout
   if (isCategoryPage) {
     return (
       <article className="wide-rectangle-card-borderless group">
         <div 
           className="wide-rectangle-image-container-borderless cursor-pointer"
-          onClick={handleStoryClick} // ✅ FIXED: Use click handler instead of href
+          onClick={handleStoryClick}
         >
           <BulletproofImage
             src={finalImageSrc}
@@ -287,53 +237,45 @@ const NewsCard = ({ article, isBookmarked, onBookmarkToggle }) => {
             storyId={id}
           />
         </div>
-        
+
         <div className="wide-rectangle-content-borderless">
-          {/* Category badge */}
           {safeCategory && (
             <div className="wide-rectangle-category-borderless">
               {safeCategory}
             </div>
           )}
-          
-          {/* Title - FIXED: Use button instead of anchor */}
+
           <h3 className="wide-rectangle-title-borderless font-bold">
-            <button 
-              onClick={handleStoryClick} // ✅ FIXED: Safe navigation
+            <button
+              onClick={handleStoryClick}
               className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-bold text-left w-full"
               style={{ fontWeight: '700' }}
             >
               {safeTitle}
             </button>
           </h3>
-          
-          {/* Summary */}
+
           {safeSummary && (
             <p className="wide-rectangle-summary-borderless">
               {safeSummary.length > 150 ? `${safeSummary.substring(0, 150)}...` : safeSummary}
             </p>
           )}
-          
-          {/* Source & Positivity Bar */}
-          <div className="wide-rectangle-meta-borderless">
-            <div className="source-info">
-              <div className="source-logo">
-                {safeSourceName ? safeSourceName.charAt(0).toUpperCase() : 'N'}
-              </div>
+
+          {/* NEW: neutral Source badge replaces positivity UI */}
+          <div className="wide-rectangle-meta-borderless flex items-center justify-between mt-2">
+            <div className="source-info flex items-center gap-2">
+              <div className="source-logo">{safeSourceName ? safeSourceName.charAt(0).toUpperCase() : 'N'}</div>
               <span className="source-name">
                 {safeSourceName ? safeSourceName.replace('www.', '').replace('.com', '') : 'Unknown'}
               </span>
-            </div>
-            <div className="positivity-score">
-              Positivity: {Math.round(positivity_score || 0)}
+              <SourceBadge name={safeSourceName} />
             </div>
           </div>
         </div>
-        
-        {/* Read more arrow - FIXED: Use button instead of anchor */}
+
         <div className="wide-rectangle-arrow-borderless">
           <button 
-            onClick={handleStoryClick} // ✅ FIXED: Safe navigation
+            onClick={handleStoryClick}
             className="inline-flex items-center text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors"
           >
             <span className="mr-2">Read More</span>
@@ -345,13 +287,10 @@ const NewsCard = ({ article, isBookmarked, onBookmarkToggle }) => {
       </article>
     );
   }
-  
-  // Default newscard for other pages (homepage, etc.) - FIXED: Use click handler
+
+  // Default card layout
   return (
-    <div 
-      className="newscard-borderless cursor-pointer" 
-      onClick={handleStoryClick} // ✅ FIXED: Safe navigation
-    >
+    <div className="newscard-borderless cursor-pointer" onClick={handleStoryClick}>
       <BulletproofImage
         src={finalImageSrc}
         alt={safeTitle}
@@ -361,21 +300,22 @@ const NewsCard = ({ article, isBookmarked, onBookmarkToggle }) => {
       />
       <div className="newscard-overlay-borderless">
         {safeCategory && (
-          <div className="newscard-category-borderless">
-            {safeCategory}
-          </div>
+          <div className="newscard-category-borderless">{safeCategory}</div>
         )}
         <h3 className="newscard-title-borderless font-bold">
-          <span // ✅ FIXED: Use span instead of anchor
-            className="hover:text-blue-300 transition-colors font-bold"
-            style={{ fontWeight: '700' }}
-          >
+          <span className="hover:text-blue-300 transition-colors font-bold" style={{ fontWeight: '700' }}>
             {safeTitle}
           </span>
         </h3>
+
+        {/* NEW: Source badge under title for default cards */}
+        <div className="mt-2">
+          <SourceBadge name={safeSourceName} />
+        </div>
       </div>
     </div>
   );
 };
 
 export default NewsCard;
+

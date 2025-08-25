@@ -6,14 +6,14 @@ import { useToast } from "@/components/ui/use-toast";
 import Logo from '@/components/Logo';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
+// UPDATED categories (labels preserved for URL; adds AI Watch)
 const categories = [
   'All',
-  'Health',
-  'Innovation & Tech',
-  'Environment & Sustainability',
-  'Education',
-  'Science & Space',
-  'Humanitarian & Rescue'
+  'Movement Tracker + Accountability',
+  'Capitalism & Inequality Watch',
+  'Justice Lens',
+  'Hope in Struggle',
+  'AI Watch',
 ];
 
 const Header = ({ isDarkMode, setIsDarkMode, setIsDonateModalOpen, streak }) => {
@@ -22,26 +22,21 @@ const Header = ({ isDarkMode, setIsDarkMode, setIsDonateModalOpen, streak }) => 
   const navigate = useNavigate();
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const [isDonateDropdownOpen, setIsDonateDropdownOpen] = useState(false);
-  
-  // FIXED: Get current category from URL path, not query params
+
+  // Get current category from URL path (/ or /category/:name)
   const getCurrentCategory = () => {
     if (location.pathname === '/') return 'All';
     const match = location.pathname.match(/\/category\/(.+)/);
-    if (match) {
-      return decodeURIComponent(match[1]);
-    }
+    if (match) return decodeURIComponent(match[1]);
     return 'All';
   };
-  
   const currentCategory = getCurrentCategory();
 
-  // FIXED: Navigate to proper category routes
+  // Build route for a given label (keeps your /category/:name scheme)
+  const routeFor = (cat) => (cat === 'All' ? '/' : `/category/${encodeURIComponent(cat)}`);
+
   const handleCategoryClick = (cat) => {
-    if (cat === 'All') {
-      navigate('/');
-    } else {
-      navigate(`/category/${encodeURIComponent(cat)}`);
-    }
+    navigate(routeFor(cat));
   };
 
   const handleUnsupportedFeature = () => {
@@ -58,8 +53,8 @@ const Header = ({ isDarkMode, setIsDarkMode, setIsDonateModalOpen, streak }) => 
       gofundme: 'https://www.gofundme.com',
       indiegogo: 'https://www.indiegogo.com',
       paypal: 'https://www.paypal.com',
+      kickstarter: 'https://www.kickstarter.com',
     };
-    
     window.open(donationUrls[platform], '_blank');
     setIsDonateDropdownOpen(false);
   };
@@ -75,19 +70,17 @@ const Header = ({ isDarkMode, setIsDarkMode, setIsDonateModalOpen, streak }) => 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-header dark:bg-black/80 backdrop-blur-sm supports-[backdrop-filter]:bg-header/80">
       <div className="w-full max-w-none px-4 py-3">
-        {/* FIXED: Desktop layout with proper spacing */}
+        {/* Desktop */}
         <div className="hidden lg:flex flex-col space-y-4">
-          
-          {/* Top row - Logo, Search, Actions, Theme */}
+          {/* Top row */}
           <div className="flex items-center justify-between w-full">
-            {/* Logo Section */}
             <div className="flex items-center flex-shrink-0 min-w-0">
               <Link to="/" className="w-10 h-10 flex-shrink-0">
                 <Logo />
               </Link>
             </div>
 
-            {/* Desktop Search - Always visible */}
+            {/* Search */}
             <div className="flex flex-1 max-w-md mx-4">
               <div className="relative w-full">
                 <Input
@@ -102,10 +95,10 @@ const Header = ({ isDarkMode, setIsDarkMode, setIsDonateModalOpen, streak }) => 
               </div>
             </div>
 
-            {/* Desktop Right Section */}
+            {/* Actions */}
             <div className="flex items-center space-x-3">
               <div className="flex space-x-2">
-                {/* Donate Dropdown */}
+                {/* Donate dropdown */}
                 <div className="relative">
                   <Button
                     variant="default"
@@ -117,7 +110,7 @@ const Header = ({ isDarkMode, setIsDarkMode, setIsDonateModalOpen, streak }) => 
                     <span>Donate</span>
                     <ChevronDown className="h-3 w-3 ml-1" />
                   </Button>
-                  
+
                   {isDonateDropdownOpen && (
                     <div className="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50">
                       <div className="py-1">
@@ -179,7 +172,7 @@ const Header = ({ isDarkMode, setIsDarkMode, setIsDonateModalOpen, streak }) => 
             </div>
           </div>
 
-          {/* FIXED: Categories and Streak on same level with proper spacing */}
+          {/* Categories + Streak */}
           <div className="flex items-center justify-between w-full pt-4">
             <nav className="flex space-x-3 overflow-x-auto scrollbar-none">
               {categories.map(cat => {
@@ -189,8 +182,8 @@ const Header = ({ isDarkMode, setIsDarkMode, setIsDonateModalOpen, streak }) => 
                     key={cat}
                     onClick={() => handleCategoryClick(cat)}
                     className={`px-4 py-2 text-sm rounded-full whitespace-nowrap flex-shrink-0 transition-all duration-200 ${
-                      active 
-                        ? 'bg-accent text-white shadow-sm' 
+                      active
+                        ? 'bg-accent text-white shadow-sm'
                         : 'bg-background/50 dark:bg-white/10 text-foreground dark:text-muted-foreground hover:bg-accent/20'
                     }`}
                   >
@@ -200,7 +193,6 @@ const Header = ({ isDarkMode, setIsDarkMode, setIsDonateModalOpen, streak }) => 
               })}
             </nav>
 
-            {/* Desktop Streak Indicator */}
             {streak > 0 && (
               <div className="flex items-center space-x-2 bg-orange-100 dark:bg-orange-900 px-3 py-2 rounded-lg flex-shrink-0">
                 <span className="text-orange-500">🔥</span>
@@ -211,19 +203,16 @@ const Header = ({ isDarkMode, setIsDarkMode, setIsDonateModalOpen, streak }) => 
           </div>
         </div>
 
-        {/* FIXED: Mobile layout with proper spacing */}
+        {/* Mobile */}
         <div className="lg:hidden flex flex-col space-y-4">
-          
-          {/* Top row - Logo, Search, Theme */}
+          {/* Top row */}
           <div className="flex items-center justify-between w-full">
-            {/* Logo Section */}
             <div className="flex items-center flex-shrink-0 min-w-0">
               <Link to="/" className="w-8 h-8 flex-shrink-0">
                 <Logo />
               </Link>
             </div>
 
-            {/* Mobile Search - Expandable */}
             <div className="flex items-center space-x-2">
               {isSearchExpanded ? (
                 <div className="flex items-center space-x-2 flex-1">
@@ -274,11 +263,11 @@ const Header = ({ isDarkMode, setIsDarkMode, setIsDonateModalOpen, streak }) => 
             </div>
           </div>
 
-          {/* FIXED: Mobile Action Buttons Row with proper spacing */}
+          {/* Mobile actions */}
           {!isSearchExpanded && (
             <div className="flex items-center justify-between w-full pt-4">
               <div className="flex space-x-3 flex-1">
-                {/* Mobile Donate Dropdown */}
+                {/* Donate */}
                 <div className="relative flex-1">
                   <Button
                     variant="default"
@@ -290,7 +279,7 @@ const Header = ({ isDarkMode, setIsDarkMode, setIsDonateModalOpen, streak }) => 
                     <span>Donate</span>
                     <ChevronDown className="h-3 w-3 ml-1" />
                   </Button>
-                  
+
                   {isDonateDropdownOpen && (
                     <div className="absolute top-full left-0 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50">
                       <div className="py-1">
@@ -307,6 +296,10 @@ const Header = ({ isDarkMode, setIsDarkMode, setIsDonateModalOpen, streak }) => 
                           Indiegogo
                         </button>
                         <button onClick={() => handleDonationPlatform('paypal')} className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center">
+                          <ExternalLink className="mr-2 h-4 w-4" />
+                          PayPal
+                        </button>
+                        <button onClick={() => handleDonationPlatform('kickstarter')} className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center">
                           <ExternalLink className="mr-2 h-4 w-4" />
                           Kickstarter
                         </button>
@@ -336,7 +329,6 @@ const Header = ({ isDarkMode, setIsDarkMode, setIsDonateModalOpen, streak }) => 
                 </Button>
               </div>
 
-              {/* Mobile Streak Indicator */}
               {streak > 0 && (
                 <div className="flex items-center space-x-1 ml-3 flex-shrink-0 bg-orange-100 dark:bg-orange-900 px-2 py-1 rounded-full">
                   <span className="text-orange-500 text-sm">🔥</span>
@@ -346,10 +338,9 @@ const Header = ({ isDarkMode, setIsDarkMode, setIsDonateModalOpen, streak }) => 
             </div>
           )}
 
-          {/* Mobile Separator Line */}
           <div className="border-t border-white/30"></div>
 
-          {/* Mobile Categories Section */}
+          {/* Mobile categories */}
           <div className="flex w-full">
             <nav className="flex space-x-3 overflow-x-auto scrollbar-none w-full pb-1">
               {categories.map(cat => {
@@ -359,8 +350,8 @@ const Header = ({ isDarkMode, setIsDarkMode, setIsDonateModalOpen, streak }) => 
                     key={cat}
                     onClick={() => handleCategoryClick(cat)}
                     className={`px-4 py-2 text-sm rounded-full whitespace-nowrap flex-shrink-0 transition-all duration-200 ${
-                      active 
-                        ? 'bg-accent text-white shadow-sm' 
+                      active
+                        ? 'bg-accent text-white shadow-sm'
                         : 'bg-background/50 dark:bg-white/10 text-foreground dark:text-muted-foreground hover:bg-accent/20'
                     }`}
                   >
@@ -371,10 +362,10 @@ const Header = ({ isDarkMode, setIsDarkMode, setIsDonateModalOpen, streak }) => 
             </nav>
           </div>
         </div>
-
       </div>
     </header>
   );
 };
 
 export default Header;
+

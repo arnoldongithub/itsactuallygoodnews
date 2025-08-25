@@ -1,164 +1,264 @@
-// Complete TrendingStories.jsx - Fixed with Safe Navigation
-import React, { useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { cleanTitle, cleanSummary } from '@/lib/utils';
-import InlineAd from './InlineAd';
-import SourcePositivityBar from './SourcePositivityBar';
+// src/components/TrendingStories.jsx
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Card } from '../ui/card';
+import { Spinner } from '../ui/spinner';
+import {
+  cleanTitle,
+  cleanSummary,
+  getBestImageSource,
+  createCategorySVG,
+} from '../lib/utils';
 
-const TrendingStories = ({ stories }) => {
-  const { category } = useParams();
-  const navigate = useNavigate(); // ✅ ADD NAVIGATION HOOK
-  
-  // ✅ SAFE NAVIGATION HANDLER
-  const handleStoryClick = useCallback((e, story) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    if (!story || !story.id) {
-      console.error('❌ Invalid story data for navigation:', story);
-      return;
+const TrendingStories = ({ items = [] }) => {
+  const navigate = useNavigate();
+  const [selectedStory, setSelectedStory] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Auto-rotate featured stories every 8 seconds
+  useEffect(() => {
+    if (items.length > 1) {
+      const id = setInterval(() => {
+        setSelectedStory((prev) => (prev + 1) % items.length);
+      }, 8000);
+      return () => clearInterval(id);
     }
-    
-    console.log('🚀 Trending story navigation:', story.id, story.title?.substring(0, 50));
-    
-    try {
-      navigate(`/article/${story.id}`);
-    } catch (error) {
-      console.error('❌ React Router navigation failed:', error);
-      // Fallback to direct navigation
-      window.location.href = `/article/${story.id}`;
-    }
-  }, [navigate]);
-  
-  if (!stories || stories.length === 0) {
+  }, [items.length]);
+
+  const handleStoryClick = useCallback(
+    (story) => {
+      if (story?.id) navigate(`/article/${story.id}`);
+    },
+    [navigate]
+  );
+
+  const getBadgeClass = useCallback(() => 'atlantic-category-indicator', []);
+
+  const featuredStory = useMemo(
+    () => (items?.length ? items[selectedStory] || items[0] : null),
+    [items, selectedStory]
+  );
+
+  const getImage = useCallback((story) => {
+    const best = getBestImageSource(story);
+    if (best) return { type: 'img', src: best };
+    const cat = story?.category || 'Trending';
+    return { type: 'svg', src: createCategorySVG(cat) };
+  }, []);
+
+  if (!items?.length) {
     return (
-      <div className="text-center py-12">
-        <div className="text-gray-500 dark:text-gray-400 mb-4">
-          <svg className="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-          </svg>
-          <p className="text-lg font-medium">No trending stories available</p>
-          <p className="text-sm mt-1">Check back soon for the latest positive news!</p>
+      <div className="flex-1 flex items-center justify-center min-h-[500px]">
+        <div className="text-center space-y-4">
+          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto">
+            <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-semibold text-gray-600">No Stories Available</h3>
+          <p className="text-sm text-gray-500">Check back soon for the latest trending news</p>
         </div>
       </div>
     );
   }
 
-  // Filter stories by category if one is active
-  const filteredStories = category
-    ? stories.filter((story) => story.category?.toLowerCase() === category.toLowerCase())
-    : stories;
-
-  // Split into viral and regular stories with better detection
-  const viralStories = filteredStories
-    .filter((story) => 
-      (story.virality_score && story.virality_score >= 7) || 
-      (story.viral_score && story.viral_score >= 8) ||
-      (story.positivity_score >= 9)
-    )
-    .slice(0, 3); // Max 3 viral stories for better layout
-
-  const regularStories = filteredStories
-    .filter((story) => !viralStories.includes(story))
-    .slice(0, 12); // Increased to 12 for more content
-
   return (
-    <div className="trending-stories-borderless">
-      {/* Viral Stories Section - NO "VIRAL GOOD NEWS" TITLE */}
-      {viralStories.length > 0 && (
-        <div className="viral-stories-section-borderless mb-8">
-          {/* REMOVED: "Viral Good News" title completely */}
-          <div className="viral-stories-grid">
-            {viralStories.map((story) => (
-              <button
-                key={story.id}
-                onClick={(e) => handleStoryClick(e, story)} // ✅ FIXED: Safe navigation
-                className="viral-newscard-borderless group cursor-pointer"
-              >
-                <img
-                  src={story.image_url || story.thumbnail_url || 'https://source.unsplash.com/800x600/?news,positive'}
-                  alt={cleanTitle(story.title)}
-                  className="viral-newscard-image group-hover:scale-105 transition-transform duration-500"
-                  onError={(e) => {
-                    e.target.src = 'https://source.unsplash.com/800x600/?news,positive';
-                  }}
-                />
-                <div className="viral-newscard-overlay">
-                  <h3 className="viral-newscard-title">
-                    {cleanTitle(story.title)}
-                  </h3>
-                </div>
-                {(story.virality_score >= 8 || story.viral_score >= 8) && (
-                  <div className="viral-newscard-badge">
-                    🔥 Viral
-                  </div>
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Regular Headlines Section - BORDERLESS */}
-      {regularStories.length > 0 && (
-        <div className="trending-headlines-section-borderless">
-          {/* Title removed - handled by parent component */}
-          <div className="trending-headlines">
-            {regularStories.map((story, index) => (
-              <React.Fragment key={story.id}>
-                {/* Source & Positivity Bar - appears before headlines (not first 2) */}
-                <SourcePositivityBar 
-                  source={story.source_name || story.source}
-                  positivityScore={story.positivity_score}
-                  isViral={false}
-                  isFirst={index < 2}
-                />
-                
-                <div className="trending-headline">
-                  <button
-                    onClick={(e) => handleStoryClick(e, story)} // ✅ FIXED: Safe navigation
-                    className="w-full text-left hover:text-purple-600 dark:hover:text-purple-400 transition-colors duration-200 cursor-pointer"
-                  >
-                    <h3 className="font-semibold text-base md:text-lg leading-tight text-gray-800 dark:text-white">
-                      {cleanTitle(story.title)}
-                    </h3>
-                    {story.summary && (
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-2 line-clamp-2">
-                        {cleanSummary(story.summary).slice(0, 120)}...
-                      </p>
-                    )}
-                    <div className="flex items-center justify-between mt-3">
-                      <span className="text-xs text-gray-500 dark:text-gray-500">
-                        {story.published_at && new Date(story.published_at).toLocaleDateString()}
-                      </span>
-                      {story.category && (
-                        <span className="text-xs px-2 py-1 rounded-full text-white font-medium"
-                              style={{ backgroundColor: 'hsl(var(--orange-accent))' }}>
-                          {story.category}
-                        </span>
-                      )}
+    <div className="flex-1 px-4 py-6">
+      {/* Featured */}
+      <div className="mb-8">
+        <Card
+          className="atlantic-newscard group cursor-pointer"
+          onClick={() => handleStoryClick(featuredStory)}
+        >
+          <div className="relative h-80 overflow-hidden">
+            {(() => {
+              const img = getImage(featuredStory);
+              if (img.type === 'img') {
+                return (
+                  <>
+                    <img
+                      src={img.src}
+                      alt={cleanTitle(featuredStory?.title)}
+                      className="atlantic-newscard-image transition-transform duration-700 group-hover:scale-105"
+                      style={{ height: '320px' }}
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                        const fallback = e.currentTarget.nextElementSibling;
+                        if (fallback) fallback.style.display = 'flex';
+                      }}
+                      loading="lazy"
+                    />
+                    {/* Hidden SVG fallback container */}
+                    <div
+                      className="absolute inset-0 flex items-center justify-center"
+                      style={{ display: 'none', background: 'linear-gradient(135deg, var(--aa-navy), var(--aa-crimson))' }}
+                    >
+                      <img
+                        src={createCategorySVG(featuredStory?.category || 'Trending')}
+                        alt="Category fallback"
+                        className="w-full h-full object-cover opacity-90"
+                        loading="lazy"
+                      />
                     </div>
-                  </button>
+                  </>
+                );
+              }
+              // Direct SVG fallback
+              return (
+                <img
+                  src={img.src}
+                  alt="Category fallback"
+                  className="w-full h-full object-cover opacity-90"
+                  loading="lazy"
+                />
+              );
+            })()}
+
+            {/* Category Badge */}
+            {featuredStory?.category && (
+              <div className="absolute top-4 left-4">
+                <span className={getBadgeClass()}>{featuredStory.category}</span>
+              </div>
+            )}
+
+            {/* Dots */}
+            {items.length > 1 && (
+              <div className="absolute bottom-4 left-4 flex gap-2">
+                {items.slice(0, 5).map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedStory(index);
+                    }}
+                    className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                      index === selectedStory ? 'bg-white w-6' : 'bg-white/60 hover:bg-white/80'
+                    }`}
+                    aria-label={`Go to story ${index + 1}`}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="atlantic-newscard-content">
+            <h1
+              className="atlantic-newscard-title group-hover:text-blue-600 transition-colors"
+              style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '1rem' }}
+            >
+              {cleanTitle(featuredStory?.title)}
+            </h1>
+
+            <p className="atlantic-newscard-excerpt" style={{ fontSize: '1rem', marginBottom: '1.5rem' }}>
+              {cleanSummary(featuredStory?.summary || featuredStory?.excerpt)}
+            </p>
+
+            <div className="atlantic-newscard-meta">
+              <div className="flex items-center gap-4">
+                {featuredStory?.source_name && (
+                  <span style={{ fontWeight: 500, color: 'var(--text-primary)' }}>
+                    {featuredStory.source_name}
+                  </span>
+                )}
+                {featuredStory?.reading_time && (
+                  <span className="flex items-center gap-1">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    {featuredStory.reading_time} min read
+                  </span>
+                )}
+              </div>
+
+              {featuredStory?.published_at && (
+                <time style={{ color: 'var(--text-muted)' }}>
+                  {new Date(featuredStory.published_at).toLocaleDateString()}
+                </time>
+              )}
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      {/* Grid */}
+      {items.length > 1 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {items.slice(1, 7).map((story, index) => {
+            const img = getImage(story);
+            return (
+              <Card
+                key={story.id || index}
+                className="atlantic-newscard group cursor-pointer"
+                onClick={() => handleStoryClick(story)}
+              >
+                <div className="relative overflow-hidden" style={{ minHeight: 200 }}>
+                  {img.type === 'img' ? (
+                    <>
+                      <img
+                        src={img.src}
+                        alt={cleanTitle(story?.title)}
+                        className="atlantic-newscard-image transition-transform duration-500 group-hover:scale-105"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                          const fallback = e.currentTarget.nextElementSibling;
+                          if (fallback) fallback.style.display = 'flex';
+                        }}
+                        loading="lazy"
+                      />
+                      <div
+                        className="absolute inset-0 flex items-center justify-center"
+                        style={{ display: 'none', background: 'linear-gradient(135deg, var(--aa-navy), var(--aa-gold))' }}
+                      >
+                        <img
+                          src={createCategorySVG(story?.category || 'Trending')}
+                          alt="Category fallback"
+                          className="w-full h-full object-cover opacity-90"
+                          loading="lazy"
+                        />
+                      </div>
+                    </>
+                  ) : (
+                    <img
+                      src={img.src}
+                      alt="Category fallback"
+                      className="w-full h-full object-cover opacity-90"
+                      loading="lazy"
+                    />
+                  )}
+
+                  {story?.category && (
+                    <div className="absolute top-3 left-3">
+                      <span className={getBadgeClass()}>{story.category}</span>
+                    </div>
+                  )}
                 </div>
 
-                {/* Insert inline ad every 4th headline */}
-                {(index + 1) % 4 === 0 && index < regularStories.length - 1 && (
-                  <InlineAd key={`trending-ad-${index}`} />
-                )}
-                
-                {index < regularStories.length - 1 && (
-                  <hr className="border-gray-200 dark:border-gray-700 my-4" />
-                )}
-              </React.Fragment>
-            ))}
-          </div>
+                <div className="atlantic-newscard-content">
+                  <h3 className="atlantic-newscard-title group-hover:text-blue-600 transition-colors">
+                    {cleanTitle(story?.title)}
+                  </h3>
+                  <p className="atlantic-newscard-excerpt">
+                    {cleanSummary(story?.summary || story?.excerpt)}
+                  </p>
+
+                  <div className="atlantic-newscard-meta">
+                    {story?.source_name && (
+                      <span style={{ fontWeight: 500, color: 'var(--text-primary)' }}>
+                        {story.source_name}
+                      </span>
+                    )}
+                    {story?.reading_time && <span>{story.reading_time} min</span>}
+                  </div>
+                </div>
+              </Card>
+            );
+          })}
         </div>
       )}
 
-      {/* No stories fallback */}
-      {viralStories.length === 0 && regularStories.length === 0 && (
-        <div className="text-center py-8">
-          <p className="text-gray-500 dark:text-gray-400">No trending stories available right now.</p>
+      {isLoading && (
+        <div className="flex justify-center items-center py-8">
+          <Spinner className="w-8 h-8 text-blue-600" />
         </div>
       )}
     </div>
@@ -166,3 +266,4 @@ const TrendingStories = ({ stories }) => {
 };
 
 export default TrendingStories;
+

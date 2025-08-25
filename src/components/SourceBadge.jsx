@@ -1,19 +1,26 @@
-// src/components/SourceBadge.jsx
 import React from 'react';
-import { getSourceName, getSourceLogo } from '@/lib/utils';
 
-const SourceBadge = ({ name }) => {
-  const clean = getSourceName(name || 'Unknown');
-  const logo = getSourceLogo(clean).replace(/[^\w]/g, '');
+/**
+ * Compact, theme-friendly source chip used across sidebars/lists.
+ * Safe for server builds (no window/btoa) and resilient to odd source strings.
+ */
+export default function SourceBadge({ name = 'Source' }) {
+  const clean = String(name).replace(/[^\w\s.-]/g, '').trim() || 'Source';
+  const initials = clean
+    .split(/\s+/)
+    .slice(0, 2)
+    .map(w => w[0]?.toUpperCase() || '')
+    .join('') || 'S';
+
   return (
-    <div className="inline-flex items-center gap-2 rounded-full border border-gray-200 dark:border-gray-700 px-2.5 py-1 text-xs bg-white/70 dark:bg-gray-800/60 backdrop-blur">
-      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gray-900 text-white text-[10px] font-bold dark:bg-gray-100 dark:text-gray-900">
-        {logo}
+    <span className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full border text-xs
+      border-gray-200 bg-white text-gray-700
+      dark:border-white/10 dark:bg-white/5 dark:text-gray-200">
+      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full
+        bg-[var(--aa-navy,#0a2342)] text-white text-[10px] font-bold">
+        {initials}
       </span>
-      <span className="text-gray-700 dark:text-gray-200">{clean}</span>
-    </div>
+      <span className="font-medium">{clean}</span>
+    </span>
   );
-};
-
-export default SourceBadge;
-
+}

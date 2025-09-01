@@ -16,7 +16,7 @@ const categories = [
   'AI Watch',
 ];
 
-const Header = ({ isDarkMode, setIsDarkMode, setIsDonateModalOpen, streak }) => {
+const Header = ({ isDarkMode, setIsDarkMode, setIsDonateModalOpen }) => {
   const { toast } = useToast();
   const location = useLocation();
   const navigate = useNavigate();
@@ -41,7 +41,7 @@ const Header = ({ isDarkMode, setIsDarkMode, setIsDonateModalOpen, streak }) => 
 
   const handleUnsupportedFeature = () => {
     toast({
-      title: "🚧 Feature in Progress!",
+      title: "Feature in Progress!",
       description: "This feature isn't implemented yet—but don't worry!",
       variant: "default",
     });
@@ -172,7 +172,7 @@ const Header = ({ isDarkMode, setIsDarkMode, setIsDonateModalOpen, streak }) => 
             </div>
           </div>
 
-          {/* Categories + Streak */}
+          {/* Categories */}
           <div className="flex items-center justify-between w-full pt-4">
             <nav className="flex space-x-3 overflow-x-auto scrollbar-none">
               {categories.map(cat => {
@@ -192,14 +192,6 @@ const Header = ({ isDarkMode, setIsDarkMode, setIsDonateModalOpen, streak }) => 
                 );
               })}
             </nav>
-
-            {streak > 0 && (
-              <div className="flex items-center space-x-2 bg-orange-100 dark:bg-orange-900 px-3 py-2 rounded-lg flex-shrink-0">
-                <span className="text-orange-500">🔥</span>
-                <span className="text-orange-600 font-bold text-lg">{streak}</span>
-                <span className="text-orange-700 dark:text-orange-300 text-sm">day streak</span>
-              </div>
-            )}
           </div>
         </div>
 
@@ -328,13 +320,6 @@ const Header = ({ isDarkMode, setIsDarkMode, setIsDonateModalOpen, streak }) => 
                   <span>Shop</span>
                 </Button>
               </div>
-
-              {streak > 0 && (
-                <div className="flex items-center space-x-1 ml-3 flex-shrink-0 bg-orange-100 dark:bg-orange-900 px-2 py-1 rounded-full">
-                  <span className="text-orange-500 text-sm">🔥</span>
-                  <span className="text-orange-600 font-bold text-sm">{streak}</span>
-                </div>
-              )}
             </div>
           )}
 
@@ -368,4 +353,3 @@ const Header = ({ isDarkMode, setIsDarkMode, setIsDonateModalOpen, streak }) => 
 };
 
 export default Header;
-

@@ -1,4 +1,4 @@
-// Optimized App.jsx - Reduced API calls and faster loading
+// Optimized App.jsx - Streak removed, hybrid news system
 import React, { useState, useEffect, lazy, Suspense, useCallback } from 'react';
 import { Routes, Route, BrowserRouter as Router, useParams, useNavigate } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
@@ -87,7 +87,7 @@ const sanitizeText = (text) => {
   return text.replace(/[^\w\s\-.,!?'"]/g, '').trim();
 };
 
-// OPTIMIZED Story Page - Single data fetch
+// Story Page - Single data fetch
 const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
   const { id } = useParams();
   const safeNavigate = useNavigationHandler();
@@ -101,7 +101,6 @@ const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
       try {
         setLoading(true);
         
-        // Single optimized fetch
         const allData = await fetchAllNewsData();
         const foundStory = allData.all.find(item => 
           item.id === parseInt(id) || item.id.toString() === id
@@ -110,7 +109,6 @@ const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
         if (foundStory) {
           setStory(foundStory);
           
-          // Get related stories from the same dataset
           const related = allData.all
             .filter(item => 
               item.category === foundStory.category && 
@@ -294,7 +292,7 @@ const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
   );
 };
 
-// OPTIMIZED Category Page
+// Category Page
 const CategoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
   const { category } = useParams();
   const { data: categoryNews, loading, error } = useCategoryNews(category);
@@ -346,40 +344,10 @@ const CategoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
   );
 };
 
-// OPTIMIZED Homepage
+// Homepage - Streak functionality removed
 const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
   const { data, loading, error, refetch } = useHomepageData();
-  const [streak, setStreak] = useState(0);
   const { toast } = useToast();
-
-  // Simplified streak tracking
-  useEffect(() => {
-    const today = new Date().toDateString();
-    const lastVisit = localStorage.getItem('lastVisitDate');
-    const currentStreak = parseInt(localStorage.getItem('streak') || '0');
-
-    if (lastVisit !== today) {
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      
-      const newStreak = lastVisit === yesterday.toDateString() ? currentStreak + 1 : 1;
-      setStreak(newStreak);
-      localStorage.setItem('streak', newStreak.toString());
-      localStorage.setItem('lastVisitDate', today);
-      
-      if (newStreak > 1) {
-        setTimeout(() => {
-          toast({
-            title: "🔥 Streak Updated!",
-            description: `Day ${newStreak} of reading good news!`,
-            duration: 2000,
-          });
-        }, 500);
-      }
-    } else {
-      setStreak(currentStreak);
-    }
-  }, [toast]);
 
   // Real-time updates (reduced frequency)
   useEffect(() => {
@@ -393,8 +361,8 @@ const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
           () => {
             setTimeout(() => {
               toast({
-                title: "📰 New Story Available!",
-                description: "Fresh good news just arrived.",
+                title: "Fresh News Available!",
+                description: "New good news just arrived.",
                 duration: 2000,
               });
               refetch();
@@ -417,7 +385,6 @@ const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
           setIsDonateModalOpen={setIsDonateModalOpen} 
           isDarkMode={isDarkMode} 
           setIsDarkMode={setIsDarkMode}
-          streak={streak}
         />
         <Suspense fallback={<QuickLoader />}>
           <SkeletonHomepage />
@@ -434,7 +401,6 @@ const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
           setIsDonateModalOpen={setIsDonateModalOpen} 
           isDarkMode={isDarkMode} 
           setIsDarkMode={setIsDarkMode}
-          streak={streak}
         />
         <div className="container mx-auto px-4 py-8">
           <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 max-w-md mx-auto">
@@ -467,7 +433,6 @@ const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
         setIsDonateModalOpen={setIsDonateModalOpen} 
         isDarkMode={isDarkMode} 
         setIsDarkMode={setIsDarkMode}
-        streak={streak}
       />
       
       <div className="main-layout">

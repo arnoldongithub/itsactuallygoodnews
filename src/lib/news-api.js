@@ -1,4 +1,4 @@
-// Optimized news-api.js - Reduced API calls and simplified logic
+// Optimized news-api.js - Updated with correct categories
 import { supabase } from './supa.js';
 import { placeholderArticles } from './placeholder-data.js';
 import { useState, useEffect, useCallback } from 'react';
@@ -7,6 +7,15 @@ import { cleanTitle, cleanSummary, cleanContent } from './utils.js';
 const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
 const CACHE_KEY = 'newsCache';
 const LAST_FETCHED_KEY = 'newsLastFetched';
+
+// Updated categories matching Header.jsx
+const VALID_CATEGORIES = [
+  'Movement Tracker + Accountability',
+  'Capitalism & Inequality Watch', 
+  'Justice Lens',
+  'Hope in Struggle',
+  'AI Watch'
+];
 
 // Simplified time filtering - only recent articles (last 48 hours)
 const isRecentArticle = (article) => {
@@ -55,13 +64,13 @@ export const fetchAllNewsData = async (bypassCache = false) => {
   if (!bypassCache) {
     const cached = getCache(cacheKey);
     if (cached) {
-      console.log('📚 Using cached data:', cached.total, 'articles');
+      console.log('Using cached data:', cached.total, 'articles');
       return cached;
     }
   }
 
   try {
-    console.log('🔍 Fetching all news data...');
+    console.log('Fetching all news data...');
     const startTime = performance.now();
 
     // Single optimized query for ALL data
@@ -89,7 +98,9 @@ export const fetchAllNewsData = async (bypassCache = false) => {
         title: cleanTitle(item.title),
         summary: cleanSummary(item.summary),
         content: cleanContent(item.content),
-        virality_score: item.virality_score || (item.positivity_score > 9 ? 8 : 0)
+        virality_score: item.virality_score || (item.positivity_score > 9 ? 8 : 0),
+        // Normalize category to match new structure
+        category: normalizeCategory(item.category)
       }));
 
     // Categorize data efficiently
@@ -98,14 +109,11 @@ export const fetchAllNewsData = async (bypassCache = false) => {
       trending: processedData
         .filter(story => story.virality_score >= 7 || story.positivity_score >= 9)
         .slice(0, 15),
-      dailyReads: getCategoryStories(processedData, [
-        'Health', 'Innovation & Tech', 'Environment & Sustainability', 
-        'Education', 'Science & Space', 'Humanitarian & Rescue'
-      ], 1), // 1 per category
+      dailyReads: getCategoryStories(processedData, VALID_CATEGORIES, 2), // 2 per category
       blindspot: processedData
         .filter(story => 
-          story.category === 'Blindspot' || 
-          story.category === 'Humanitarian & Rescue'
+          story.category === 'Justice Lens' || 
+          story.category === 'Hope in Struggle'
         )
         .slice(0, 8),
       categories: groupByCategory(processedData),
@@ -116,17 +124,17 @@ export const fetchAllNewsData = async (bypassCache = false) => {
     setCache(cacheKey, result);
 
     const endTime = performance.now();
-    console.log(`✅ Fetched and processed ${result.total} articles in ${(endTime - startTime).toFixed(2)}ms`);
+    console.log(`Fetched and processed ${result.total} articles in ${(endTime - startTime).toFixed(2)}ms`);
 
     return result;
 
   } catch (error) {
-    console.error('❌ Error fetching news:', error);
+    console.error('Error fetching news:', error);
     
     // Return cached data as fallback
     const fallback = getCache(cacheKey);
     if (fallback) {
-      console.log('🔄 Using stale cache as fallback');
+      console.log('Using stale cache as fallback');
       return fallback;
     }
     
@@ -142,8 +150,32 @@ export const fetchAllNewsData = async (bypassCache = false) => {
   }
 };
 
-// Helper function to get one story per category
-const getCategoryStories = (stories, categories, perCategory = 1) => {
+// Normalize old category names to new structure
+const normalizeCategory = (oldCategory) => {
+  if (!oldCategory) return 'Hope in Struggle';
+  
+  const categoryMap = {
+    'Health': 'Hope in Struggle',
+    'Innovation & Tech': 'AI Watch',
+    'Environment & Sustainability': 'Hope in Struggle',
+    'Education': 'Hope in Struggle',
+    'Science & Space': 'AI Watch',
+    'Humanitarian & Rescue': 'Hope in Struggle',
+    'Blindspot': 'Justice Lens',
+    'Viral': 'Hope in Struggle',
+    // Keep new categories as-is
+    'Movement Tracker + Accountability': 'Movement Tracker + Accountability',
+    'Capitalism & Inequality Watch': 'Capitalism & Inequality Watch',
+    'Justice Lens': 'Justice Lens',
+    'Hope in Struggle': 'Hope in Struggle',
+    'AI Watch': 'AI Watch'
+  };
+  
+  return categoryMap[oldCategory] || 'Hope in Struggle';
+};
+
+// Helper function to get stories per category
+const getCategoryStories = (stories, categories, perCategory = 2) => {
   const result = [];
   
   categories.forEach(category => {
@@ -159,7 +191,7 @@ const getCategoryStories = (stories, categories, perCategory = 1) => {
 // Helper function to group stories by category
 const groupByCategory = (stories) => {
   return stories.reduce((acc, story) => {
-    const category = story.category || 'Other';
+    const category = story.category || 'Hope in Struggle';
     if (!acc[category]) acc[category] = [];
     acc[category].push(story);
     return acc;
@@ -189,25 +221,13 @@ export const fetchNews = async (category = 'All', retryCount = 0, bypassCache = 
     return allData.all;
   }
   
-  const normalizedCategory = category.toLowerCase().trim();
-  const categoryMap = {
-    'health': 'Health',
-    'innovation & tech': 'Innovation & Tech',
-    'environment & sustainability': 'Environment & Sustainability',
-    'education': 'Education',
-    'science & space': 'Science & Space',
-    'humanitarian & rescue': 'Humanitarian & Rescue',
-    'blindspot': 'Blindspot',
-    'viral': 'Viral'
-  };
-  
-  const exactCategory = categoryMap[normalizedCategory];
-  
-  if (exactCategory && allData.categories[exactCategory]) {
-    return allData.categories[exactCategory];
+  // Direct category match
+  if (allData.categories[category]) {
+    return allData.categories[category];
   }
   
-  // Fuzzy search if exact match not found
+  // Fuzzy search
+  const normalizedCategory = category.toLowerCase().trim();
   return allData.all.filter(story => 
     story.category?.toLowerCase().includes(normalizedCategory) ||
     story.title?.toLowerCase().includes(normalizedCategory)
@@ -238,7 +258,7 @@ export const useHomepageData = () => {
       });
       
     } catch (err) {
-      console.error('❌ Homepage data error:', err);
+      console.error('Homepage data error:', err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -248,7 +268,7 @@ export const useHomepageData = () => {
   useEffect(() => {
     fetchData();
     
-    // Refresh every 15 minutes (less frequent)
+    // Refresh every 15 minutes
     const interval = setInterval(() => fetchData(false), 15 * 60 * 1000);
     return () => clearInterval(interval);
   }, [fetchData]);
@@ -277,7 +297,7 @@ export const useCategoryNews = (category = 'All') => {
       setData(result);
       
     } catch (err) {
-      console.error(`❌ Category ${category} error:`, err);
+      console.error(`Category ${category} error:`, err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -309,7 +329,7 @@ export const clearNewsCache = () => {
         localStorage.removeItem(key);
       }
     });
-    console.log('🧹 News cache cleared');
+    console.log('News cache cleared');
   }
 };
 
@@ -349,8 +369,3 @@ export const fetchHomepageData = async (bypassCache = false) => {
     blindspot: allData.blindspot
   };
 };
-
-// Remove unused exports and functions
-export const fetchTrendingNewsTimeFiltered = fetchTrendingNews;
-export const fetchDailyReadsTimeFiltered = fetchDailyReads;
-export const fetchBlindspotStoriesTimeFiltered = fetchBlindspotStories;

@@ -1,0 +1,229 @@
+/* Full-page, Patreon-like tier grid using your palette.
+   Uses site CSS vars if present; falls back to hex values. */
+
+:root {
+  /* Fallbacks to keep consistent if site vars not present */
+  --aa-navy: var(--aa-navy, #0f172a);
+  --aa-crimson: var(--aa-crimson, #b91c1c);
+  --aa-gold: var(--aa-gold, #f59e0b);
+  --text-primary: var(--text-primary, #0b1020);
+  --text-muted: var(--text-muted, #64748b);
+  --panel: var(--panel, #ffffff);
+  --panel-alt: var(--panel-alt, #0b1020);
+  --border: var(--border, #e5e7eb);
+  --bg: var(--bg, #f8fafc);
+}
+
+/* Wrapper */
+.sub-wrap {
+  min-height: 100vh;
+  background: var(--bg);
+  padding: clamp(24px, 4vw, 56px) 16px 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Hero */
+.sub-hero {
+  max-width: 960px;
+  width: 100%;
+  text-align: center;
+  margin-bottom: 28px; /* full-page feel but tighter than huge hero */
+}
+
+.sub-hero h1 {
+  font-size: clamp(28px, 4vw, 44px);
+  line-height: 1.1;
+  font-weight: 800;
+  color: var(--aa-navy);
+  margin: 0 0 10px;
+}
+
+.sub-deck {
+  color: var(--text-muted);
+  font-size: clamp(14px, 2.2vw, 18px);
+  margin: 0 auto;
+  max-width: 760px;
+}
+
+/* Grid */
+.sub-grid {
+  width: 100%;
+  max-width: 1100px;
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 20px;
+  margin: 20px auto 36px;
+}
+
+@media (min-width: 820px) {
+  .sub-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
+    margin-top: 28px;
+  }
+}
+
+/* Tier Card */
+.tier {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 22px 20px;
+  display: flex;
+  flex-direction: column;
+  box-shadow:
+    0 1px 2px rgba(0,0,0,0.03),
+    0 8px 24px rgba(15, 23, 42, 0.05);
+  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+
+.tier:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 2px 6px rgba(0,0,0,0.06),
+    0 16px 36px rgba(15, 23, 42, 0.10);
+  border-color: rgba(15, 23, 42, 0.12);
+}
+
+.tier--highlight {
+  border-color: var(--aa-crimson);
+  box-shadow:
+    0 2px 6px rgba(185, 28, 28, 0.10),
+    0 18px 40px rgba(185, 28, 28, 0.10);
+}
+
+.tier-head {
+  margin-bottom: 12px;
+}
+
+.tier-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0 0 4px;
+}
+
+.tier-tag {
+  color: var(--text-muted);
+  font-size: 14px;
+  margin: 0 0 10px;
+}
+
+.tier-price {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  color: var(--aa-navy);
+}
+
+.tier-currency {
+  font-size: 18px;
+  font-weight: 700;
+  margin-right: -2px;
+}
+
+.tier-amount {
+  font-size: 40px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.tier-period {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+/* Perks */
+.tier-list {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0 16px;
+  display: grid;
+  gap: 10px;
+}
+
+.tier-item {
+  font-size: 14px;
+  color: var(--text-primary);
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  line-height: 1.35;
+}
+
+.tick {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, #fff, #f7fafc);
+  text-align: center;
+  font-weight: 800;
+  line-height: 16px;
+  font-size: 12px;
+  color: var(--aa-crimson);
+}
+
+/* CTA */
+.tier-cta {
+  margin-top: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 44px;
+  border-radius: 10px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: linear-gradient(180deg, var(--aa-crimson), #8a1515);
+  color: #fff;
+  font-weight: 800;
+  text-decoration: none;
+  transition: transform .15s ease, box-shadow .15s ease, filter .15s ease;
+  will-change: transform;
+}
+
+.tier-cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 22px rgba(185, 28, 28, 0.24);
+  filter: saturate(1.06);
+}
+
+.tier--highlight .tier-cta {
+  background: linear-gradient(180deg, var(--aa-gold), #b45309);
+  color: #0b1020;
+  border-color: rgba(244, 165, 96, 0.45);
+}
+
+.tier--highlight .tier-cta:hover {
+  box-shadow: 0 8px 22px rgba(245, 158, 11, 0.28);
+}
+
+/* FAQ */
+.sub-faq {
+  max-width: 860px;
+  width: 100%;
+  margin-top: 14px;
+}
+
+.sub-faq details {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+}
+
+.sub-faq summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.sub-faq p {
+  margin: 8px 0 0;
+  color: var(--text-muted);
+  font-size: 14px;
+}

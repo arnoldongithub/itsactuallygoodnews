@@ -5,6 +5,8 @@ import { X, Check, Heart, Users, Megaphone } from 'lucide-react';
 const SubscribeModal = ({ isOpen, onClose }) => {
   const [paddle, setPaddle] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [paddleLoading, setPaddleLoading] = useState(false);
+  const [paddleError, setPaddleError] = useState(null);
 
   // Environment variables - use process.env for Vite compatibility
   const paddleConfig = {
@@ -15,24 +17,75 @@ const SubscribeModal = ({ isOpen, onClose }) => {
     advocatePriceId: process.env.VITE_PADDLE_ADVOCATE_PRICE_ID || 'pri_01k4pt23r2c6b5hkhpcz1reptt'
   };
 
-  // Initialize Paddle
+  // Initialize Paddle when modal opens
   useEffect(() => {
+    if (!isOpen) return;
+
     const initializePaddle = async () => {
-      if (typeof window !== 'undefined' && window.Paddle) {
+      // Check if Paddle is already loaded
+      if (window.Paddle && !paddle) {
         try {
           const paddleInstance = new window.Paddle({
             environment: paddleConfig.environment,
             token: paddleConfig.token
           });
           setPaddle(paddleInstance);
+          console.log('Paddle initialized from existing script');
+          return;
         } catch (error) {
-          console.error('Paddle initialization error:', error);
+          console.error('Error initializing existing Paddle:', error);
+          setPaddleError('Failed to initialize payment system');
+        }
+      }
+
+      // Load Paddle script dynamically
+      if (!window.Paddle && !paddleLoading) {
+        setPaddleLoading(true);
+        setPaddleError(null);
+        
+        try {
+          const script = document.createElement('script');
+          script.src = 'https://cdn.paddle.com/paddle/v2/paddle.js';
+          script.async = true;
+          
+          script.onload = () => {
+            try {
+              if (window.Paddle) {
+                const paddleInstance = new window.Paddle({
+                  environment: paddleConfig.environment,
+                  token: paddleConfig.token
+                });
+                setPaddle(paddleInstance);
+                console.log('Paddle loaded and initialized successfully');
+              } else {
+                throw new Error('Paddle not available after script load');
+              }
+            } catch (error) {
+              console.error('Error initializing Paddle after load:', error);
+              setPaddleError('Payment system initialization failed');
+            } finally {
+              setPaddleLoading(false);
+            }
+          };
+          
+          script.onerror = () => {
+            console.error('Failed to load Paddle script');
+            setPaddleError('Failed to load payment system');
+            setPaddleLoading(false);
+          };
+          
+          document.head.appendChild(script);
+          
+        } catch (error) {
+          console.error('Error creating Paddle script:', error);
+          setPaddleError('Failed to setup payment system');
+          setPaddleLoading(false);
         }
       }
     };
     
     initializePaddle();
-  }, []);
+  }, [isOpen, paddleLoading]);
 
   const TIERS = [
     {
@@ -44,10 +97,10 @@ const SubscribeModal = ({ isOpen, onClose }) => {
       priceId: paddleConfig.supporterPriceId,
       icon: Heart,
       perks: [
-        "Ad-free experience",
-        "Comment & react on Patreon posts", 
+        "Comment & react on Patreon posts",
         "Name in closing credits (optional)",
-        "Member updates via Patreon feed"
+        "Member updates via Patreon feed",
+        "Ad-free reading experience"
       ]
     },
     {
@@ -59,7 +112,7 @@ const SubscribeModal = ({ isOpen, onClose }) => {
       priceId: paddleConfig.allyPriceId,
       icon: Users,
       perks: [
-        "Everything in Supporter, plus:",
+        "All Supporter perks",
         "Early access to 1 video/week (via Patreon)",
         "Priority topic suggestions",
         "Community chat access (via Patreon)",
@@ -75,10 +128,10 @@ const SubscribeModal = ({ isOpen, onClose }) => {
       priceId: paddleConfig.advocatePriceId,
       icon: Megaphone,
       perks: [
-        "Everything in Ally, plus:",
+        "All Ally perks",
         "Submit local good-news tips for coverage",
         "Vote on upcoming projects",
-        "Quarterly behind-the-scenes mini-brief", 
+        "Quarterly behind-the-scenes mini-brief",
         "Direct line to editors",
         "Exclusive merch discounts + Early access"
       ]
@@ -88,6 +141,7 @@ const SubscribeModal = ({ isOpen, onClose }) => {
   const handleSubscribe = async (tier) => {
     if (!paddle || !tier.priceId) {
       console.error('Paddle not initialized or missing price ID');
+      setPaddleError('Payment system not ready. Please try again.');
       return;
     }
 
@@ -102,6 +156,7 @@ const SubscribeModal = ({ isOpen, onClose }) => {
         },
         successUrl: `${window.location.origin}/?subscription=success&tier=${tier.id}`,
         onComplete: (data) => {
+          console.log('Subscription completed:', data);
           setTimeout(() => {
             window.open('https://www.patreon.com/c/itsActuallyGoodNews', '_blank');
             onClose();
@@ -110,6 +165,7 @@ const SubscribeModal = ({ isOpen, onClose }) => {
       });
     } catch (error) {
       console.error('Paddle checkout error:', error);
+      setPaddleError('Checkout failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -151,6 +207,32 @@ const SubscribeModal = ({ isOpen, onClose }) => {
           </p>
         </div>
 
+        {/* Loading/Error States */}
+        {paddleLoading && (
+          <div className="text-center py-4">
+            <p className="text-white/80 text-sm">Loading payment system...</p>
+          </div>
+        )}
+        
+        {paddleError && (
+          <div className="text-center py-4">
+            <p className="text-red-200 text-sm">{paddleError}</p>
+            <button 
+              onClick={() => {
+                setPaddleError(null);
+                setPaddleLoading(false);
+                // Retry initialization
+                if (isOpen) {
+                  window.location.reload();
+                }
+              }}
+              className="text-white underline text-sm mt-2"
+            >
+              Try Again
+            </button>
+          </div>
+        )}
+
         {/* Main Content - Centered */}
         <div className="flex-1 flex items-center justify-center px-8">
           <div className="w-full max-w-5xl">
@@ -190,12 +272,12 @@ const SubscribeModal = ({ isOpen, onClose }) => {
                       </div>
                     </div>
 
-                    {/* Features List */}
-                    <div className="mb-6">
+                    {/* Features List - Fixed height for alignment */}
+                    <div className="mb-6 flex-1 flex flex-col">
                       <p className="text-white font-semibold mb-3 text-center text-sm">
                         {tier.tagline}
                       </p>
-                      <ul className="space-y-2">
+                      <ul className="space-y-2 flex-1">
                         {tier.perks.map((perk, index) => (
                           <li key={index} className="flex items-start text-white text-xs">
                             <Check size={14} className="text-white mr-2 mt-0.5 flex-shrink-0" />
@@ -208,14 +290,17 @@ const SubscribeModal = ({ isOpen, onClose }) => {
                     {/* CTA Button - All Same Color (Pastel Yellow) */}
                     <button
                       onClick={() => handleSubscribe(tier)}
-                      disabled={isLoading}
+                      disabled={isLoading || paddleLoading || !paddle}
                       className="w-full py-3 px-4 rounded-xl font-bold text-base transition-all duration-300 hover:transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                       style={{
                         backgroundColor: '#FFE8A0',
                         color: '#1F1F1F'
                       }}
                     >
-                      {isLoading ? 'Processing...' : 'Join Now'}
+                      {isLoading ? 'Processing...' : 
+                       paddleLoading ? 'Loading...' : 
+                       !paddle ? 'Payment Loading...' : 
+                       'Join Now'}
                     </button>
                   </div>
                 );

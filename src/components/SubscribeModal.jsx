@@ -237,7 +237,7 @@ const SubscribeModal = ({ isOpen, onClose }) => {
               
               <div className="text-center">
                 <p className="text-white/80 text-sm">
-                  Cancel anytime • 30-day money-back guarantee
+                  Cancel anytime • Join the community today
                 </p>
               </div>
             </div>

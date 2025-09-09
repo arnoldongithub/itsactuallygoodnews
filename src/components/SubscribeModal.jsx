@@ -264,20 +264,3 @@ export const useSubscribeModal = () => {
 };
 
 export default SubscribeModal;
-
-// Hook to use the modal
-export const useSubscribeModal = () => {
-  const [isOpen, setIsOpen] = useState(false);
-
-  const openModal = () => setIsOpen(true);
-  const closeModal = () => setIsOpen(false);
-
-  return {
-    isOpen,
-    openModal,
-    closeModal,
-    SubscribeModal: (props) => <SubscribeModal {...props} isOpen={isOpen} onClose={closeModal} />
-  };
-};
-
-export default SubscribeModal;

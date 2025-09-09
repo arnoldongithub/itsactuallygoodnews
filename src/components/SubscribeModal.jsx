@@ -25,11 +25,12 @@ const SubscribeModal = ({ isOpen, onClose }) => {
       // Check if Paddle is already loaded
       if (window.Paddle && !paddle) {
         try {
-          const paddleInstance = new window.Paddle({
+          // Paddle v2 uses Setup() instead of new Paddle()
+          window.Paddle.Setup({
             environment: paddleConfig.environment,
             token: paddleConfig.token
           });
-          setPaddle(paddleInstance);
+          setPaddle(window.Paddle);
           console.log('Paddle initialized from existing script');
           return;
         } catch (error) {
@@ -51,12 +52,13 @@ const SubscribeModal = ({ isOpen, onClose }) => {
           script.onload = () => {
             try {
               if (window.Paddle) {
-                const paddleInstance = new window.Paddle({
+                // Paddle v2 uses Setup() instead of new Paddle()
+                window.Paddle.Setup({
                   environment: paddleConfig.environment,
                   token: paddleConfig.token
                 });
-                setPaddle(paddleInstance);
-                console.log('Paddle loaded and initialized successfully');
+                setPaddle(window.Paddle);
+                console.log('Paddle v2 loaded and initialized successfully');
               } else {
                 throw new Error('Paddle not available after script load');
               }
@@ -148,21 +150,17 @@ const SubscribeModal = ({ isOpen, onClose }) => {
     setIsLoading(true);
     
     try {
-      await paddle.Checkout.open({
+      // Paddle v2 syntax
+      paddle.Checkout.open({
         items: [{ priceId: tier.priceId }],
         customData: {
           tier: tier.id,
           source: 'iagn_subscribe_modal'
         },
         successUrl: `${window.location.origin}/?subscription=success&tier=${tier.id}`,
-        onComplete: (data) => {
-          console.log('Subscription completed:', data);
-          setTimeout(() => {
-            window.open('https://www.patreon.com/c/itsActuallyGoodNews', '_blank');
-            onClose();
-          }, 2000);
-        }
       });
+      
+      console.log('Paddle checkout opened for tier:', tier.name);
     } catch (error) {
       console.error('Paddle checkout error:', error);
       setPaddleError('Checkout failed. Please try again.');

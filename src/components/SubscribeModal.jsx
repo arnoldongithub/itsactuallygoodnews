@@ -161,7 +161,7 @@ const SubscribeModal = ({ isOpen, onClose }) => {
                 return (
                   <div
                     key={tier.id}
-                    className="rounded-2xl p-6 transition-all duration-300 hover:transform hover:scale-105 shadow-lg hover:shadow-xl"
+                    className="rounded-2xl p-6 transition-all duration-300 hover:transform hover:scale-105 shadow-lg hover:shadow-xl flex flex-col h-full"
                     style={{ 
                       backgroundColor: '#A69CFF',
                       border: '2px solid rgba(255,255,255,0.2)'

@@ -48,8 +48,7 @@ const SubscribeModal = ({ isOpen, onClose }) => {
         "Comment & react on Patreon posts", 
         "Name in closing credits (optional)",
         "Member updates via Patreon feed"
-      ],
-      highlight: false
+      ]
     },
     {
       id: "ally",
@@ -65,8 +64,7 @@ const SubscribeModal = ({ isOpen, onClose }) => {
         "Priority topic suggestions",
         "Community chat access (via Patreon)",
         "Weekly insider updates"
-      ],
-      highlight: true
+      ]
     },
     {
       id: "advocate",
@@ -83,8 +81,7 @@ const SubscribeModal = ({ isOpen, onClose }) => {
         "Quarterly behind-the-scenes mini-brief", 
         "Direct line to editors",
         "Exclusive merch discounts + Early access"
-      ],
-      highlight: false
+      ]
     }
   ];
 
@@ -118,110 +115,104 @@ const SubscribeModal = ({ isOpen, onClose }) => {
     }
   };
 
+  const handleGiftMembership = () => {
+    window.open('https://www.patreon.com/c/itsActuallyGoodNews', '_blank');
+  };
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="flex min-h-full items-center justify-center p-4">
-        {/* Backdrop */}
-        <div 
-          className="fixed inset-0 transition-opacity" 
-          style={{ backgroundColor: 'rgba(167, 230, 196, 0.95)' }}
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* Full Screen Modal - No Scrolling */}
+      <div 
+        className="w-full h-full flex flex-col"
+        style={{ backgroundColor: '#A7E6C4' }}
+      >
+        {/* Close Button */}
+        <button
           onClick={onClose}
-        />
-        
-        {/* Modal Container */}
-        <div 
-          className="relative w-full max-w-6xl max-h-[95vh] overflow-y-auto rounded-2xl shadow-2xl"
-          style={{ backgroundColor: '#A7E6C4' }}
+          className="absolute top-6 right-6 z-10 p-2 rounded-full bg-white/20 hover:bg-white/30 text-white transition-colors"
         >
-          {/* Close Button */}
-          <button
-            onClick={onClose}
-            className="absolute top-6 right-6 z-10 p-2 rounded-full bg-white/20 hover:bg-white/30 text-white transition-colors"
-          >
-            <X size={24} />
-          </button>
+          <X size={24} />
+        </button>
 
-          {/* Header Section */}
-          <div className="text-center px-8 py-12">
-            <div className="flex items-center justify-center mb-6">
-              <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center">
-                <span className="text-2xl font-bold" style={{ color: '#A7E6C4' }}>I</span>
-              </div>
+        {/* Header Section - Compact */}
+        <div className="text-center px-8 py-8">
+          <div className="flex items-center justify-center mb-4">
+            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center">
+              <span className="text-xl font-bold" style={{ color: '#A7E6C4' }}>I</span>
             </div>
-            <h1 className="text-4xl font-bold text-white mb-4">
-              Choose your membership
-            </h1>
-            <p className="text-xl text-white/90 max-w-2xl mx-auto">
-              Join thousands getting the positive news that matters
-            </p>
           </div>
+          <h1 className="text-3xl font-bold text-white mb-2">
+            Choose your membership
+          </h1>
+          <p className="text-lg text-white/90 max-w-xl mx-auto">
+            Join thousands getting the positive news that matters
+          </p>
+        </div>
 
-          {/* Pricing Cards */}
-          <div className="px-8 pb-12">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+        {/* Main Content - Centered */}
+        <div className="flex-1 flex items-center justify-center px-8">
+          <div className="w-full max-w-5xl">
+            {/* Pricing Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
               {TIERS.map((tier) => {
                 const IconComponent = tier.icon;
                 return (
                   <div
                     key={tier.id}
-                    className={`rounded-2xl p-8 transition-all duration-300 hover:transform hover:scale-105 ${
-                      tier.highlight 
-                        ? 'ring-4 ring-white/50 shadow-2xl' 
-                        : 'shadow-lg hover:shadow-xl'
-                    }`}
+                    className="rounded-2xl p-6 transition-all duration-300 hover:transform hover:scale-105 shadow-lg hover:shadow-xl"
                     style={{ 
                       backgroundColor: '#A69CFF',
-                      border: tier.highlight ? '3px solid #FFE8A0' : '2px solid rgba(255,255,255,0.2)'
+                      border: '2px solid rgba(255,255,255,0.2)'
                     }}
                   >
                     {/* Tier Header */}
-                    <div className="text-center mb-6">
-                      <div className="flex justify-center mb-4">
+                    <div className="text-center mb-5">
+                      <div className="flex justify-center mb-3">
                         <div className="p-3 rounded-full bg-white/20">
-                          <IconComponent size={32} className="text-white" />
+                          <IconComponent size={28} className="text-white" />
                         </div>
                       </div>
-                      <h2 className="text-2xl font-bold text-white mb-2">
+                      <h2 className="text-xl font-bold text-white mb-2">
                         {tier.name}
                       </h2>
-                      <p className="text-white/80 text-sm mb-4">
+                      <p className="text-white/80 text-sm mb-3">
                         {tier.description}
                       </p>
-                      <div className="mb-4">
-                        <span className="text-4xl font-bold text-white">
+                      <div className="mb-3">
+                        <span className="text-3xl font-bold text-white">
                           ${tier.price}
                         </span>
-                        <span className="text-white/80 text-lg">
+                        <span className="text-white/80 text-base">
                           /month
                         </span>
                       </div>
                     </div>
 
                     {/* Features List */}
-                    <div className="mb-8">
-                      <p className="text-white font-semibold mb-4 text-center">
+                    <div className="mb-6">
+                      <p className="text-white font-semibold mb-3 text-center text-sm">
                         {tier.tagline}
                       </p>
-                      <ul className="space-y-3">
+                      <ul className="space-y-2">
                         {tier.perks.map((perk, index) => (
-                          <li key={index} className="flex items-start text-white text-sm">
-                            <Check size={16} className="text-white mr-3 mt-0.5 flex-shrink-0" />
+                          <li key={index} className="flex items-start text-white text-xs">
+                            <Check size={14} className="text-white mr-2 mt-0.5 flex-shrink-0" />
                             <span>{perk}</span>
                           </li>
                         ))}
                       </ul>
                     </div>
 
-                    {/* CTA Button */}
+                    {/* CTA Button - All Same Color (Pastel Yellow) */}
                     <button
                       onClick={() => handleSubscribe(tier)}
                       disabled={isLoading}
-                      className="w-full py-4 px-6 rounded-xl font-bold text-lg transition-all duration-300 hover:transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                      className="w-full py-3 px-4 rounded-xl font-bold text-base transition-all duration-300 hover:transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                       style={{
-                        backgroundColor: tier.highlight ? '#FFE8A0' : '#F99C8B',
-                        color: tier.highlight ? '#1F1F1F' : '#FFFFFF'
+                        backgroundColor: '#FFE8A0',
+                        color: '#1F1F1F'
                       }}
                     >
                       {isLoading ? 'Processing...' : 'Join Now'}
@@ -231,36 +222,24 @@ const SubscribeModal = ({ isOpen, onClose }) => {
               })}
             </div>
 
-            {/* Gift Membership Section */}
-            <div 
-              className="mt-12 mx-auto max-w-2xl rounded-2xl p-8 text-center"
-              style={{ backgroundColor: '#FFE8A0' }}
-            >
-              <div className="flex items-center justify-center mb-4">
-                <Heart size={32} style={{ color: '#F99C8B' }} className="mr-3" />
-                <h3 className="text-2xl font-bold" style={{ color: '#1F1F1F' }}>
-                  Gift a membership to IAGN
-                </h3>
-              </div>
-              <p className="text-lg mb-6" style={{ color: '#1F1F1F' }}>
-                Share the power of positive news with someone you care about
-              </p>
+            {/* Bottom Actions */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <button
-                onClick={() => {
-                  window.open('https://www.patreon.com/c/itsActuallyGoodNews', '_blank');
+                onClick={handleGiftMembership}
+                className="px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:transform hover:-translate-y-1"
+                style={{ 
+                  backgroundColor: '#F99C8B',
+                  color: '#FFFFFF'
                 }}
-                className="px-8 py-3 rounded-lg font-semibold text-white transition-all duration-300 hover:transform hover:-translate-y-1"
-                style={{ backgroundColor: '#F99C8B' }}
               >
-                Gift Now
+                Gift a membership to IAGN
               </button>
-            </div>
-
-            {/* Footer */}
-            <div className="mt-8 text-center">
-              <p className="text-white/80 text-sm">
-                Cancel anytime • 30-day money-back guarantee
-              </p>
+              
+              <div className="text-center">
+                <p className="text-white/80 text-sm">
+                  Cancel anytime • 30-day money-back guarantee
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -268,6 +247,23 @@ const SubscribeModal = ({ isOpen, onClose }) => {
     </div>
   );
 };
+
+// Hook to use the modal
+export const useSubscribeModal = () => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const openModal = () => setIsOpen(true);
+  const closeModal = () => setIsOpen(false);
+
+  return {
+    isOpen,
+    openModal,
+    closeModal,
+    SubscribeModal: (props) => <SubscribeModal {...props} isOpen={isOpen} onClose={closeModal} />
+  };
+};
+
+export default SubscribeModal;
 
 // Hook to use the modal
 export const useSubscribeModal = () => {

@@ -176,103 +176,107 @@ const SubscribeModal = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Full Screen Modal - No Scrolling */}
+    <div className="fixed inset-0 z-50">
+      {/* Modal Container with Proper Scrolling */}
       <div 
-        className="w-full h-full flex flex-col"
-        style={{ backgroundColor: '#A7E6C4' }}
+        className="w-full h-full overflow-y-auto"
+        style={{ 
+          backgroundColor: '#A7E6C4',
+          WebkitOverflowScrolling: 'touch' // iOS momentum scrolling
+        }}
       >
-        {/* Close Button */}
+        {/* Close Button - Fixed Position */}
         <button
           onClick={onClose}
-          className="absolute top-6 right-6 z-10 p-2 rounded-full bg-white/20 hover:bg-white/30 text-white transition-colors"
+          className="fixed top-4 right-4 z-20 p-2 rounded-full bg-white/20 hover:bg-white/30 text-white transition-colors"
         >
           <X size={24} />
         </button>
 
-        {/* Header Section - Compact */}
-        <div className="text-center px-8 py-8">
-          <div className="flex items-center justify-center mb-4">
-            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center">
-              <span className="text-xl font-bold" style={{ color: '#A7E6C4' }}>I</span>
+        {/* Content Container - Allows natural flow */}
+        <div className="min-h-full px-4 py-8 md:px-8">
+          {/* Header Section */}
+          <div className="text-center mb-8">
+            <div className="flex items-center justify-center mb-4">
+              <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center">
+                <span className="text-xl font-bold" style={{ color: '#A7E6C4' }}>I</span>
+              </div>
             </div>
+            <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">
+              Choose your membership
+            </h1>
+            <p className="text-base md:text-lg text-white/90 max-w-xl mx-auto">
+              Join thousands getting the positive news that matters
+            </p>
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">
-            Choose your membership
-          </h1>
-          <p className="text-lg text-white/90 max-w-xl mx-auto">
-            Join thousands getting the positive news that matters
-          </p>
-        </div>
 
-        {/* Loading/Error States */}
-        {paddleLoading && (
-          <div className="text-center py-4">
-            <p className="text-white/80 text-sm">Loading payment system...</p>
-          </div>
-        )}
-        
-        {paddleError && (
-          <div className="text-center py-4">
-            <p className="text-red-200 text-sm">{paddleError}</p>
-            <button 
-              onClick={() => {
-                setPaddleError(null);
-                setPaddleLoading(false);
-                // Retry initialization
-                if (isOpen) {
-                  window.location.reload();
-                }
-              }}
-              className="text-white underline text-sm mt-2"
-            >
-              Try Again
-            </button>
-          </div>
-        )}
+          {/* Loading/Error States */}
+          {paddleLoading && (
+            <div className="text-center py-4">
+              <p className="text-white/80 text-sm">Loading payment system...</p>
+            </div>
+          )}
+          
+          {paddleError && (
+            <div className="text-center py-4">
+              <p className="text-red-200 text-sm">{paddleError}</p>
+              <button 
+                onClick={() => {
+                  setPaddleError(null);
+                  setPaddleLoading(false);
+                  // Retry initialization
+                  if (isOpen) {
+                    window.location.reload();
+                  }
+                }}
+                className="text-white underline text-sm mt-2"
+              >
+                Try Again
+              </button>
+            </div>
+          )}
 
-        {/* Main Content - Centered */}
-        <div className="flex-1 flex items-center justify-center px-8">
-          <div className="w-full max-w-5xl">
-            {/* Pricing Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {/* Main Content */}
+          <div className="max-w-6xl mx-auto">
+            {/* Pricing Cards - Responsive Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8">
               {TIERS.map((tier) => {
                 const IconComponent = tier.icon;
                 return (
                   <div
                     key={tier.id}
-                    className="rounded-2xl p-6 transition-all duration-300 hover:transform hover:scale-105 shadow-lg hover:shadow-xl flex flex-col h-full"
+                    className="rounded-2xl p-4 md:p-6 transition-all duration-300 hover:transform hover:scale-105 shadow-lg hover:shadow-xl flex flex-col"
                     style={{ 
                       backgroundColor: '#A69CFF',
                       border: '2px solid rgba(255,255,255,0.2)'
                     }}
                   >
                     {/* Tier Header */}
-                    <div className="text-center mb-5">
+                    <div className="text-center mb-4 md:mb-5">
                       <div className="flex justify-center mb-3">
                         <div className="p-3 rounded-full bg-white/20">
                           <IconComponent size={28} className="text-white" />
                         </div>
                       </div>
-                      <h2 className="text-xl font-bold text-white mb-2">
+                      <h2 className="text-lg md:text-xl font-bold text-white mb-2">
                         {tier.name}
                       </h2>
-                      <p className="text-white/80 text-sm mb-3">
+                      <p className="text-white/80 text-xs md:text-sm mb-3">
                         {tier.description}
                       </p>
                       <div className="mb-3">
-                        <span className="text-3xl font-bold text-white">
+                        <span className="text-2xl md:text-3xl font-bold text-white">
                           ${tier.price}
                         </span>
-                        <span className="text-white/80 text-base">
+                        <span className="text-white/80 text-sm md:text-base">
                           /month
                         </span>
                       </div>
                     </div>
 
-                    {/* Features List - Fixed height for alignment */}
-                    <div className="mb-6 flex-1 flex flex-col">
-                      <p className="text-white font-semibold mb-3 text-center text-sm">
+                    {/* Features List */}
+                    <div className="mb-4 md:mb-6 flex-1 flex flex-col">
+                      <p className="text-white font-semibold mb-3 text-center text-xs md:text-sm">
                         {tier.tagline}
                       </p>
                       <ul className="space-y-2 flex-1">
@@ -285,11 +289,11 @@ const SubscribeModal = ({ isOpen, onClose }) => {
                       </ul>
                     </div>
 
-                    {/* CTA Button - All Same Color (Pastel Yellow) */}
+                    {/* CTA Button */}
                     <button
                       onClick={() => handleSubscribe(tier)}
                       disabled={isLoading || paddleLoading || !paddle}
-                      className="w-full py-3 px-4 rounded-xl font-bold text-base transition-all duration-300 hover:transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                      className="w-full py-3 px-4 rounded-xl font-bold text-sm md:text-base transition-all duration-300 hover:transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                       style={{
                         backgroundColor: '#FFE8A0',
                         color: '#1F1F1F'
@@ -306,10 +310,10 @@ const SubscribeModal = ({ isOpen, onClose }) => {
             </div>
 
             {/* Bottom Actions */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pb-8">
               <button
                 onClick={handleGiftMembership}
-                className="px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:transform hover:-translate-y-1"
+                className="px-4 md:px-6 py-3 rounded-lg font-semibold text-sm md:text-base transition-all duration-300 hover:transform hover:-translate-y-1"
                 style={{ 
                   backgroundColor: '#F99C8B',
                   color: '#FFFFFF'
@@ -319,7 +323,7 @@ const SubscribeModal = ({ isOpen, onClose }) => {
               </button>
               
               <div className="text-center">
-                <p className="text-white/80 text-sm">
+                <p className="text-white/80 text-xs md:text-sm">
                   Cancel anytime • Join the community today
                 </p>
               </div>

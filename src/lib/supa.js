@@ -1,6 +1,15 @@
+// Supabase client — frontend must use ANON key only
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = 'https://qcdapfobdsqvzmagimvr.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFjZGFwZm9iZHNxdnptYWdpbXZyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MDA3MTQwMSwiZXhwIjoyMDY1NjQ3NDAxfQ.tXgdzhhwr_TlsLG_4ydReOPgGdaZyYz9oU8-wbNcdgY';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnon = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
+if (!supabaseUrl || !supabaseAnon) {
+  throw new Error('Missing Supabase env: VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY');
+}
+
+export const supabase = createClient(supabaseUrl, supabaseAnon, {
+  db: { schema: 'public' },
+  auth: { persistSession: false },
+});
+

@@ -22,18 +22,21 @@ const safeCategoryImages = (category, storyId) => {
 
 const safeCategorySVG = (category) => {
   const info = {
-    'Movement Tracker & Accountability': { color: '#0ea5e9', title: 'Movement Tracker' },
-    'Capitalism & Inequality': { color: '#ef4444', title: 'Inequality Watch' },
-    'Justice Lens': { color: '#22c55e', title: 'Justice Lens' },
-    'Hope in Struggle': { color: '#a855f7', title: 'Hope in Struggle' },
-    'AI Watch': { color: '#f59e0b', title: 'AI Watch' },
-    Blindspot: { color: '#f59e0b', title: 'Blindspot' },
-  }[category] || { color: '#6b7280', title: 'News' };
+    'Movement Tracker & Accountability': { icon: '▲', color: '#0ea5e9', title: 'Movement Tracker' },
+    'Capitalism & Inequality': { icon: '▼', color: '#ef4444', title: 'Inequality Watch' },
+    'Justice Lens': { icon: '⚖', color: '#22c55e', title: 'Justice Lens' },
+    'Hope in Struggle': { icon: '★', color: '#a855f7', title: 'Hope in Struggle' },
+    'AI Watch': { icon: '◆', color: '#f59e0b', title: 'AI Watch' },
+    Blindspot: { icon: '●', color: '#f59e0b', title: 'Blindspot' },
+  }[category] || { icon: '■', color: '#6b7280', title: 'News' };
+  
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`
     <svg width="800" height="600" viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
       <defs><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:${info.color};stop-opacity:1" /><stop offset="100%" style="stop-color:${info.color};stop-opacity:0.7" /></linearGradient></defs>
-      <rect width="800" height="600" fill="url(#g)"/><circle cx="400" cy="200" r="80" fill="white" opacity="0.2"/><circle cx="400" cy="200" r="60" fill="white" opacity="0.3"/>
-      <text x="400" y="220" text-anchor="middle" font-size="60">${info.emoji}</text>
+      <rect width="800" height="600" fill="url(#g)"/>
+      <circle cx="400" cy="200" r="80" fill="white" opacity="0.2"/>
+      <circle cx="400" cy="200" r="60" fill="white" opacity="0.3"/>
+      <circle cx="400" cy="200" r="40" fill="white" opacity="0.4"/>
       <text x="400" y="380" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="32" font-weight="700">${info.title}</text>
       <text x="400" y="420" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="18" opacity="0.9">Stories that matter</text>
     </svg>
@@ -46,17 +49,20 @@ const BulletproofImage = ({ src, alt, className, category = 'News', storyId = 1 
   const [errorCount, setErrorCount] = useState(0);
 
   const fallbacks = useMemo(() => {
-    return [
-      src && typeof src === 'string' && src !== 'null' && src !== 'undefined' && (src.startsWith('http') || src.startsWith('data:')) ? src : null,
-      ...safeCategoryImages(category, storyId),
-      safeCategorySVG(category),
-    ].filter(Boolean);
+    const sources = [];
+    if (src && typeof src === 'string' && src !== 'null' && src !== 'undefined' && (src.startsWith('http') || src.startsWith('data:'))) {
+      sources.push(src);
+    }
+    sources.push(...safeCategoryImages(category, storyId));
+    sources.push(safeCategorySVG(category));
+    return sources;
   }, [src, category, storyId]);
 
   useEffect(() => {
     setErrorCount(0);
     setIsLoading(true);
-    setCurrentSrc(fallbacks[0] || null);
+    const initialSrc = fallbacks[0] || fallbacks[fallbacks.length - 1];
+    setCurrentSrc(initialSrc);
   }, [fallbacks]);
 
   const onError = () => {
@@ -66,6 +72,7 @@ const BulletproofImage = ({ src, alt, className, category = 'News', storyId = 1 
       setCurrentSrc(fallbacks[i]);
       setIsLoading(true);
     } else {
+      setCurrentSrc(fallbacks[fallbacks.length - 1]);
       setIsLoading(false);
     }
   };
@@ -76,7 +83,14 @@ const BulletproofImage = ({ src, alt, className, category = 'News', storyId = 1 
   return (
     <div className="relative overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700">
       {currentSrc && (
-        <img src={currentSrc} alt={safeAlt} className={`${safeClassName} transition-all duration-500 ${isLoading ? 'opacity-60 scale-105' : 'opacity-100 scale-100'}`} onLoad={() => setIsLoading(false)} onError={onError} loading="lazy" />
+        <img 
+          src={currentSrc} 
+          alt={safeAlt} 
+          className={`${safeClassName} transition-all duration-500 ${isLoading ? 'opacity-60 scale-105' : 'opacity-100 scale-100'}`} 
+          onLoad={() => setIsLoading(false)} 
+          onError={onError} 
+          loading="lazy" 
+        />
       )}
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center">
@@ -113,6 +127,7 @@ const NewsCard = ({ article }) => {
     );
     return arr[0] || null;
   };
+  
   const finalImageSrc = getImageSrc();
   const isCategoryPage = location.pathname.includes('/category');
 
@@ -121,12 +136,10 @@ const NewsCard = ({ article }) => {
   const safeSummary = String(summary || '').replace(/[^\w\s\-.,!?'"]/g, '').replace(/\s+/g, ' ').trim();
   const safeSourceName = String(source_name || '').replace(/[^\w\s.-]/g, '');
 
-  // Improved summary truncation
   const truncatedSummary = safeSummary.length > 150 
     ? safeSummary.substring(0, 150).split(' ').slice(0, -1).join(' ') + '...' 
     : safeSummary;
 
-  // Category page layout
   if (isCategoryPage) {
     return (
       <article className="wide-rectangle-card-borderless group">
@@ -169,7 +182,6 @@ const NewsCard = ({ article }) => {
     );
   }
 
-  // Default card
   return (
     <div className="newscard-borderless cursor-pointer" onClick={handleStoryClick}>
       <BulletproofImage 

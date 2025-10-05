@@ -1,4 +1,4 @@
-// src/App.jsx - Restructured version
+// src/App.jsx
 import React, { useState, useEffect, lazy, Suspense, useCallback } from 'react';
 import { Routes, Route, BrowserRouter as Router, useParams, useNavigate } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
@@ -59,7 +59,6 @@ const sanitizeText = (text) => {
   return text.replace(/[^\w\s\-.,!?'"]/g, '').trim();
 };
 
-// Article Link Component - extracted to avoid JSX issues
 const ArticleLink = ({ url, children }) => {
   const linkProps = {
     href: url,
@@ -323,16 +322,8 @@ const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
       <div className="pt-8"></div>
       <div className="container mx-auto px-4 lg:px-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div>
-            <h2 className="text-xl font-bold mb-6 text-gray-900 dark:text-white flex items-center" style={{ color: 'hsl(var(--purple-text))' }}>
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-              </svg>
-              Daily Reads
-            </h2>
-            <DailyReads stories={dailyReads} />
-          </div>
-          <div>
+          
+          <div className="order-1">
             <h2 className="text-xl font-bold mb-6 text-gray-900 dark:text-white flex items-center" style={{ color: 'hsl(var(--purple-text))' }}>
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -341,7 +332,8 @@ const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
             </h2>
             <TrendingStories items={trending} />
           </div>
-          <div>
+
+          <div className="order-2">
             <h2 className="text-xl font-bold mb-6 text-gray-900 dark:text-white flex items-center" style={{ color: 'hsl(var(--orange-accent))' }}>
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <circle cx="11" cy="11" r="7" strokeWidth="2"></circle>
@@ -351,6 +343,17 @@ const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
             </h2>
             <Blindspot stories={blindspot} />
           </div>
+
+          <div className="order-3">
+            <h2 className="text-xl font-bold mb-6 text-gray-900 dark:text-white flex items-center" style={{ color: 'hsl(var(--purple-text))' }}>
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+              Daily Reads
+            </h2>
+            <DailyReads stories={dailyReads} />
+          </div>
+          
         </div>
       </div>
       <Footer />

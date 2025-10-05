@@ -1,4 +1,4 @@
-// src/App.jsx
+// src/App.jsx - Restructured version
 import React, { useState, useEffect, lazy, Suspense, useCallback } from 'react';
 import { Routes, Route, BrowserRouter as Router, useParams, useNavigate } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
@@ -9,27 +9,15 @@ import NewsCard from "@/components/NewsCard";
 import TrendingStories from "@/components/TrendingStories";
 import DailyReads from "@/components/DailyReads";
 import Blindspot from "@/components/Blindspot";
-import InlineAd from "@/components/InlineAd";
-import SourceBadge from "@/components/SourceBadge";
 import Button from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { fetchAllNewsData, useHomepageData, useCategoryNews } from '@/lib/news-api';
 import { cleanTitle, createBulletPoints, getSourceName } from '@/lib/utils';
 import { supabase } from '@/lib/supa.js';
 
-const SkeletonHomepage = lazy(() =>
-  import('@/components/SkeletonComponents').then(m => ({ default: m.SkeletonHomepage }))
-);
-const SkeletonCategoryPage = lazy(() =>
-  import('@/components/SkeletonComponents').then(m => ({ default: m.SkeletonCategoryPage }))
-);
-const SkeletonStoryPage = lazy(() =>
-  import('@/components/SkeletonComponents').then(m => ({ default: m.SkeletonStoryPage }))
-);
-const LoadingSpinner = lazy(() =>
-  import('@/components/SkeletonComponents').then(m => ({ default: m.LoadingSpinner }))
-);
+const SkeletonHomepage = lazy(() => import('@/components/SkeletonComponents').then(m => ({ default: m.SkeletonHomepage })));
+const SkeletonStoryPage = lazy(() => import('@/components/SkeletonComponents').then(m => ({ default: m.SkeletonStoryPage })));
 
 const QuickLoader = () => (
   <div className="animate-pulse space-y-4 p-4">
@@ -39,19 +27,23 @@ const QuickLoader = () => (
 );
 
 class ErrorBoundary extends React.Component {
-  constructor(props) { super(props); this.state = { hasError: false }; }
-  static getDerivedStateFromError() { return { hasError: true }; }
-  componentDidCatch(error, errorInfo) { console.error('App Error:', error, errorInfo); }
+  constructor(props) { 
+    super(props); 
+    this.state = { hasError: false }; 
+  }
+  static getDerivedStateFromError() { 
+    return { hasError: true }; 
+  }
+  componentDidCatch(error, errorInfo) { 
+    console.error('App Error:', error, errorInfo); 
+  }
   render() {
     if (this.state.hasError) {
       return (
         <div className="min-h-screen bg-white dark:bg-black flex items-center justify-center p-4">
           <div className="text-center">
             <h2 className="text-xl font-bold mb-4">Something went wrong</h2>
-            <button
-              onClick={() => window.location.reload()}
-              className="bg-blue-600 text-white px-4 py-2 rounded"
-            >
+            <button onClick={() => window.location.reload()} className="bg-blue-600 text-white px-4 py-2 rounded">
               Refresh Page
             </button>
           </div>
@@ -62,21 +54,27 @@ class ErrorBoundary extends React.Component {
   }
 }
 
-const useNavigationHandler = () => {
-  const navigate = useNavigate();
-  return useCallback((path) => {
-    try { navigate(path); } catch { window.location.href = path; }
-  }, [navigate]);
-};
-
 const sanitizeText = (text) => {
   if (!text || typeof text !== 'string') return '';
   return text.replace(/[^\w\s\-.,!?'"]/g, '').trim();
 };
 
+// Article Link Component - extracted to avoid JSX issues
+const ArticleLink = ({ url, children }) => {
+  const linkProps = {
+    href: url,
+    target: "_blank",
+    rel: "noopener noreferrer",
+    className: "block w-full text-center px-4 py-2 lg:px-6 lg:py-3 rounded-lg font-medium transition-all duration-300 hover:shadow-lg text-white text-sm lg:text-base",
+    style: { backgroundColor: 'hsl(var(--purple-text))' }
+  };
+  
+  return React.createElement('a', linkProps, children);
+};
+
 const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
   const { id } = useParams();
-  const safeNavigate = useNavigationHandler();
+  const navigate = useNavigate();
   const [story, setStory] = useState(null);
   const [relatedStories, setRelatedStories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -127,7 +125,7 @@ const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
         <Header setIsDonateModalOpen={setIsDonateModalOpen} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />
         <div className="text-center py-20">
           <h2 className="text-2xl font-bold mb-4">Story Not Found</h2>
-          <Button onClick={() => safeNavigate('/')}>Go Home</Button>
+          <Button onClick={() => navigate('/')}>Go Home</Button>
         </div>
         <Footer />
       </div>
@@ -187,16 +185,15 @@ const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
                 <h2 className="text-xl lg:text-2xl font-bold mb-4 lg:mb-6">Related Stories</h2>
                 <div className="related-stories-list">
                   {relatedStories.map((rel) => (
-                    <div key={rel.id} className="related-story-item">
+                    <div key={rel.id} className="related-story-item mb-4">
                       <button
-                        onClick={() => safeNavigate(`/article/${rel.id}`)}
+                        onClick={() => navigate(`/article/${rel.id}`)}
                         className="related-story-link w-full text-left"
                       >
                         <h3 className="related-story-title-mobile mb-3 font-bold">
                           {cleanTitle(rel.title)}
                         </h3>
                       </button>
-                      <SourceBadge name={(rel.source_name || rel.source || 'Source')} />
                     </div>
                   ))}
                 </div>
@@ -216,15 +213,7 @@ const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
                 )}
               </ul>
               <div className="mt-4 lg:mt-6">
-                 
-                  href={story.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block w-full text-center px-4 py-2 lg:px-6 lg:py-3 rounded-lg font-medium transition-all duration-300 hover:shadow-lg text-white text-sm lg:text-base"
-                  style={{ backgroundColor: 'hsl(var(--purple-text))' }}
-                >
-                  Read Full Article →
-                </a>
+                <ArticleLink url={story.url}>Read Full Article →</ArticleLink>
               </div>
             </div>
           </div>
@@ -242,12 +231,10 @@ const CategoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
   return (
     <div className="min-h-screen bg-white dark:bg-black">
       <Header setIsDonateModalOpen={setIsDonateModalOpen} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />
-
       <div className="px-4 lg:px-6 my-6">
         <h2 className="text-xl font-bold mb-6 capitalize">
           {sanitizeText(decodeURIComponent(category))} News
         </h2>
-
         {loading ? (
           <div className="max-w-4xl mx-auto space-y-6">
             <Suspense fallback={<QuickLoader />}>
@@ -333,12 +320,9 @@ const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
   return (
     <div className="min-h-screen bg-white dark:bg-black">
       <Header setIsDonateModalOpen={setIsDonateModalOpen} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />
-
       <div className="pt-8"></div>
-
       <div className="container mx-auto px-4 lg:px-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
           <div>
             <h2 className="text-xl font-bold mb-6 text-gray-900 dark:text-white flex items-center" style={{ color: 'hsl(var(--purple-text))' }}>
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -348,7 +332,6 @@ const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
             </h2>
             <DailyReads stories={dailyReads} />
           </div>
-
           <div>
             <h2 className="text-xl font-bold mb-6 text-gray-900 dark:text-white flex items-center" style={{ color: 'hsl(var(--purple-text))' }}>
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -358,7 +341,6 @@ const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
             </h2>
             <TrendingStories items={trending} />
           </div>
-
           <div>
             <h2 className="text-xl font-bold mb-6 text-gray-900 dark:text-white flex items-center" style={{ color: 'hsl(var(--orange-accent))' }}>
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -369,10 +351,8 @@ const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
             </h2>
             <Blindspot stories={blindspot} />
           </div>
-
         </div>
       </div>
-
       <Footer />
     </div>
   );
@@ -408,20 +388,10 @@ const App = () => {
       <Router>
         <div className="bg-white dark:bg-black text-black dark:text-white transition-colors duration-200 min-h-screen">
           <Routes>
-            <Route
-              path="/"
-              element={<HomePage setIsDonateModalOpen={setIsDonateModalOpen} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />}
-            />
-            <Route
-              path="/category/:category"
-              element={<CategoryPage setIsDonateModalOpen={setIsDonateModalOpen} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />}
-            />
-            <Route
-              path="/article/:id"
-              element={<StoryPage setIsDonateModalOpen={setIsDonateModalOpen} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />}
-            />
+            <Route path="/" element={<HomePage setIsDonateModalOpen={setIsDonateModalOpen} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />} />
+            <Route path="/category/:category" element={<CategoryPage setIsDonateModalOpen={setIsDonateModalOpen} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />} />
+            <Route path="/article/:id" element={<StoryPage setIsDonateModalOpen={setIsDonateModalOpen} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />} />
           </Routes>
-
           <AnimatePresence>
             {isDonateModalOpen && (
               <Dialog open={isDonateModalOpen} onOpenChange={setIsDonateModalOpen}>
@@ -431,16 +401,13 @@ const App = () => {
                     <DialogDescription>Your contribution helps us grow.</DialogDescription>
                   </DialogHeader>
                   <DialogFooter>
-                    <DialogClose asChild>
-                      <Button variant="outline">Close</Button>
-                    </DialogClose>
+                    <DialogClose asChild><Button variant="outline">Close</Button></DialogClose>
                     <Button>Donate Now</Button>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
             )}
           </AnimatePresence>
-
           <Toaster />
         </div>
       </Router>

@@ -216,7 +216,7 @@ const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
                 )}
               </ul>
               <div className="mt-4 lg:mt-6">
-                
+                 
                   href={story.url}
                   target="_blank"
                   rel="noopener noreferrer"

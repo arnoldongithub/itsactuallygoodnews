@@ -10,7 +10,7 @@ import TrendingStories from "@/components/TrendingStories";
 import DailyReads from "@/components/DailyReads";
 import Blindspot from "@/components/Blindspot";
 import InlineAd from "@/components/InlineAd";
-import SourceBadge from "@/components/SourceBadge"; // replaced SourcePositivityBar
+import SourceBadge from "@/components/SourceBadge";
 import Button from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { motion, AnimatePresence } from 'framer-motion';
@@ -217,7 +217,7 @@ const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
                 )}
               </ul>
               <div className="mt-4 lg:mt-6">
-                <a
+                
                   href={story.url}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -337,36 +337,43 @@ const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
     <div className="min-h-screen bg-white dark:bg-black">
       <Header setIsDonateModalOpen={setIsDonateModalOpen} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />
 
-      <div className="main-layout">
-        <aside className="daily-reads-sidebar">
-          <div className="daily-reads-separator">
+      <div className="pt-8"></div>
+
+      <div className="container mx-auto px-4 lg:px-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          
+          <div>
+            <h2 className="text-xl font-bold mb-6 text-gray-900 dark:text-white flex items-center" style={{ color: 'hsl(var(--purple-text))' }}>
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+              Daily Reads
+            </h2>
             <DailyReads stories={dailyReads} />
           </div>
-        </aside>
 
-        <main className="trending-main">
-          <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white" style={{ color: 'hsl(var(--purple-text))' }}>
-            <svg className="inline-block w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
-            Trending Stories
-          </h2>
+          <div>
+            <h2 className="text-xl font-bold mb-6 text-gray-900 dark:text-white flex items-center" style={{ color: 'hsl(var(--purple-text))' }}>
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              Trending Stories
+            </h2>
+            <TrendingStories items={trending} />
+          </div>
 
-          <TrendingStories stories={trending} />
-
-          {trending.length === 0 && (
-            <div className="text-center py-8">
-              <Suspense fallback={<QuickLoader />}><LoadingSpinner text="No trending stories available" /></Suspense>
-              <Button onClick={refetch} variant="outline" size="sm" className="mt-4">Refresh</Button>
-            </div>
-          )}
-        </main>
-
-        <aside className="blindspot-sidebar">
-          <div className="blindspot-separator">
+          <div>
+            <h2 className="text-xl font-bold mb-6 text-gray-900 dark:text-white flex items-center" style={{ color: 'hsl(var(--orange-accent))' }}>
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="7" strokeWidth="2"></circle>
+                <line x1="16.65" y1="16.65" x2="21" y2="21" strokeWidth="2" strokeLinecap="round"></line>
+              </svg>
+              Blindspot
+            </h2>
             <Blindspot stories={blindspot} />
           </div>
-        </aside>
+
+        </div>
       </div>
 
       <Footer />
@@ -419,7 +426,6 @@ const App = () => {
             />
           </Routes>
 
-          {/* Keep donate modal if you use it elsewhere */}
           <AnimatePresence>
             {isDonateModalOpen && (
               <Dialog open={isDonateModalOpen} onOpenChange={setIsDonateModalOpen}>
@@ -447,4 +453,3 @@ const App = () => {
 };
 
 export default App;
-

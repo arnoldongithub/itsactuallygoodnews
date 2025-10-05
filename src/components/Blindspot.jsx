@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import InlineAd from './InlineAd';
 import SourceBadge from './SourceBadge';
 
-// SVG fallback without emoji
 const createBlindspotSVG = () =>
   `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`
     <svg width="400" height="600" viewBox="0 0 400 600" xmlns="http://www.w3.org/2000/svg">
@@ -16,7 +15,6 @@ const createBlindspotSVG = () =>
       <rect width="400" height="600" fill="url(#blindspotGrad)"/>
       <circle cx="200" cy="220" r="40" fill="white" opacity="0.25"/>
       <circle cx="200" cy="220" r="26" fill="white" opacity="0.35"/>
-      <!-- magnifying glass icon -->
       <g transform="translate(200 220)">
         <circle r="18" fill="none" stroke="white" stroke-width="4" opacity="0.9"/>
         <line x1="12" y1="12" x2="28" y2="28" stroke="white" stroke-width="4" stroke-linecap="round" opacity="0.9"/>
@@ -26,7 +24,6 @@ const createBlindspotSVG = () =>
     </svg>
   `)}`;
 
-// Bulletproof image
 const BulletproofBlindspotImage = ({ story, className }) => {
   const [src, setSrc] = React.useState(null);
   const [idx, setIdx] = React.useState(0);
@@ -78,11 +75,6 @@ const BulletproofBlindspotImage = ({ story, className }) => {
           <div className="w-6 h-6 border-2 border-orange-300 border-t-orange-600 rounded-full animate-spin" />
         </div>
       )}
-      {story.url === '#' && !loading && (
-        <div className="absolute top-2 left-2 bg-orange-500 text-white text-xs px-2 py-1 rounded opacity-90">
-          Preview
-        </div>
-      )}
     </div>
   );
 };
@@ -130,63 +122,44 @@ const Blindspot = ({ stories }) => {
       category: 'Blindspot',
       published_at: new Date().toISOString(),
       source_name: 'Inclusive Living Network'
-    },
-    {
-      id: 'fallback-blindspot-5',
-      title: 'Small Town Janitor Becomes Local Hero Through Acts of Kindness',
-      summary: 'Custodian pays utility bills, organizes food drives, and mentors youth.',
-      image_url: null,
-      url: '#',
-      category: 'Blindspot',
-      published_at: new Date().toISOString(),
-      source_name: 'Hometown Heroes'
-    },
-    {
-      id: 'fallback-blindspot-6',
-      title: 'Language Immersion Programs Revitalize Cultural Heritage',
-      summary: 'Communities build apps and schools to revive endangered languages.',
-      image_url: null,
-      url: '#',
-      category: 'Blindspot',
-      published_at: new Date().toISOString(),
-      source_name: 'Cultural Revival Network'
     }
   ];
 
   const displayStories = (stories && stories.length > 0) ? stories : fallbackStories;
   const featured = displayStories.slice(0, 2);
-  const headlines = displayStories.slice(2, 12);
+  const headlines = displayStories.slice(2, 8);
 
   return (
-    <div className="sidebar-section blindspot-sidebar force-visible px-2">
-      <h2 className="sidebar-title flex items-center">
-        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <circle cx="11" cy="11" r="7" strokeWidth="2"></circle>
-          <line x1="16.65" y1="16.65" x2="21" y2="21" strokeWidth="2" strokeLinecap="round"></line>
-        </svg>
-        Blindspot
-        {stories?.length === 0 && <span className="text-xs text-orange-500 ml-2 opacity-75">(Preview)</span>}
-      </h2>
-
+    <div className="space-y-6">
       {featured.length > 0 && (
-        <div className="sidebar-featured-cards">
+        <div className="space-y-4">
           {featured.map((story) => (
             <button
               key={story.id}
               onClick={() => story.url === '#' ? null : navigate(`/article/${story.id}`)}
-              className="sidebar-newscard group"
+              className="w-full overflow-hidden rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-black group"
               disabled={story.url === '#'}
-              style={{ cursor: story.url === '#' ? 'default' : 'pointer', opacity: story.url === '#' ? 0.85 : 1 }}
+              style={{ cursor: story.url === '#' ? 'default' : 'pointer' }}
             >
-              <BulletproofBlindspotImage
-                story={story}
-                className="sidebar-newscard-image group-hover:scale-105 transition-transform duration-300"
-              />
-              <div className="sidebar-newscard-overlay">
-                <h3 className="blindspot-title-full font-bold" style={{ fontWeight: 700 }}>
-                  {String(story.title || '').replace(/[^\w\s\-.,!?]/g, '').replace(/\s+/g, ' ').trim()}
+              <div className="relative h-40 overflow-hidden">
+                <BulletproofBlindspotImage
+                  story={story}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+                {story?.category && (
+                  <div className="absolute top-3 left-3">
+                    <span className="inline-block px-3 py-1 text-xs font-semibold rounded-full bg-orange-500 text-white shadow-sm">
+                      {story.category}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <div className="p-4">
+                <h3 className="font-bold text-base text-left group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors line-clamp-2">
+                  {String(story.title || '').replace(/[^\w\s\-.,!?]/g, '').trim()}
                 </h3>
-                {story.url === '#' && <p className="text-white text-xs mt-2 opacity-75">Coming soon...</p>}
+                {story.url === '#' && <p className="text-gray-500 text-xs mt-2">Coming soon...</p>}
               </div>
             </button>
           ))}
@@ -194,31 +167,30 @@ const Blindspot = ({ stories }) => {
       )}
 
       {headlines.length > 0 && (
-        <div className="sidebar-headlines">
+        <div className="space-y-4">
           {headlines.map((story, index) => (
             <React.Fragment key={story.id}>
-              {/* Source only (no positivity bar) */}
               <div className="mb-2">
                 <SourceBadge name={(story.source_name || story.source || 'Source').replace(/[^\w\s.-]/g, '').trim() || 'Source'} />
               </div>
 
-              <div className="sidebar-headline">
+              <div>
                 <button
                   onClick={() => story.url === '#' ? null : navigate(`/article/${story.id}`)}
-                  className="w-full text-left hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+                  className="w-full text-left hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
                   disabled={story.url === '#'}
                   style={{ cursor: story.url === '#' ? 'default' : 'pointer', opacity: story.url === '#' ? 0.75 : 1 }}
                 >
-                  <h3 className="blindspot-headline-full font-bold" style={{ fontWeight: 700 }}>
+                  <h3 className="font-bold text-sm line-clamp-2">
                     {String(story.title || '').replace(/[^\w\s\-.,!?]/g, '').replace(/\s+/g, ' ').trim()}
                     {story.url === '#' && <span className="text-orange-500 text-xs ml-2 opacity-60">(Preview)</span>}
                   </h3>
                 </button>
               </div>
 
-              {(index + 1) % 4 === 0 && index < headlines.length - 1 && <InlineAd key={`blindspot-ad-${index}`} />}
+              {(index + 1) % 3 === 0 && index < headlines.length - 1 && <InlineAd key={`blindspot-ad-${index}`} />}
 
-              {index < headlines.length - 1 && <hr className="border-gray-200 dark:border-gray-700 my-3 opacity-30 border-t-2" />}
+              {index < headlines.length - 1 && <hr className="border-gray-200 dark:border-gray-700 my-3 opacity-30" />}
             </React.Fragment>
           ))}
         </div>
@@ -232,8 +204,7 @@ const Blindspot = ({ stories }) => {
               <line x1="16.65" y1="16.65" x2="21" y2="21" strokeWidth="2" strokeLinecap="round"></line>
             </svg>
           </div>
-          <p className="text-gray-500 dark:text-gray-400 text-sm mb-2">Blindspot stories are being curated</p>
-          <p className="text-gray-400 dark:text-gray-500 text-xs">Check back soon for underreported positive news</p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">Blindspot stories are being curated</p>
         </div>
       )}
     </div>
@@ -241,4 +212,3 @@ const Blindspot = ({ stories }) => {
 };
 
 export default Blindspot;
-

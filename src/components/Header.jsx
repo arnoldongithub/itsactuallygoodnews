@@ -51,7 +51,6 @@ const Header = ({ isDarkMode, setIsDarkMode, setIsDonateModalOpen }) => {
     setIsDonateDropdownOpen(false);
   };
 
-  // open Patreon directly
   const handleMemberClick = () => window.open(PATREON_URL, '_blank', 'noopener,noreferrer');
   const handleShopClick = () => window.open('https://shopify.com', '_blank');
 
@@ -142,14 +141,54 @@ const Header = ({ isDarkMode, setIsDarkMode, setIsDonateModalOpen }) => {
           </div>
 
           {/* Mobile */}
-          {/* unchanged except Member button uses handleMemberClick */}
-          {/* ... keep your mobile section, replace Member button onClick with handleMemberClick */}
+          <div className="lg:hidden">
+            <div className="flex items-center justify-between">
+              <Link to="/" className="w-10 h-10">
+                <Logo />
+              </Link>
+              
+              <div className="flex items-center space-x-2">
+                <Button variant="ghost" size="icon" onClick={() => setIsSearchExpanded(!isSearchExpanded)}>
+                  <Search className="h-5 w-5" />
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => setIsDarkMode(!isDarkMode)}>
+                  {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                </Button>
+              </div>
+            </div>
+
+            {isSearchExpanded && (
+              <div className="mt-3">
+                <Input
+                  type="search"
+                  placeholder="Search stories..."
+                  className="w-full"
+                  onFocus={handleUnsupportedFeature}
+                />
+              </div>
+            )}
+
+            <nav className="flex space-x-2 overflow-x-auto scrollbar-none mt-3 pb-2">
+              {categories.map(cat => {
+                const active = cat === currentCategory;
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => handleCategoryClick(cat)}
+                    className={`px-3 py-1.5 text-xs rounded-full whitespace-nowrap ${
+                      active ? 'bg-accent text-white' : 'bg-background/50 text-foreground'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
         </div>
       </header>
-      {/* removed SubscribeModal usage to prevent Paddle from loading */}
     </>
   );
 };
 
 export default Header;
-

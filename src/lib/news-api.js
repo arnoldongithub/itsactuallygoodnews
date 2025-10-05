@@ -6,7 +6,6 @@ const CACHE_DURATION = 10 * 60 * 1000;
 const CACHE_KEY = 'newsCache';
 const LAST_FETCHED_KEY = 'newsLastFetched';
 
-// match DB categories (see SQL)
 const VALID_CATEGORIES = [
   'Movement Tracker & Accountability',
   'Capitalism & Inequality',
@@ -52,7 +51,6 @@ export const fetchAllNewsData = async (bypassCache = false) => {
   try {
     const since = new Date(Date.now() - 48 * 3600 * 1000).toISOString();
 
-    // only columns that exist in your SQL
     const { data, error } = await supabase
       .from('news')
       .select(`
@@ -77,12 +75,12 @@ export const fetchAllNewsData = async (bypassCache = false) => {
         summary: cleanSummary(x.summary),
         content: cleanContent(x.content),
         category: normalizeCategory(x.category),
-        virality_score: x.positivity_score > 9 ? 8 : 0
+        virality_score: x.positivity_score >= 8 ? 8 : x.positivity_score >= 7 ? 6 : 0
       }));
 
     const result = {
       all: processed,
-      trending: processed.filter(s => s.is_trending || s.positivity_score >= 9 || s.virality_score >= 7).slice(0, 15),
+      trending: processed.filter(s => s.is_trending || s.positivity_score >= 8).slice(0, 15),
       dailyReads: getCategoryStories(processed, VALID_CATEGORIES, 2),
       blindspot: processed.filter(s => s.category === 'Justice Lens' || s.category === 'Hope in Struggle').slice(0, 8),
       categories: groupByCategory(processed),
@@ -111,8 +109,6 @@ const normalizeCategory = (c) => {
     'Education': 'Hope in Struggle',
     'Humanitarian & Rescue': 'Hope in Struggle',
     'Viral': 'Hope in Struggle',
-
-    // canonical
     'Movement Tracker & Accountability': 'Movement Tracker & Accountability',
     'Capitalism & Inequality': 'Capitalism & Inequality',
     'Justice Lens': 'Justice Lens',
@@ -229,4 +225,3 @@ export const fetchHomepageData = async (bypassCache = false) => {
   const all = await fetchAllNewsData(bypassCache);
   return { trending: all.trending, dailyReads: all.dailyReads, blindspot: all.blindspot };
 };
-

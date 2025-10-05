@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import SourceBadge from '@/components/SourceBadge';
 
-// Fallback-only helpers to avoid ESM require issues
 const safeCategoryImages = (category, storyId) => {
   const safeId = Math.abs(String(storyId || '0').split('').reduce((a, b) => a + b.charCodeAt(0), 0));
   const map = {
@@ -20,15 +19,16 @@ const safeCategoryImages = (category, storyId) => {
     `https://via.placeholder.com/800x600/6b7280/white?text=${encodeURIComponent(category || 'News')}`,
   ];
 };
+
 const safeCategorySVG = (category) => {
   const info = {
-    'Movement Tracker & Accountability': { emoji: '📣', color: '#0ea5e9', title: 'Movement Tracker' },
-    'Capitalism & Inequality': { emoji: '📉', color: '#ef4444', title: 'Inequality Watch' },
-    'Justice Lens': { emoji: '⚖️', color: '#22c55e', title: 'Justice Lens' },
-    'Hope in Struggle': { emoji: '🌟', color: '#a855f7', title: 'Hope in Struggle' },
-    'AI Watch': { emoji: '🤖', color: '#f59e0b', title: 'AI Watch' },
-    Blindspot: { emoji: '🔍', color: '#f59e0b', title: 'Blindspot' },
-  }[category] || { emoji: '📰', color: '#6b7280', title: 'News' };
+    'Movement Tracker & Accountability': { color: '#0ea5e9', title: 'Movement Tracker' },
+    'Capitalism & Inequality': { color: '#ef4444', title: 'Inequality Watch' },
+    'Justice Lens': { color: '#22c55e', title: 'Justice Lens' },
+    'Hope in Struggle': { color: '#a855f7', title: 'Hope in Struggle' },
+    'AI Watch': { color: '#f59e0b', title: 'AI Watch' },
+    Blindspot: { color: '#f59e0b', title: 'Blindspot' },
+  }[category] || { color: '#6b7280', title: 'News' };
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`
     <svg width="800" height="600" viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
       <defs><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:${info.color};stop-opacity:1" /><stop offset="100%" style="stop-color:${info.color};stop-opacity:0.7" /></linearGradient></defs>
@@ -47,7 +47,7 @@ const BulletproofImage = ({ src, alt, className, category = 'News', storyId = 1 
 
   const fallbacks = useMemo(() => {
     return [
-      src && typeof src === 'string' && (src.startsWith('http') || src.startsWith('data:')) ? src : null,
+      src && typeof src === 'string' && src !== 'null' && src !== 'undefined' && (src.startsWith('http') || src.startsWith('data:')) ? src : null,
       ...safeCategoryImages(category, storyId),
       safeCategorySVG(category),
     ].filter(Boolean);
@@ -85,9 +85,6 @@ const BulletproofImage = ({ src, alt, className, category = 'News', storyId = 1 
           </div>
         </div>
       )}
-      {process.env.NODE_ENV === 'development' && errorCount > 0 && (
-        <div className="absolute top-2 right-2 bg-blue-500 text-white text-xs px-2 py-1 rounded opacity-75">{category} #{errorCount + 1}</div>
-      )}
     </div>
   );
 };
@@ -100,13 +97,20 @@ const NewsCard = ({ article }) => {
   const { id, category, title, image_url, thumbnail_url, summary, source_name } = article;
 
   const handleStoryClick = useCallback((e) => {
-    e.preventDefault(); e.stopPropagation();
+    e.preventDefault(); 
+    e.stopPropagation();
     if (!id) return;
     try { navigate(`/article/${id}`); } catch { window.location.href = `/article/${id}`; }
   }, [id, navigate]);
 
   const getImageSrc = () => {
-    const arr = [image_url, thumbnail_url].filter((u) => typeof u === 'string' && u.trim() && (u.startsWith('http') || u.startsWith('data:')));
+    const arr = [image_url, thumbnail_url].filter((u) => 
+      typeof u === 'string' && 
+      u.trim() && 
+      u !== 'null' && 
+      u !== 'undefined' &&
+      (u.startsWith('http') || u.startsWith('data:'))
+    );
     return arr[0] || null;
   };
   const finalImageSrc = getImageSrc();
@@ -117,12 +121,23 @@ const NewsCard = ({ article }) => {
   const safeSummary = String(summary || '').replace(/[^\w\s\-.,!?'"]/g, '').replace(/\s+/g, ' ').trim();
   const safeSourceName = String(source_name || '').replace(/[^\w\s.-]/g, '');
 
+  // Improved summary truncation
+  const truncatedSummary = safeSummary.length > 150 
+    ? safeSummary.substring(0, 150).split(' ').slice(0, -1).join(' ') + '...' 
+    : safeSummary;
+
   // Category page layout
   if (isCategoryPage) {
     return (
       <article className="wide-rectangle-card-borderless group">
         <div className="wide-rectangle-image-container-borderless cursor-pointer" onClick={handleStoryClick}>
-          <BulletproofImage src={finalImageSrc} alt={safeTitle} className="wide-rectangle-image-borderless group-hover:scale-105 transition-transform duration-300" category={safeCategory} storyId={id} />
+          <BulletproofImage 
+            src={finalImageSrc} 
+            alt={safeTitle} 
+            className="wide-rectangle-image-borderless group-hover:scale-105 transition-transform duration-300" 
+            category={safeCategory} 
+            storyId={id} 
+          />
         </div>
         <div className="wide-rectangle-content-borderless">
           {safeCategory && <div className="wide-rectangle-category-borderless">{safeCategory}</div>}
@@ -131,7 +146,11 @@ const NewsCard = ({ article }) => {
               {safeTitle}
             </button>
           </h3>
-          {safeSummary && <p className="wide-rectangle-summary-borderless">{safeSummary.length > 150 ? `${safeSummary.substring(0, 150)}...` : safeSummary}</p>}
+          {safeSummary && (
+            <p className="wide-rectangle-summary-borderless">
+              {truncatedSummary}
+            </p>
+          )}
           <div className="wide-rectangle-meta-borderless flex items-center justify-between mt-2">
             <div className="source-info flex items-center gap-2">
               <div className="source-logo">{safeSourceName ? safeSourceName.charAt(0).toUpperCase() : 'N'}</div>
@@ -153,7 +172,13 @@ const NewsCard = ({ article }) => {
   // Default card
   return (
     <div className="newscard-borderless cursor-pointer" onClick={handleStoryClick}>
-      <BulletproofImage src={finalImageSrc} alt={safeTitle} className="newscard-image-borderless" category={safeCategory} storyId={id} />
+      <BulletproofImage 
+        src={finalImageSrc} 
+        alt={safeTitle} 
+        className="newscard-image-borderless" 
+        category={safeCategory} 
+        storyId={id} 
+      />
       <div className="newscard-overlay-borderless">
         {safeCategory && <div className="newscard-category-borderless">{safeCategory}</div>}
         <h3 className="newscard-title-borderless font-bold">
@@ -166,4 +191,3 @@ const NewsCard = ({ article }) => {
 };
 
 export default NewsCard;
-

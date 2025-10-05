@@ -74,7 +74,6 @@ const sanitizeText = (text) => {
   return text.replace(/[^\w\s\-.,!?'"]/g, '').trim();
 };
 
-// -------- Story Page --------
 const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
   const { id } = useParams();
   const safeNavigate = useNavigationHandler();
@@ -236,7 +235,6 @@ const StoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
   );
 };
 
-// -------- Category Page --------
 const CategoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
   const { category } = useParams();
   const { data: categoryNews, loading, error } = useCategoryNews(category);
@@ -280,7 +278,6 @@ const CategoryPage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
   );
 };
 
-// -------- Home Page --------
 const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
   const { data, loading, error, refetch } = useHomepageData();
   const { toast } = useToast();
@@ -381,7 +378,6 @@ const HomePage = ({ setIsDonateModalOpen, isDarkMode, setIsDarkMode }) => {
   );
 };
 
-// -------- App Shell --------
 const App = () => {
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
